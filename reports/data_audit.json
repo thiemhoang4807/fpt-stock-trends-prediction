@@ -1,0 +1,53 @@
+{
+  "input_file": "C:\\Users\\ACER\\OneDrive\\Documents\\ChatGPT\\ML\\fpt-stock-trends-prediction\\data\\raw\\fpt\\fpt_historical_price.csv",
+  "row_count": 4678,
+  "columns": [
+    "time",
+    "open",
+    "high",
+    "low",
+    "close",
+    "volume"
+  ],
+  "date_start": "2007-01-02",
+  "date_end": "2025-10-09",
+  "missing_values_by_column": {
+    "time": 0,
+    "open": 0,
+    "high": 0,
+    "low": 0,
+    "close": 0,
+    "volume": 0
+  },
+  "duplicate_dates": 0,
+  "is_chronologically_sorted": true,
+  "zero_volume_sessions": 2,
+  "ohlc_consistency_violations": 3,
+  "ohlc_violation_dates": [
+    "2007-08-17",
+    "2009-06-10",
+    "2009-12-07"
+  ],
+  "daily_return_min": -0.06989633583085297,
+  "daily_return_max": 0.06992187499999991,
+  "daily_return_mean": 0.0006459662157204318,
+  "daily_return_std": 0.019180368078512054,
+  "daily_return_quantiles": {
+    "0.01": -0.04946492559975705,
+    "0.25": -0.008663366336633671,
+    "0.5": 0.0,
+    "0.75": 0.009422850412249772,
+    "0.99": 0.04970967651274546
+  },
+  "next_session_direction_counts": {
+    "up": 2121,
+    "down": 2077,
+    "unchanged": 479
+  },
+  "figures": [
+    "figures/01_fpt_close.png",
+    "figures/02_fpt_volume.png",
+    "figures/03_daily_return_distribution.png",
+    "figures/04_next_session_class_balance.png"
+  ]
+}

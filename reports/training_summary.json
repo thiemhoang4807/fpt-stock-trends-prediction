@@ -1,0 +1,164 @@
+{
+  "classifier_selected": "Random Forest",
+  "regressor_selected": "Last close baseline",
+  "classification_test_metrics": [
+    {
+      "model": "HistGradientBoosting",
+      "accuracy": 0.5545454545454546,
+      "balanced_accuracy": 0.5527594713007622,
+      "precision_up": 0.5730337078651685,
+      "recall_up": 0.5895953757225434,
+      "f1_up": 0.5811965811965812,
+      "roc_auc": 0.5649000404992452,
+      "selected_by_validation": false
+    },
+    {
+      "model": "Random Forest",
+      "accuracy": 0.5318181818181819,
+      "balanced_accuracy": 0.5269596112072457,
+      "precision_up": 0.5465994962216625,
+      "recall_up": 0.6271676300578035,
+      "f1_up": 0.5841184387617766,
+      "roc_auc": 0.5593129855307242,
+      "selected_by_validation": true
+    },
+    {
+      "model": "Logistic Regression",
+      "accuracy": 0.5272727272727272,
+      "balanced_accuracy": 0.5229188910570304,
+      "precision_up": 0.5435897435897435,
+      "recall_up": 0.6127167630057804,
+      "f1_up": 0.5760869565217391,
+      "roc_auc": 0.537305327491624,
+      "selected_by_validation": false
+    },
+    {
+      "model": "Majority baseline",
+      "accuracy": 0.5242424242424243,
+      "balanced_accuracy": 0.5,
+      "precision_up": 0.5242424242424243,
+      "recall_up": 1.0,
+      "f1_up": 0.6878727634194831,
+      "roc_auc": 0.5,
+      "selected_by_validation": false
+    }
+  ],
+  "regression_test_metrics": [
+    {
+      "model": "Last close baseline",
+      "rmse": 1.5010026385264312,
+      "mae": 1.0051798561151075,
+      "mape_percent": 1.0977613103631456,
+      "directional_accuracy_nonflat_percent": 0.0,
+      "selected_by_validation": true
+    },
+    {
+      "model": "Linear Regression",
+      "rmse": 1.4989471304912494,
+      "mae": 1.0054514152828995,
+      "mape_percent": 1.098592943558863,
+      "directional_accuracy_nonflat_percent": 51.81818181818182,
+      "selected_by_validation": false
+    },
+    {
+      "model": "HistGradientBoosting",
+      "rmse": 41.38981709904976,
+      "mae": 33.277227371385955,
+      "mape_percent": 32.02975563838991,
+      "directional_accuracy_nonflat_percent": 47.72727272727273,
+      "selected_by_validation": false
+    },
+    {
+      "model": "Random Forest",
+      "rmse": 41.46108819153412,
+      "mae": 33.35609514196152,
+      "mape_percent": 32.127223553412634,
+      "directional_accuracy_nonflat_percent": 49.09090909090909,
+      "selected_by_validation": false
+    }
+  ],
+  "split": {
+    "train_target_date_end": "2020-03-19",
+    "validation_target_date_start": "2020-03-20",
+    "validation_target_date_end": "2022-12-22",
+    "test_target_date_start": "2022-12-23",
+    "split_method": "chronological by target session date; train 70%, validation 15%, test 15%",
+    "feature_warmup_rows_removed": 49,
+    "final_feature_rows_without_next_session_target": 1,
+    "regression_rows": {
+      "train": 3239,
+      "validation": 694,
+      "test": 695
+    },
+    "classification_rows_excluding_unchanged": {
+      "train": 2850,
+      "validation": 646,
+      "test": 660
+    },
+    "feature_count": 23,
+    "feature_names": [
+      "return_1d",
+      "return_2d",
+      "return_5d",
+      "return_10d",
+      "return_20d",
+      "sma_5_ratio",
+      "sma_10_ratio",
+      "sma_20_ratio",
+      "sma_50_ratio",
+      "ema_5_ratio",
+      "ema_10_ratio",
+      "ema_20_ratio",
+      "ema_50_ratio",
+      "rsi_14",
+      "macd_ratio",
+      "macd_signal_ratio",
+      "macd_histogram_ratio",
+      "bollinger_percent_b_20",
+      "bollinger_width_20",
+      "volatility_5d",
+      "volatility_20d",
+      "log_volume_change_1d",
+      "log_volume_zscore_20d"
+    ],
+    "regression_feature_count": 24,
+    "regression_feature_names": [
+      "return_1d",
+      "return_2d",
+      "return_5d",
+      "return_10d",
+      "return_20d",
+      "sma_5_ratio",
+      "sma_10_ratio",
+      "sma_20_ratio",
+      "sma_50_ratio",
+      "ema_5_ratio",
+      "ema_10_ratio",
+      "ema_20_ratio",
+      "ema_50_ratio",
+      "rsi_14",
+      "macd_ratio",
+      "macd_signal_ratio",
+      "macd_histogram_ratio",
+      "bollinger_percent_b_20",
+      "bollinger_width_20",
+      "volatility_5d",
+      "volatility_20d",
+      "log_volume_change_1d",
+      "log_volume_zscore_20d",
+      "current_close"
+    ],
+    "prediction_definition": "At close of session t, predict close(t+1) and its direction relative to close(t).",
+    "classification_label": "up=1, down=0; exactly unchanged next closes are excluded from classification.",
+    "regression_directional_accuracy": "Computed only for non-zero actual next-session returns.",
+    "scaling": "StandardScaler is inside Logistic/Linear Regression pipelines; fit occurs only on training data, then on train+validation for final test evaluation.",
+    "model_selection": {
+      "classifier": "highest validation balanced accuracy; tie-break by validation F1 for up class",
+      "regressor": "lowest validation MAE, including last-close persistence baseline"
+    },
+    "selected_models": {
+      "classifier": "Random Forest",
+      "regressor": "Last close baseline"
+    }
+  }
+}

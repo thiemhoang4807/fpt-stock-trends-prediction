@@ -1,0 +1,12 @@
+{
+  "as_of_session": "2025-10-09",
+  "prediction_target": "next observed trading session",
+  "current_close": 94.2,
+  "classifier_model": "Random Forest",
+  "predicted_direction": "down",
+  "probability_up_conditional_on_nonflat_direction": 0.40763525726840066,
+  "regression_model": "Last close baseline",
+  "predicted_next_close": 94.2,
+  "predicted_change_percent_from_current": 0.0,
+  "note": "Educational model output based on source history through the as-of session; not an investment recommendation."
+}
