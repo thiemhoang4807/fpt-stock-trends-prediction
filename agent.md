@@ -33,8 +33,8 @@ Build a reproducible, leakage-safe ML project to classify next-session FPT stock
 ### Phase 5 — Packaging & GitHub
 - [x] Add `.gitignore` and complete `requirements.txt`.
 - [x] Run end-to-end checks from a reproducible invocation; check repository contents and Git status.
-- [ ] Update this log with final completion status and any limitations.
-- [ ] Configure the authorized target remote, commit changes, and push to `main` if network/authentication allow.
+- [x] Update this log with final completion status and any limitations.
+- [x] Configure the authorized target remote, commit changes, and push to `main`.
 
 ## Work log
 - Initial checklist was created before project code; this file is updated as each phase completes.
@@ -54,5 +54,7 @@ Build a reproducible, leakage-safe ML project to classify next-session FPT stock
 - 2026-10-20: Regression model chosen by validation MAE was Last Close baseline; test RMSE 1.5010, MAE 1.0052, MAPE 1.0978%, directional accuracy 0% (flat predictions on non-flat targets). Linear Regression test MAE 1.0055, directional accuracy 51.82%; tree regressors extrapolated poorly on later price levels. This supports keeping regression supplemental.
 - 2026-10-20: `python src/prepare.py`, `python src/train.py`, and `python src/predict.py` completed. Latest in-file prediction is for the next observed session after 2025-10-09: Random Forest predicts down with P(up)=0.4076; regression baseline repeats 94.2.
 - 2026-10-20: Final validation passed: `python -m py_compile` for all source/test files; `python -m pytest -q` (3 passed); `src/eda.py`, `src/prepare.py`, `src/train.py`, and `src/predict.py` all completed; `python -m pip check` found no dependency conflicts; all local Markdown image links resolve.
-- 2026-10-20: Added README, proposal, detailed report, `.gitignore`, and `requirements.txt`. Report uses the final generated metrics and figure paths. Local repository review and GitHub publication are the remaining steps.
-- 2026-10-20: Repository audit found only the intended FPT project artifacts in the target repo. Total working tree is approximately 5.6 MB; no TODO/placeholder markers were found in source, tests, docs, or README. Phase 5 code packaging is ready; commit/push and post-push status are still pending.
+- 2026-10-20: Added README, proposal, detailed report, `.gitignore`, and `requirements.txt`. Report uses the final generated metrics and figure paths.
+- 2026-10-20: Repository audit found only the intended FPT project artifacts in the target repo. Total working tree is approximately 5.6 MB; no TODO/placeholder markers were found in source, tests, docs, or README. Phase 5 code packaging was ready before the initial push.
+- 2026-10-20: All five phases are complete (100%). First project commit `17b6d4d` was pushed successfully to `https://github.com/thiemhoang4807/fpt-stock-trends-prediction` on `main`; the final status log is included in a follow-up commit.
+- Limitations to retain in future work: source ends 2025-10-09; upstream repo lacks a LICENSE and does not fully identify the historical price provider or price adjustment/unit metadata; classification improvement over majority baseline is modest and is not evidence of investment profitability.
