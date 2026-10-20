@@ -37,6 +37,7 @@ Thí nghiệm hồi quy chọn baseline giữ nguyên giá gần nhất theo val
 ├── models/                               # Mô hình đã huấn luyện
 ├── reports/                              # Audit, metrics, dự đoán và split
 ├── src/
+│   ├── fetch_data.py                     # Tải, chuẩn hóa và xác minh OHLCV
 │   ├── features.py                       # Đọc dữ liệu và tạo đặc trưng
 │   ├── eda.py                            # Kiểm tra dữ liệu và biểu đồ
 │   ├── prepare.py                        # Tạo bảng đặc trưng
@@ -60,6 +61,7 @@ Windows PowerShell:
 ```powershell
 .venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
+python src/fetch_data.py --verify
 python src/eda.py
 python src/prepare.py
 python src/train.py
@@ -68,6 +70,8 @@ python -m pytest -q
 ```
 
 `train.py` tự tạo lại đặc trưng trước khi huấn luyện. Lệnh `prepare.py` có thể chạy riêng để xem và lưu bảng đặc trưng tại `data/processed/fpt_next_session_features.csv`. `predict.py` sử dụng các artifact trong `models/` và dòng mới nhất trong CSV; ví dụ dự đoán hiện tại được ghi tại `reports/latest_prediction.json`.
+
+Để tải dữ liệu qua API VCI như notebook nguồn, cài thêm `vnstock` bằng `python -m pip install -U --extra-index-url https://vnstocks.com/api/simple vnstock vnai`, rồi chạy `python src/fetch_data.py --download --start 2007-01-01 --end YYYY-MM-DD --output data/raw/fpt/fpt_historical_price.csv`. Nếu dùng CSV xuất từ API/widget, chuẩn hóa bằng `python src/fetch_data.py --input export.csv --output data/raw/fpt/fpt_historical_price.csv`. Mỗi lệnh tải/chuẩn hóa ghi đè tệp đích đã chỉ định; chạy lại `--verify` trước khi dùng snapshot để tái tạo kết quả.
 
 Các biểu đồ được lưu dưới `figures/`; kết quả số nằm ở `reports/`. Pipeline không xáo trộn thứ tự thời gian, không dùng `bfill`, và đặt `StandardScaler` bên trong pipeline để chỉ fit trên dữ liệu huấn luyện.
 
@@ -79,7 +83,7 @@ Mô hình phân loại gồm Majority baseline, Logistic Regression, Random Fore
 
 ## Dữ liệu
 
-Dữ liệu OHLCV được lấy từ `data/raw/fpt/fpt_historical_price.csv` trong [repo nguồn DS111 UIT](https://github.com/nguyenlog205/ds111-uit-stock-price-analysis). Tập dữ liệu có 4.678 phiên từ 2007-01-02 đến 2025-10-09. README repo nguồn không nêu rõ nhà cung cấp cụ thể cho tệp giá lịch sử và repo không có LICENSE; xem [data/README.md](data/README.md) để biết xuất xứ và cách diễn giải.
+Dữ liệu OHLCV có nguồn API được notebook của [repo DS111 UIT](https://github.com/nguyenlog205/ds111-uit-stock-price-analysis/blob/main/notebook/data_ingestion/API_use.ipynb) ghi rõ: thư viện `vnstock`, lớp `Quote`, nguồn `VCI` (Vietcap). Snapshot có 4.678 phiên từ 2007-01-02 đến 2025-10-09. `src/fetch_data.py --verify` kiểm tra hash snapshot; tải lại từ API có thể khác do nhà cung cấp cập nhật chuỗi lịch sử. Đơn vị giá được diễn giải là nghìn đồng theo thang giá VCI nhưng metadata không xác nhận rõ; trạng thái adjusted/unadjusted cũng không được lưu, nên báo cáo ghi nhận giới hạn này. Xem [data/README.md](data/README.md) để biết kết quả kiểm toán toàn bộ luồng dữ liệu và hướng dẫn tái tải.
 
 ## Kiểm thử
 

@@ -24,11 +24,23 @@ Các mục tiêu cụ thể:
 4. Phân tích sai số bằng Balanced Accuracy, F1, ROC-AUC, confusion matrix và các chỉ số liên quan.
 5. Thực hiện thêm thí nghiệm hồi quy giá đóng cửa phiên kế tiếp để minh họa vì sao sai số giá và dự đoán hướng là hai mục tiêu khác nhau.
 
-## 3. Phạm vi dữ liệu
+## 3. Phạm vi dữ liệu và xuất xứ
 
-Đầu vào chính là tệp `fpt_historical_price.csv` từ repo [DS111 UIT Stock Price Analysis](https://github.com/nguyenlog205/ds111-uit-stock-price-analysis), gồm các trường `time`, `open`, `high`, `low`, `close`, `volume`. Tập có 4.678 phiên, từ 2007-01-02 đến 2025-10-09. Các cột ngày, giá và khối lượng không có giá trị khuyết hoặc ngày trùng lặp. Có hai phiên volume bằng 0 và ba dòng không thỏa quan hệ thông thường giữa high, low, open và close; các dòng này được giữ trong tệp gốc, được ghi nhận trong kiểm kê và không đưa high/low vào các đặc trưng mô hình.
+Đầu vào chính là snapshot `data/raw/fpt/fpt_historical_price.csv` trong repo [DS111 UIT Stock Price Analysis](https://github.com/nguyenlog205/ds111-uit-stock-price-analysis), gồm sáu trường `time, open, high, low, close, volume`, 4.678 phiên từ 2007-01-02 đến 2025-10-09. Kiểm tra trực tiếp notebook [`API_use.ipynb`](https://github.com/nguyenlog205/ds111-uit-stock-price-analysis/blob/main/notebook/data_ingestion/API_use.ipynb) xác định cách trích xuất: `vnstock.Quote(symbol='FPT', source='VCI').history(start='2007-01-01', end='2025-10-09')`, sau đó lưu DataFrame thành CSV. Do đó nguồn được chọn là VCI/Vietcap thông qua thư viện Python `vnstock`, không phải dữ liệu lấy từ widget TradingView hay công cụ Selenium. Tệp có 4.678 hàng, không có giá trị thiếu hoặc ngày lặp; có hai phiên volume bằng 0 và ba hàng có bất nhất high/low được giữ nguyên.
 
-Tệp tổng hợp trong repo nguồn không được chọn làm đầu vào chính vì nhiều biến vĩ mô, tài chính và ngành thiếu dữ liệu ở phần lớn ngày. Tệp dự báo có các biến đã biến đổi/scaled nhưng không mô tả đầy đủ thời điểm fit. Chỉ sử dụng dữ liệu OHLCV thô để giữ pipeline minh bạch và giảm nguy cơ rò rỉ thông tin.
+Giá trị được ghi ở thang xấp xỉ nghìn đồng/cổ phiếu (ví dụ `94.2` tương ứng khoảng 94.200 đồng); báo cáo đồ án nguồn cũng ghi sai số dự báo giá theo nghìn VND, dù CSV không lưu metadata đơn vị. Notebook không có cờ hoặc mô tả cho biết VCI trả chuỗi adjusted/unadjusted; snapshot chỉ chứa OHLCV. Dự án vì thế giữ nguyên thang giá từ nhà cung cấp, không tự điều chỉnh. `python src/fetch_data.py --verify` xác nhận SHA-256 nội dung LF-normalized `263eced0cb25bc0380ed0dba7dc6f8d77b409146c7b4e2b1b0fd9f0ddbf25e98`, cấu trúc và khoảng ngày. Chuẩn hóa LF làm hash nhất quán giữa Windows và Linux; API có thể sửa lịch sử nên lần tải sau không được giả định giống snapshot.
+
+Các tệp liên quan trong repo nguồn được ghi xuất xứ riêng: báo cáo thu nhập FPT dùng `vnstock.Finance`/VCI; USD/VND, CPI và XAU/USD được ghi là Investing.com; GDP từ World Bank với dự báo 2025 từ IMF; P/E ngành ICT từ Simply Wall St. Báo cáo nguồn xác nhận macro được tải thủ công thành CSV, market cap/P-E chép thủ công, còn OHLCV và tài chính FPT lấy bằng API vnstock. Tài liệu upstream cũ/mới có chỗ thiếu hoặc không nhất quán về nguồn GDP/XAU; chi tiết được ghi trong [data/README.md](../data/README.md). Repo còn có script dùng Selenium điều khiển Google News và `newspaper3k` để bóc nội dung, nhưng script này không tạo đặc trưng trong CSV huấn luyện của đồ án. Dự án chỉ dùng OHLCV FPT.
+
+Không sử dụng `synthetized_dataset.csv`/`predictive_modeling.csv` làm đầu vào. Tập tổng hợp 1.529 ngày thiếu CPI 95,55%, GDP 99,67%, market cap/P-E 98,76%, các biến báo cáo FPT 98,56%, giá/volume 6,28%. Notebook tiền xử lý tạo `predictive_modeling.csv` gọi `fit_transform` trên cả bảng và dùng `bfill`; `src/preprocessor.py` cũng fit `StandardScaler` trên toàn chuỗi. Thời điểm fit không được lưu thành metadata riêng, nên có nguy cơ đưa phân phối tương lai vào giai đoạn trước. Dự án tự tính đặc trưng chỉ từ dữ liệu quá khứ và fit scaler trong pipeline trên tập train.
+
+Để tải lại qua VCI (cần cài `vnstock` theo hướng dẫn chính thức):
+
+```bash
+python src/fetch_data.py --download --start 2007-01-01 --end 2025-10-09 --output data/raw/fpt/fpt_historical_price.csv
+```
+
+Có thể chuẩn hóa tệp xuất sẵn bằng `python src/fetch_data.py --input export.csv --output data/raw/fpt/fpt_historical_price.csv`; lệnh kiểm định snapshot là `python src/fetch_data.py --verify`. Chi tiết audit và giới hạn đơn vị/điều chỉnh được nêu trong [data/README.md](../data/README.md).
 
 ## 4. Định nghĩa bài toán
 
@@ -112,4 +124,4 @@ Với hồi quy, báo cáo RMSE, MAE, MAPE và Directional Accuracy. Directional
 
 ## 10. Giới hạn
 
-Thí nghiệm ban đầu chỉ dùng một cổ phiếu, không có VN-Index, nhóm ngành hay tin tức. Kết quả chịu ảnh hưởng của thay đổi chế độ thị trường và cách điều chỉnh giá lịch sử; metadata nguồn không ghi rõ đơn vị giá hoặc chính sách adjusted/unadjusted. Nguồn kết thúc ngày 2025-10-09 nên chưa phản ánh các phiên sau ngày đó. Các giới hạn này sẽ được nêu trong báo cáo và là hướng mở rộng tiếp theo.
+Thí nghiệm ban đầu chỉ dùng một cổ phiếu, không có VN-Index, nhóm ngành hay tin tức. Nguồn dữ liệu có thể được nhà cung cấp hiệu chỉnh lại theo sự kiện doanh nghiệp; metadata snapshot không xác nhận chính sách adjusted/unadjusted. Đơn vị nghìn đồng là diễn giải theo thang giá của tệp, không phải metadata được lưu. Nguồn kết thúc ngày 2025-10-09 nên chưa phản ánh các phiên sau ngày đó. Đây là các giới hạn cần giữ khi diễn giải kết quả.
