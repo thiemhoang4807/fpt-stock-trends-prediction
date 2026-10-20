@@ -1,77 +1,57 @@
-# Xuất xứ và kiểm định dữ liệu
+# Dữ liệu và xuất xứ
 
-## Chuỗi xuất xứ OHLCV FPT
+## Pipeline thu thập
 
-```text
-API lịch sử giá VCI (Vietcap)
-        │  vnstock.Quote(symbol="FPT", source="VCI").history(...)
-        ▼
-Notebook trích xuất của DS111 UIT
-        │  giữ sáu trường time, open, high, low, close, volume; xuất CSV
-        ▼
-Snapshot được lưu trong repo DS111 UIT
-        │  4.678 phiên, 2007-01-02–2025-10-09
-        ▼
-src/fetch_data.py của dự án này
-        ├── --download: gọi lại vnstock/VCI và chuẩn hóa OHLCV
-        ├── --input: chuẩn hóa CSV do API/widget xuất thủ công
-        └── --verify: kiểm tra schema, khoảng ngày và SHA-256 snapshot
-```
+    VCI (Vietcap, dữ liệu giá HOSE)
+        → thư viện kết nối vnstock 5.1.0, Quote.history, source=VCI
+        → src/fetch_data.py: chuẩn hóa time, open, high, low, close, volume
+        → data/raw/fpt/fpt_historical_price.csv
+        → kiểm toán trong src/eda.py và reports/data_audit.json
 
-Repo [DS111 UIT Stock Price Analysis](https://github.com/nguyenlog205/ds111-uit-stock-price-analysis) lưu notebook trích xuất tại [`notebook/data_ingestion/API_use.ipynb`](https://github.com/nguyenlog205/ds111-uit-stock-price-analysis/blob/main/notebook/data_ingestion/API_use.ipynb). Notebook import `Quote`, `Listing` và `Finance` từ `vnstock`; với giá FPT, nó gọi `Quote(symbol='FPT', source='VCI')`, sau đó `history(start='2007-01-01', end='2025-10-09')` và ghi kết quả ra CSV. Không có widget TradingView/Investing hay Selenium/Playwright trong luồng lấy giá này. `vnstock` là thư viện trung gian; `VCI` là nguồn dữ liệu được chọn trong thư viện. Tài liệu/mã hiện tại của vnstock mô tả phương thức lịch sử OHLCV và bộ chuyển đổi VCI; phiên bản API có thể đã thay đổi sau thời điểm notebook được tạo ([hướng dẫn Quote](https://github.com/vnstock-hq/vnstock-agent-guide/blob/main/docs/vnstock/advanced-usage/06-quote-price-api.md), [mã VCI Quote](https://github.com/thinh-vu/vnstock/blob/main/vnstock/explorer/vci/quote.py)).
+<code>vnstock</code> là công cụ kết nối Python; dữ liệu thị trường được truy xuất từ VCI. Tài liệu thư viện mô tả VCI là một trong các nguồn cho OHLCV và lưu ý chuỗi lịch sử có thể được điều chỉnh sau sự kiện quyền. Các phiên bản nguồn dữ liệu khác nhau có thể cho giá lịch sử hơi khác; xem [nguồn dữ liệu của thư viện](https://www.vnstocks.com/docs/vnstock/tham-khao/data-sources), [tài liệu API lịch sử](https://www.vnstocks.com/docs/vnstock/advanced-usage/06-quote-price-api) và [quyền truy cập hiện hành](https://www.vnstocks.com/docs/vnstock/tham-khao/cap-quyen-va-gioi-han).
 
-Notebook lưu sáu trường OHLCV nguyên trạng, không nhân/chia giá và không thêm cột giá điều chỉnh. Giá trong snapshot được hiểu theo **nghìn đồng/cổ phiếu** (ví dụ close `94.2` tương ứng khoảng 94.200 đồng). Cách hiểu này được củng cố bởi báo cáo đồ án nguồn, trong đó sai số dự báo giá được ghi theo nghìn VND; notebook/CSV không gắn metadata đơn vị riêng cho cột OHLC. Báo cáo cũng ghi chung tiền tệ là VND trừ khi có chú thích, nên đơn vị này được đọc cùng thang giá và kết quả được trình bày. Snapshot không có cột hoặc tham số ghi rõ `adjusted`/`unadjusted`. Chuỗi không có bước hiệu chỉnh tại dự án DS111 và biến động ngày lớn nhất xấp xỉ giới hạn biên độ giao dịch, phù hợp với dữ liệu lịch sử đã được nhà cung cấp quy đổi theo sự kiện doanh nghiệp; tuy vậy, từ artefact đã lưu không thể xác định chắc chắn API đã điều chỉnh những loại sự kiện nào (chia/tách, cổ phiếu thưởng, quyền mua, cổ tức tiền mặt). Vì vậy, chúng tôi ghi nhận basis là **VCI trả về, có khả năng đã điều chỉnh lịch sử; chính sách chi tiết chưa được xác nhận**, không tự sửa chuỗi.
+Điều khoản sử dụng Vietcap bảo lưu quyền với nội dung và dữ liệu trên website, đồng thời hạn chế sao chép, phân phối hoặc xuất bản ngoài mục đích cá nhân. Trước khi phát hành công khai snapshot OHLCV hoặc dữ liệu dẫn xuất, cần kiểm tra quyền sử dụng phù hợp với [điều khoản Vietcap](https://www.vietcap.com.vn/dieu-khoan-su-dung-chinh-sach-bao-mat).
 
-Lịch sử Git cho thấy snapshot OHLCV và notebook/API được đưa vào repo nguồn ở commit `65c7780` ngày 2025-10-16; commit `96a6524` cùng ngày sắp xếp notebook vào `notebook/data_ingestion/`; commit `bf714a1` ngày 2025-11-10 chuyển tệp sang `data/raw/fpt/`. `requirements.txt` của repo nguồn không khai báo `vnstock` dù notebook import thư viện này, nên cần cài riêng nếu muốn chạy lại notebook cũ.
+## Cách tái lập lần cập nhật này
 
-## Thu thập dữ liệu lại
+Chạy <code>python src/fetch_data.py</code> để tải dữ liệu đến 30/09/2026. Script chuẩn hóa tên cột, ngày, số thực, volume nguyên; loại mã khác FPT nếu có; sắp xếp theo thời gian và từ chối ngày trùng hay giá trị thiếu/không hợp lệ. Lệnh <code>python src/fetch_data.py --verify</code> kiểm tra schema, thứ tự thời gian, ngày đầu/cuối, các khoảng giá và SHA-256 hiện tại.
 
-Môi trường dự án chính vẫn dùng snapshot đã khóa để kết quả thí nghiệm ổn định. Để gọi lại VCI, cài vnstock theo [hướng dẫn cài chính thức](https://www.vnstocks.com/docs/vnstock/v4/gioi-thieu-vnstock), sau đó chạy:
+Ở thời điểm thu thập, quyền khách của API VCI chỉ trả tối đa 365 ngày dữ liệu ngày. Vì vậy, lần chạy này giữ archive OHLCV 2007–2025 đã được quản lý trong dự án và lấy cửa sổ VCI mới từ 30/09/2025 đến 30/09/2026. Có 8 phiên trùng để đối chiếu. Tỷ số giá OHLC giữa VCI mới và archive cũ có trung vị 0,8875; độ trải tương đối của các tỷ số dưới 0,011%. Script nhân bốn cột OHLC trong phần archive trước cửa sổ API với hệ số này để cùng basis với chuỗi VCI hiện tại, thay các ngày trùng bằng dữ liệu mới và giữ nguyên volume. Nếu overlap thiếu hoặc hệ số không ổn định, script dừng và không ghi tệp mới.
 
-```bash
-python -m pip install -U --extra-index-url https://vnstocks.com/api/simple vnstock vnai
-python src/fetch_data.py --download --start 2007-01-01 --end 2025-10-09 \
-  --output data/raw/fpt/fpt_historical_price.csv
-```
+Đây là bước nối archive và đồng nhất basis giá, không phải một lần tải lại toàn bộ 2007–2026 từ API. Muốn tái tạo toàn bộ chuỗi từ nguồn mà không dùng archive đã quản lý trong dự án cần một quyền dữ liệu có độ phủ đầy đủ hoặc nguồn lịch sử thay thế. Các kết quả hiện tại dựa trên tệp CSV đã lưu và có thể tái lập bằng checksum trong <code>reports/data_lineage.json</code>.
 
-Nếu đã tải dữ liệu bằng công cụ/widget và xuất CSV, chuyển đổi các cột ngày, OHLC và volume về schema chuẩn bằng:
+## Định dạng và đơn vị
 
-```bash
-python src/fetch_data.py --input path/to/fpt_export.csv \
-  --output data/raw/fpt/fpt_historical_price.csv
-```
-
-Script hỗ trợ các tên cột tiếng Anh phổ biến và một số nhãn tiếng Việt; nếu tệp có cột mã, chỉ giữ `FPT`. Script sắp xếp thời gian, kiểm tra ngày trùng, giá/khối lượng thiếu hoặc không hợp lệ, rồi chỉ ghi sáu cột chuẩn. Ba dòng có quan hệ high/low bất nhất trong snapshot được giữ nguyên để không âm thầm thay đổi dữ liệu; audit báo số dòng này. Lệnh `python src/fetch_data.py --verify` kiểm tra schema, khoảng ngày, các miền giá/volume và SHA-256 của CSV sau khi chuẩn hóa LF để hash nhất quán giữa checkout CRLF trên Windows và LF trên Linux. Hash nội dung là `263eced0cb25bc0380ed0dba7dc6f8d77b409146c7b4e2b1b0fd9f0ddbf25e98`.
-
-Hash xác nhận khả năng tái lập 100% của **các giá trị và thứ tự hàng trong snapshot đang commit** (không phân biệt LF/CRLF), không bảo đảm lần gọi API trong tương lai sẽ trả cùng dữ liệu: nhà cung cấp có thể sửa lịch sử, API hoặc chính sách điều chỉnh. `--download` tải lại toàn bộ khoảng ngày yêu cầu và thay tệp đích, không nối một phần dữ liệu vào chuỗi cũ; tệp tải mới phải được kiểm tra lại và không được coi là tương đương snapshot chỉ vì cùng ngày bắt đầu/kết thúc.
-
-## Các dữ liệu liên quan trong repo nguồn
-
-| Dữ liệu | Nguồn/cách lấy được repo nguồn ghi nhận | Cách xử lý trong dự án này |
+| Cột | Ý nghĩa | Đơn vị / quy tắc |
 |---|---|---|
-| Báo cáo thu nhập FPT | Notebook `API_use.ipynb`: `vnstock.Finance(symbol='FPT', source='VCI').income_statement(period='quarter', lang='vi')` | Không dùng trong mô hình; dữ liệu quý phải gắn với ngày công bố thực tế để tránh nhìn trước. |
-| USD/VND, CPI, XAU/USD | Repo nguồn ghi Investing.com; CSV có cấu trúc lịch sử/kinh tế và notebook tổng hợp dùng các tệp có sẵn | Không dùng trong mô hình hiện tại. |
-| GDP Việt Nam | Repo nguồn ghi World Bank, cùng dự báo 2025 từ IMF | Không dùng; chuỗi thường niên không đồng bộ với phiên giao dịch. |
-| P/E ngành ICT | Repo nguồn ghi Simply Wall St | Không dùng; chỉ có một số ngày đo lường. |
-| Tin tức | `src/datasets/ingest_news.py` điều khiển Selenium trên Google News, lấy nội dung bài bằng `newspaper3k` | Không tham gia tập dữ liệu huấn luyện FPT; notebook `news_ingestion.ipynb` trong snapshot repo là tệp rỗng. |
+| <code>time</code> | Ngày giao dịch | <code>YYYY-MM-DD</code>, giờ Việt Nam được rút về ngày |
+| <code>open</code> | Giá mở cửa | Nghìn VND/cổ phiếu theo thang dữ liệu VCI |
+| <code>high</code> | Giá cao nhất phiên | Nghìn VND/cổ phiếu |
+| <code>low</code> | Giá thấp nhất phiên | Nghìn VND/cổ phiếu |
+| <code>close</code> | Giá đóng cửa | Nghìn VND/cổ phiếu |
+| <code>volume</code> | Khối lượng giao dịch | Số cổ phiếu |
 
-Báo cáo đồ án nguồn ([`NHOM30_BAOCAO.pdf`](https://github.com/nguyenlog205/ds111-uit-stock-price-analysis/blob/main/NHOM30_BAOCAO.pdf)) nói chung các nguồn thị trường gồm CafeF, Vietstock và Investing; phần phương pháp xác định cụ thể rằng USD/VND, CPI, GDP, XAU/USD được tải thủ công thành CSV; market cap/P-E được chép thủ công; các trường FPT (OHLCV và tài chính) lấy qua vnstock API. README dữ liệu chi tiết ánh xạ USD/VND, CPI và XAU/USD sang Investing.com, GDP sang World Bank cùng dự báo IMF 2025, P/E ICT sang Simply Wall St. Tài liệu giữa các phiên bản không hoàn toàn nhất quán: README cũ ghi rõ GDP dùng World Bank và dự báo IMF năm 2025, trong khi README mới hơn dưới `data/raw/` bỏ trống nguồn GDP/XAU và gọi dữ liệu vàng là XAU-VND dù tên tệp/giá trị là XAU/USD. Vì vậy, nguồn của các tệp vĩ mô được dẫn theo tài liệu upstream còn lưu trong lịch sử, nhưng không xem metadata đó là đầy đủ hoặc nhất quán như nguồn VCI được chứng minh trực tiếp bằng notebook.
+Ví dụ giá <code>63.0</code> tương ứng khoảng 63.000 VND/cổ phiếu. Tệp không chuyển đổi giá sang đồng và không có cột <code>adjusted_close</code>; OHLC được giữ theo basis lịch sử do VCI trả về và được căn chỉnh archive như mô tả ở trên. Không diễn giải basis này như chuỗi tổng lợi nhuận có tái đầu tư cổ tức.
 
-## Vì sao không dùng hai CSV đã xử lý sẵn
+## Kiểm toán snapshot hiện tại
 
-`synthetized_dataset.csv` có 1.529 ngày (2020-01-01–2025-09-30). Tỷ lệ thiếu đo trực tiếp trên bản lưu trong repo nguồn:
+| Kiểm tra | Kết quả |
+|---|---:|
+| Số phiên | 4.919 |
+| Khoảng ngày | 02/01/2007–30/09/2026 |
+| Cột thiếu | 0 |
+| Ngày trùng | 0 |
+| Phiên volume bằng 0 | 2 |
+| Hàng sai quan hệ OHLC | 3 |
+| Giá thấp nhất / cao nhất | 1,562 / 119,36875 nghìn VND |
+| Close thấp nhất / cao nhất | 1,61525 / 118,073 nghìn VND |
+| Volume thấp nhất / cao nhất | 0 / 47.840.750 cổ phiếu |
+| SHA-256 chuẩn hóa LF | <code>7b9f9bbefb2a50280d4761e3cfa73f995c607cf825f2d4b7013cd9204182e2cb</code> |
 
-| Trường | Thiếu | Tỷ lệ |
-|---|---:|---:|
-| CPI | 1.461/1.529 | 95,55% |
-| GDP | 1.524/1.529 | 99,67% |
-| Market cap và P/E | 1.510/1.529 | 98,76% |
-| Mỗi trường doanh thu/lợi nhuận FPT | 1.507/1.529 | 98,56% |
-| Giá và volume FPT | 96/1.529 | 6,28% |
+Ba hàng OHLC bất nhất và hai phiên volume bằng 0 được giữ nguyên để không âm thầm sửa dữ liệu nguồn; ngày bất nhất được liệt kê trong <code>reports/data_audit.json</code>. Nhãn biến động phiên kế tiếp: 2.224 tăng, 2.211 giảm, 483 không đổi. Báo cáo EDA đầy đủ nằm trong <code>reports/data_audit.json</code>.
 
-Notebook tổng hợp ghép nhiều tần suất bằng outer join theo ngày lịch, nên phần lớn ngày không có quan sát ở các chuỗi tháng/quý/năm. `predictive_modeling.csv` đã điền và chuẩn hóa dữ liệu, nhưng thời điểm fit không phù hợp để dùng lại làm đầu vào tái lập: notebook EDA gọi `pipeline.fit_transform(dataset)` trên toàn bộ bảng; `src/preprocessor.py` dùng `StandardScaler.fit_transform` cho toàn chuỗi và bù khuyết cả `bfill` lẫn `ffill`. Vì vậy thống kê ở phần cuối thời gian có thể ảnh hưởng biến đổi các ngày trước, và `bfill` có thể đưa thông tin tương lai về quá khứ. Không có mô tả lưu scaler hay quy trình fit chỉ trên train. Dự án chỉ dùng chuỗi OHLCV FPT và tự tạo lại các đặc trưng kỹ thuật từ dữ liệu tại thời điểm dự báo; scaler của mô hình hiện tại được fit trong pipeline trên phần train.
+## Vì sao mô hình dùng OHLCV
 
-## Tệp sử dụng trong dự án
+Mục tiêu là phân loại tăng/giảm ở phiên kế tiếp, nên đầu vào chỉ dùng các quan sát OHLCV đã biết tại thời điểm đóng cửa phiên hiện tại. Dự án tính lại 23 đặc trưng kỹ thuật bằng rolling/lag theo chiều quá khứ; không dùng bfill hay fit scaler trên toàn chuỗi. Các giá trị chuẩn hóa được học trong pipeline của mô hình, chỉ trên train rồi trên train cộng validation để đánh giá tập test.
 
-- `raw/fpt/fpt_historical_price.csv`: snapshot OHLCV gốc đã khóa bằng SHA-256.
-- `processed/fpt_next_session_features.csv`: bảng đặc trưng được sinh lại bởi `python src/prepare.py`.
+Các chỉ báo vĩ mô và báo cáo tài chính có tần suất thấp, ngày công bố khác ngày kỳ báo cáo và dễ gây rò rỉ nếu ghép theo ngày hiệu lực thay vì thời điểm công bố. Chúng không nằm trong phạm vi phiên bản này.

@@ -1,0 +1,24 @@
+{
+  "provider": "VCI (Vietcap) via vnstock",
+  "connector": "vnstock Quote.history, source=VCI",
+  "requested_start": "2007-01-01",
+  "requested_end": "2026-09-30",
+  "api_window_start": "2025-09-30",
+  "output_first_date": "2007-01-02",
+  "output_last_date": "2026-09-30",
+  "rows": 4919,
+  "price_adjustment_factor_applied_this_run": 1.0,
+  "historical_archive_cumulative_price_factor": 0.8875000000000001,
+  "historical_price_adjustment_history": [
+    {
+      "factor": 0.8875,
+      "api_window_start": "2025-09-30",
+      "overlap_rows": 8
+    }
+  ],
+  "overlap_rows_for_cumulative_price_factor": 8,
+  "overlap_rows_used_for_adjustment_check": 249,
+  "price_columns_rebased": [],
+  "volume_rebased": false,
+  "sha256": "7b9f9bbefb2a50280d4761e3cfa73f995c607cf825f2d4b7013cd9204182e2cb"
+}

@@ -1,90 +1,70 @@
 # Dự đoán xu hướng cổ phiếu FPT
 
-Dự án học thuật áp dụng Machine Learning để phân loại cổ phiếu FPT tăng hay giảm ở phiên giao dịch kế tiếp. Thí nghiệm phụ dự báo giá đóng cửa phiên sau để đối chiếu với baseline “giá ngày mai bằng giá hôm nay”. Dữ liệu nguồn kết thúc ngày 09-10-2025.
-
-## Câu hỏi nghiên cứu
-
-Với dữ liệu giá đóng cửa và khối lượng giao dịch lịch sử của FPT, các mô hình Logistic Regression, Random Forest và HistGradientBoosting có phân loại hướng biến động phiên kế tiếp tốt hơn baseline hay không?
-
-Thời điểm dự báo là sau khi phiên giao dịch ngày `t` đóng cửa. Mô hình dùng dữ liệu quan sát đến hết ngày `t` để dự đoán lợi nhuận đóng cửa từ `t` sang phiên giao dịch kế tiếp. Nhãn phân loại là `up` nếu giá đóng cửa tăng, `down` nếu giảm; các phiên không đổi được loại khỏi thí nghiệm phân loại và vẫn được giữ trong thí nghiệm hồi quy giá.
-
-## Kết quả thực nghiệm
-
-Chia dữ liệu theo thời gian: train đến 2020-03-19, validation từ 2020-03-20 đến 2022-12-22, test từ 2022-12-23 đến 2025-10-09. Mô hình phân loại được chọn dựa trên Balanced Accuracy của validation; test chỉ dùng cho đánh giá cuối.
-
-| Mô hình phân loại | Accuracy | Balanced Accuracy | F1 (tăng) | ROC-AUC |
-|---|---:|---:|---:|---:|
-| Majority baseline | 52.42% | 50.00% | 0.688 | 0.500 |
-| Logistic Regression | 52.73% | 52.29% | 0.576 | 0.537 |
-| Random Forest — chọn theo validation | 53.18% | 52.70% | 0.584 | 0.559 |
-| HistGradientBoosting | 55.45% | 55.28% | 0.581 | 0.565 |
-
-Random Forest được chọn trên validation theo quy tắc đã đặt trước. HistGradientBoosting có Balanced Accuracy test cao nhất trong lần chạy này; không dùng test để thay đổi lựa chọn mô hình. Kết quả cho thấy mức cải thiện còn khiêm tốn và cần được kiểm tra trên nhiều giai đoạn khác.
-
-Thí nghiệm hồi quy chọn baseline giữ nguyên giá gần nhất theo validation: test RMSE **1.5010**, MAE **1.0052**, MAPE **1.10%** theo đơn vị giá của tệp nguồn. Baseline này có Directional Accuracy **0%** vì dự đoán giá không đổi; Linear Regression đạt Directional Accuracy **51.82%** nhưng MAE nhỉnh hơn một chút. Vì vậy, điểm số sai số giá thấp không đồng nghĩa với khả năng dự đoán hướng tốt.
-
-## Cấu trúc thư mục
-
-```text
-├── data/
-│   ├── raw/fpt/fpt_historical_price.csv  # OHLCV nguồn
-│   ├── processed/                       # Đặc trưng sinh tự động
-│   └── README.md                        # Xuất xứ và mô tả dữ liệu
-├── docs/
-│   ├── PROPOSAL.md                       # Đề xuất gửi giảng viên
-│   └── REPORT.md                         # Báo cáo theo kết quả chạy thật
-├── figures/                              # EDA và đánh giá
-├── models/                               # Mô hình đã huấn luyện
-├── reports/                              # Audit, metrics, dự đoán và split
-├── src/
-│   ├── fetch_data.py                     # Tải, chuẩn hóa và xác minh OHLCV
-│   ├── features.py                       # Đọc dữ liệu và tạo đặc trưng
-│   ├── eda.py                            # Kiểm tra dữ liệu và biểu đồ
-│   ├── prepare.py                        # Tạo bảng đặc trưng
-│   ├── train.py                          # Chia thời gian, huấn luyện, đánh giá
-│   └── predict.py                        # Dự đoán phiên kế tiếp
-├── tests/                                # Kiểm thử căn chỉnh nhãn và leakage
-├── agent.md                              # Nhật ký tiến độ và kết quả
-└── requirements.txt
-```
-
-## Cài đặt và chạy
-
-Khuyến nghị Python 3.10 trở lên. Trong thư mục gốc repo:
-
-```bash
-python -m venv .venv
-```
-
-Windows PowerShell:
-
-```powershell
-.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-python src/fetch_data.py --verify
-python src/eda.py
-python src/prepare.py
-python src/train.py
-python src/predict.py
-python -m pytest -q
-```
-
-`train.py` tự tạo lại đặc trưng trước khi huấn luyện. Lệnh `prepare.py` có thể chạy riêng để xem và lưu bảng đặc trưng tại `data/processed/fpt_next_session_features.csv`. `predict.py` sử dụng các artifact trong `models/` và dòng mới nhất trong CSV; ví dụ dự đoán hiện tại được ghi tại `reports/latest_prediction.json`.
-
-Để tải dữ liệu qua API VCI như notebook nguồn, cài thêm `vnstock` bằng `python -m pip install -U --extra-index-url https://vnstocks.com/api/simple vnstock vnai`, rồi chạy `python src/fetch_data.py --download --start 2007-01-01 --end YYYY-MM-DD --output data/raw/fpt/fpt_historical_price.csv`. Nếu dùng CSV xuất từ API/widget, chuẩn hóa bằng `python src/fetch_data.py --input export.csv --output data/raw/fpt/fpt_historical_price.csv`. Mỗi lệnh tải/chuẩn hóa ghi đè tệp đích đã chỉ định; chạy lại `--verify` trước khi dùng snapshot để tái tạo kết quả.
-
-Các biểu đồ được lưu dưới `figures/`; kết quả số nằm ở `reports/`. Pipeline không xáo trộn thứ tự thời gian, không dùng `bfill`, và đặt `StandardScaler` bên trong pipeline để chỉ fit trên dữ liệu huấn luyện.
-
-## Đặc trưng và mô hình
-
-23 đặc trưng phân loại được tạo từ lợi nhuận trễ 1/2/5/10/20 phiên, SMA/EMA 5/10/20/50, RSI-14, MACD, Bollinger Bands 20 phiên, biến động 5/20 phiên và thay đổi/độ lệch chuẩn hóa của log-volume. Bài toán hồi quy thêm giá đóng cửa hiện tại làm đầu vào. Tất cả đều chỉ dùng giá trị biết được vào cuối phiên `t`.
-
-Mô hình phân loại gồm Majority baseline, Logistic Regression, Random Forest và HistGradientBoosting. Mô hình hồi quy gồm Last close baseline, Linear Regression, Random Forest và HistGradientBoosting. Deep learning không được dùng vì dữ liệu chỉ có một mã cổ phiếu và khoảng 4.600 quan sát hữu dụng; mô hình chuỗi sâu sẽ tăng độ phức tạp và nguy cơ overfit mà chưa có căn cứ về lợi ích.
+Dự án nghiên cứu khả năng dự báo hướng biến động giá đóng cửa FPT ở phiên giao dịch kế tiếp bằng các đặc trưng kỹ thuật tính từ OHLCV quá khứ. Bài toán hồi quy giá đóng cửa được dùng như phần đánh giá bổ trợ. Đây là đồ án học tập, không phải công cụ tư vấn đầu tư.
 
 ## Dữ liệu
 
-Dữ liệu OHLCV có nguồn API được notebook của [repo DS111 UIT](https://github.com/nguyenlog205/ds111-uit-stock-price-analysis/blob/main/notebook/data_ingestion/API_use.ipynb) ghi rõ: thư viện `vnstock`, lớp `Quote`, nguồn `VCI` (Vietcap). Snapshot có 4.678 phiên từ 2007-01-02 đến 2025-10-09. `src/fetch_data.py --verify` kiểm tra hash snapshot; tải lại từ API có thể khác do nhà cung cấp cập nhật chuỗi lịch sử. Đơn vị giá được diễn giải là nghìn đồng theo thang giá VCI nhưng metadata không xác nhận rõ; trạng thái adjusted/unadjusted cũng không được lưu, nên báo cáo ghi nhận giới hạn này. Xem [data/README.md](data/README.md) để biết kết quả kiểm toán toàn bộ luồng dữ liệu và hướng dẫn tái tải.
+Tập dữ liệu hiện tại có 4.919 phiên, từ 02/01/2007 đến 30/09/2026, gồm <code>time, open, high, low, close, volume</code>. Nguồn thị trường là VCI (Vietcap), truy cập bằng thư viện Python <code>vnstock</code> phiên bản 5.1.0. Giá trong tệp giữ nguyên thang VCI và được biểu diễn bằng nghìn đồng/cổ phiếu; volume là số cổ phiếu.
 
-## Kiểm thử
+API ở quyền khách hiện giới hạn lịch sử nến ngày ở 365 ngày. Vì vậy, lệnh thu thập giữ archive lịch sử đã được quản lý trong dự án, tải cửa sổ mới từ VCI, kiểm tra phần ngày trùng và căn chỉnh OHLC cũ về cùng basis giá. Lần tái lập này dùng 8 phiên trùng để tính hệ số 0,8875; độ phân tán giữa các tỷ lệ OHLC dưới 0,011%. Volume không bị nhân hệ số. Chi tiết được lưu trong <code>reports/data_lineage.json</code>. Giới hạn và điều chỉnh lịch sử của VCI được mô tả trong [tài liệu Vnstock về quyền truy cập](https://www.vnstocks.com/docs/vnstock/tham-khao/cap-quyen-va-gioi-han) và [nguồn dữ liệu thị trường](https://www.vnstocks.com/docs/vnstock/tham-khao/data-sources).
 
-`python -m pytest -q` kiểm tra căn chỉnh nhãn với phiên kế tiếp, xác nhận các đặc trưng quá khứ không đổi khi sửa dữ liệu tương lai, và xác nhận thứ tự thời gian của các tập. Kết quả thực nghiệm đầy đủ, ma trận nhầm lẫn và giới hạn của dữ liệu được trình bày trong [báo cáo](docs/REPORT.md).
+Kiểm toán dữ liệu ghi nhận: không có ô thiếu hoặc ngày trùng; 2 phiên volume bằng 0; 3 phiên có quan hệ OHLC không nhất quán được giữ nguyên và đánh dấu. Lợi nhuận ngày có trung bình 0,0567%, độ lệch chuẩn 1,9246%, nhỏ nhất −6,9896%, lớn nhất 6,9922%. Nhãn phiên kế tiếp gồm 2.224 tăng, 2.211 giảm và 483 không đổi.
+
+## Kết quả kiểm tra trên tập test
+
+Tập test theo thời gian bao phủ 23/10/2023–30/09/2026. Bộ phân loại được chọn bằng validation là Logistic Regression. Các metric dưới đây đều tính trên test; F1 là F1 của lớp tăng.
+
+| Bộ phân loại | Accuracy | Balanced Accuracy | F1 tăng | ROC-AUC |
+|---|---:|---:|---:|---:|
+| Majority baseline | 49,09% | 50,00% | 65,85% | 50,00% |
+| Logistic Regression | 49,65% | 49,73% | 51,36% | 49,41% |
+| Random Forest | 51,62% | 51,60% | 50,57% | 55,13% |
+| HistGradientBoosting | 52,88% | 52,91% | 53,02% | 52,63% |
+
+Mô hình phân loại được chọn không vượt baseline một cách thuyết phục trên test; kết quả hiện tại không cho thấy khả năng dự báo hướng ổn định. Với hồi quy, baseline giữ giá đóng cửa bằng phiên hiện tại đạt MAE 1,114 nghìn đồng, RMSE 1,536 nghìn đồng, MAPE 1,331%; do dự đoán không đổi nên directional accuracy bằng 0%. Bảng đầy đủ nằm tại <code>reports/classification_test_metrics.csv</code> và <code>reports/regression_test_metrics.csv</code>.
+
+## Chạy dự án
+
+Tạo môi trường Python, cài thư viện và chạy lần lượt:
+
+    python -m pip install -r requirements.txt
+    python src/fetch_data.py
+    python src/fetch_data.py --verify
+    python src/eda.py
+    python src/prepare.py
+    python src/train.py
+    python src/predict.py
+    python -m pytest -q
+
+Để tải khoảng ngày khác, dùng <code>python src/fetch_data.py --download --start YYYY-MM-DD --end YYYY-MM-DD</code>. Nếu API chỉ trả cửa sổ gần đây, script cần archive cũ có sẵn và phần ngày trùng đủ để xác nhận basis. Nếu bắt đầu từ archive mới hoặc thiếu overlap, script dừng mà không thay dữ liệu hiện hữu. Có thể chuẩn hóa CSV đã xuất bằng <code>python src/fetch_data.py --input FILE.csv --output normalized.csv</code>.
+
+## Pipeline
+
+    VCI → vnstock → src/fetch_data.py → data/raw/fpt/fpt_historical_price.csv
+       → src/eda.py → reports/data_audit.json và figures/
+       → src/prepare.py → data/processed/fpt_next_session_features.csv
+       → src/train.py → models/, reports/, figures/
+       → src/predict.py → reports/latest_prediction.json
+
+Các đặc trưng gồm 23 biến trễ và chỉ báo kỹ thuật. Tập train, validation, test được tách theo thời gian. Scaler nằm bên trong pipeline học máy và chỉ fit trên train trước khi mô hình cuối được fit trên train cộng validation.
+
+## Cấu trúc chính
+
+- <code>src/fetch_data.py</code>: tải, chuẩn hóa, nối archive và kiểm định OHLCV.
+- <code>src/eda.py</code>: kiểm toán dữ liệu và tạo biểu đồ khám phá.
+- <code>src/features.py</code>, <code>src/prepare.py</code>: tạo đặc trưng quá khứ và nhãn phiên kế tiếp.
+- <code>src/train.py</code>: huấn luyện, chọn mô hình bằng validation và đánh giá test.
+- <code>src/predict.py</code>: dự đoán phiên kế tiếp sau phiên cuối dữ liệu.
+- <code>data/raw/</code>, <code>data/processed/</code>: dữ liệu nguồn và bảng đặc trưng.
+- <code>models/</code>: bộ phân loại và hồi quy được chọn.
+- <code>reports/</code>: audit, nguồn gốc dữ liệu, ranh giới split, metric, dự đoán.
+- <code>figures/</code>: biểu đồ EDA, confusion matrix và dự đoán giá.
+- <code>tests/</code>: kiểm thử chuẩn hóa, căn chỉnh nguồn, đặc trưng và tách tập thời gian.
+
+## Hình minh họa
+
+![Giá đóng cửa FPT](figures/01_fpt_close.png)
+
+![Phân phối lợi nhuận ngày](figures/03_daily_return_distribution.png)
+
+![Confusion matrix trên test](figures/05_test_confusion_matrix.png)

@@ -1,99 +1,101 @@
 {
-  "classifier_selected": "Random Forest",
+  "classifier_selected": "Logistic Regression",
   "regressor_selected": "Last close baseline",
   "classification_test_metrics": [
     {
       "model": "HistGradientBoosting",
-      "accuracy": 0.5545454545454546,
-      "balanced_accuracy": 0.5527594713007622,
-      "precision_up": 0.5730337078651685,
-      "recall_up": 0.5895953757225434,
-      "f1_up": 0.5811965811965812,
-      "roc_auc": 0.5649000404992452,
+      "accuracy": 0.5288326300984529,
+      "balanced_accuracy": 0.529060931786161,
+      "precision_up": 0.5192307692307693,
+      "recall_up": 0.5415472779369628,
+      "f1_up": 0.5301542776998598,
+      "roc_auc": 0.5263341195839731,
       "selected_by_validation": false
     },
     {
       "model": "Random Forest",
-      "accuracy": 0.5318181818181819,
-      "balanced_accuracy": 0.5269596112072457,
-      "precision_up": 0.5465994962216625,
-      "recall_up": 0.6271676300578035,
-      "f1_up": 0.5841184387617766,
-      "roc_auc": 0.5593129855307242,
-      "selected_by_validation": true
-    },
-    {
-      "model": "Logistic Regression",
-      "accuracy": 0.5272727272727272,
-      "balanced_accuracy": 0.5229188910570304,
-      "precision_up": 0.5435897435897435,
-      "recall_up": 0.6127167630057804,
-      "f1_up": 0.5760869565217391,
-      "roc_auc": 0.537305327491624,
+      "accuracy": 0.5161744022503516,
+      "balanced_accuracy": 0.5159611518308032,
+      "precision_up": 0.5072046109510087,
+      "recall_up": 0.504297994269341,
+      "f1_up": 0.5057471264367817,
+      "roc_auc": 0.5513463882600642,
       "selected_by_validation": false
     },
     {
       "model": "Majority baseline",
-      "accuracy": 0.5242424242424243,
+      "accuracy": 0.4908579465541491,
       "balanced_accuracy": 0.5,
-      "precision_up": 0.5242424242424243,
+      "precision_up": 0.4908579465541491,
       "recall_up": 1.0,
-      "f1_up": 0.6878727634194831,
+      "f1_up": 0.6584905660377358,
       "roc_auc": 0.5,
       "selected_by_validation": false
+    },
+    {
+      "model": "Logistic Regression",
+      "accuracy": 0.4964838255977497,
+      "balanced_accuracy": 0.4972929759850559,
+      "precision_up": 0.4883720930232558,
+      "recall_up": 0.5415472779369628,
+      "f1_up": 0.5135869565217391,
+      "roc_auc": 0.4940714591017746,
+      "selected_by_validation": true
     }
   ],
   "regression_test_metrics": [
     {
       "model": "Last close baseline",
-      "rmse": 1.5010026385264312,
-      "mae": 1.0051798561151075,
-      "mape_percent": 1.0977613103631456,
+      "rmse": 1.535890277692205,
+      "mae": 1.114116621067031,
+      "mape_percent": 1.330827425929197,
       "directional_accuracy_nonflat_percent": 0.0,
       "selected_by_validation": true
     },
     {
       "model": "Linear Regression",
-      "rmse": 1.4989471304912494,
-      "mae": 1.0054514152828995,
-      "mape_percent": 1.098592943558863,
-      "directional_accuracy_nonflat_percent": 51.81818181818182,
+      "rmse": 1.5372000470863232,
+      "mae": 1.1183274160130496,
+      "mape_percent": 1.3369585573593616,
+      "directional_accuracy_nonflat_percent": 48.66385372714487,
       "selected_by_validation": false
     },
     {
       "model": "HistGradientBoosting",
-      "rmse": 41.38981709904976,
-      "mae": 33.277227371385955,
-      "mape_percent": 32.02975563838991,
-      "directional_accuracy_nonflat_percent": 47.72727272727273,
+      "rmse": 27.592826108946603,
+      "mae": 22.570967199125484,
+      "mape_percent": 23.909367716331797,
+      "directional_accuracy_nonflat_percent": 51.89873417721519,
       "selected_by_validation": false
     },
     {
       "model": "Random Forest",
-      "rmse": 41.46108819153412,
-      "mae": 33.35609514196152,
-      "mape_percent": 32.127223553412634,
-      "directional_accuracy_nonflat_percent": 49.09090909090909,
+      "rmse": 27.70869294801255,
+      "mae": 22.692021811614804,
+      "mape_percent": 24.04078976142514,
+      "directional_accuracy_nonflat_percent": 52.74261603375528,
       "selected_by_validation": false
     }
   ],
   "split": {
-    "train_target_date_end": "2020-03-19",
-    "validation_target_date_start": "2020-03-20",
-    "validation_target_date_end": "2022-12-22",
-    "test_target_date_start": "2022-12-23",
+    "train_target_date_start": "2007-03-21",
+    "train_target_date_end": "2020-11-17",
+    "validation_target_date_start": "2020-11-18",
+    "validation_target_date_end": "2023-10-20",
+    "test_target_date_start": "2023-10-23",
+    "test_target_date_end": "2026-09-30",
     "split_method": "chronological by target session date; train 70%, validation 15%, test 15%",
     "feature_warmup_rows_removed": 49,
     "final_feature_rows_without_next_session_target": 1,
     "regression_rows": {
-      "train": 3239,
-      "validation": 694,
-      "test": 695
+      "train": 3408,
+      "validation": 730,
+      "test": 731
     },
     "classification_rows_excluding_unchanged": {
-      "train": 2850,
-      "validation": 646,
-      "test": 660
+      "train": 3006,
+      "validation": 676,
+      "test": 711
     },
     "feature_count": 23,
     "feature_names": [
@@ -157,7 +159,7 @@
       "regressor": "lowest validation MAE, including last-close persistence baseline"
     },
     "selected_models": {
-      "classifier": "Random Forest",
+      "classifier": "Logistic Regression",
       "regressor": "Last close baseline"
     }
   }

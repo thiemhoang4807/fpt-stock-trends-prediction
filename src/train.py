@@ -54,6 +54,8 @@ def _chronological_splits(table: pd.DataFrame) -> tuple[dict[str, pd.Series], di
     validation_start = labeled.loc[train_end_index + 1, "target_date"]
     validation_end = labeled.loc[validation_end_index, "target_date"]
     test_start = labeled.loc[validation_end_index + 1, "target_date"]
+    train_start = labeled.loc[0, "target_date"]
+    test_end = labeled.loc[len(labeled) - 1, "target_date"]
     target_dates = table["target_date"]
     masks = {
         "train": target_dates.le(train_end),
@@ -61,10 +63,12 @@ def _chronological_splits(table: pd.DataFrame) -> tuple[dict[str, pd.Series], di
         "test": target_dates.gt(validation_end),
     }
     boundaries = {
+        "train_target_date_start": train_start.strftime("%Y-%m-%d"),
         "train_target_date_end": train_end.strftime("%Y-%m-%d"),
         "validation_target_date_start": validation_start.strftime("%Y-%m-%d"),
         "validation_target_date_end": validation_end.strftime("%Y-%m-%d"),
         "test_target_date_start": test_start.strftime("%Y-%m-%d"),
+        "test_target_date_end": test_end.strftime("%Y-%m-%d"),
         "split_method": "chronological by target session date; train 70%, validation 15%, test 15%",
     }
     if not masks["train"].any() or not masks["validation"].any() or not masks["test"].any():
@@ -292,7 +296,7 @@ def _evaluate_regressors(table, masks, reports_dir, figures_dir, models_dir):
     ax.plot(test_table["target_date"], best_prediction, label=f"Dự đoán — {selected_name}", linewidth=1.0, color="#D14A40", alpha=0.85)
     ax.set_title("Giá đóng cửa thực tế và dự đoán trên tập test")
     ax.set_xlabel("Ngày mục tiêu")
-    ax.set_ylabel("Close (đơn vị theo dữ liệu nguồn)")
+    ax.set_ylabel("Close (nghìn VND/cổ phiếu)")
     ax.grid(alpha=0.25)
     ax.legend()
     fig.tight_layout()

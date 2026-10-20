@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import sys
 from pathlib import Path
 
 import matplotlib
@@ -28,6 +30,11 @@ def _ohlc_violations(data):
     return data.loc[~valid, ["time", "open", "high", "low", "close"]]
 
 
+def _sha256(path: Path) -> str:
+    content = path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    return hashlib.sha256(content).hexdigest()
+
+
 def run_eda(input_path: Path, figures_dir: Path, reports_dir: Path) -> dict:
     data = load_price_data(input_path)
     daily_return = data["close"].pct_change().dropna()
@@ -45,7 +52,7 @@ def run_eda(input_path: Path, figures_dir: Path, reports_dir: Path) -> dict:
     plt.plot(data["time"], data["close"], linewidth=1.0, color="#2457A7")
     plt.title("Giá đóng cửa FPT theo ngày")
     plt.xlabel("Ngày giao dịch")
-    plt.ylabel("Close (đơn vị theo dữ liệu nguồn)")
+    plt.ylabel("Close (nghìn VND/cổ phiếu)")
     plt.grid(alpha=0.25)
     plt.tight_layout()
     plt.savefig(figures_dir / "01_fpt_close.png", dpi=160)
@@ -85,12 +92,32 @@ def run_eda(input_path: Path, figures_dir: Path, reports_dir: Path) -> dict:
     plt.close()
 
     q = daily_return.quantile([0.01, 0.25, 0.5, 0.75, 0.99])
+    try:
+        input_label = input_path.resolve().relative_to(ROOT).as_posix()
+    except ValueError:
+        input_label = input_path.name
+    lineage_path = reports_dir / "data_lineage.json"
+    lineage = json.loads(lineage_path.read_text(encoding="utf-8")) if lineage_path.is_file() else {}
     summary = {
-        "input_file": str(input_path),
+        "input_file": input_label,
+        "data_provider": lineage.get("provider", "VCI (Vietcap) via vnstock"),
+        "price_unit": "nghìn VND/cổ phiếu; giữ nguyên thang giá VCI trả về",
+        "volume_unit": "cổ phiếu",
+        "data_sha256": _sha256(input_path),
+        "historical_price_adjustment_factor": lineage.get(
+            "historical_archive_cumulative_price_factor",
+            lineage.get("price_adjustment_factor_applied_to_archive"),
+        ),
         "row_count": int(len(data)),
         "columns": list(data.columns),
         "date_start": data["time"].min().strftime("%Y-%m-%d"),
         "date_end": data["time"].max().strftime("%Y-%m-%d"),
+        "price_min": float(data[["open", "high", "low", "close"]].min().min()),
+        "price_max": float(data[["open", "high", "low", "close"]].max().max()),
+        "close_min": float(data["close"].min()),
+        "close_max": float(data["close"].max()),
+        "volume_min": int(data["volume"].min()),
+        "volume_max": int(data["volume"].max()),
         "missing_values_by_column": {key: int(value) for key, value in data.isna().sum().items()},
         "duplicate_dates": int(data["time"].duplicated().sum()),
         "is_chronologically_sorted": bool(data["time"].is_monotonic_increasing),
@@ -117,6 +144,9 @@ def run_eda(input_path: Path, figures_dir: Path, reports_dir: Path) -> dict:
 
 
 def main() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description="Audit FPT OHLCV data and save EDA figures.")
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
     parser.add_argument("--figures", type=Path, default=ROOT / "figures")

@@ -33,6 +33,7 @@ def predict_latest(input_path: Path, models_dir: Path, output_path: Path) -> dic
     result = {
         "as_of_session": latest["date"].iloc[0].strftime("%Y-%m-%d"),
         "prediction_target": "next observed trading session",
+        "price_unit": "thousand VND per share",
         "current_close": current_close,
         "classifier_model": classifier["model_name"],
         "predicted_direction": "up" if direction_value == 1 else "down",

@@ -1,127 +1,67 @@
-# ĐỀ XUẤT ĐỒ ÁN CUỐI KỲ MACHINE LEARNING
-
-## Tên đề tài
-
-**Phân loại xu hướng tăng/giảm của cổ phiếu FPT ở phiên kế tiếp bằng các mô hình Machine Learning trên dữ liệu giá và khối lượng giao dịch**
+# Đề xuất đồ án: Dự đoán hướng biến động cổ phiếu FPT bằng Machine Learning
 
 ## 1. Đặt vấn đề
 
-Giá cổ phiếu thay đổi theo nhiều yếu tố và chứa nhiễu đáng kể. Việc dự đoán trực tiếp một mức giá cụ thể dễ tạo cảm giác chính xác nhưng chưa trả lời được câu hỏi thực tế của thí nghiệm: các thông tin đã quan sát có giúp nhận biết phiên tiếp theo tăng hay giảm hay không? Đề tài chuyển vấn đề thành một bài toán phân loại nhị phân có nhãn rõ ràng, đầu vào xác định và có thể đánh giá trên một giai đoạn tương lai chưa dùng trong huấn luyện.
+Giá cổ phiếu chịu ảnh hưởng đồng thời từ thông tin doanh nghiệp, thị trường, tâm lý nhà đầu tư và các cú sốc khó lường. Một mô hình có thể khớp tốt dữ liệu quá khứ nhưng vẫn không dự báo được phiên kế tiếp. Vì vậy, đồ án tập trung vào bài toán Machine Learning có thể định nghĩa và đánh giá rõ ràng: dùng thông tin đã biết đến cuối phiên hiện tại để phân loại giá đóng cửa FPT ở phiên kế tiếp tăng hay giảm.
 
-FPT được chọn vì có lịch sử giao dịch dài và repo nguồn cung cấp dữ liệu giá, khối lượng theo ngày. Đề tài vừa áp dụng các kỹ thuật học có giám sát đã học—tạo đặc trưng, huấn luyện, xác thực theo thời gian, đo hiệu quả—vừa tạo cơ hội phân tích các giới hạn của dự đoán tài chính.
+## 2. Câu hỏi và mục tiêu nghiên cứu
 
-## 2. Mục tiêu và câu hỏi nghiên cứu
+**Câu hỏi chính:** Các đặc trưng kỹ thuật tính từ OHLCV quá khứ có giúp dự đoán hướng đóng cửa phiên kế tiếp của FPT tốt hơn baseline đơn giản trên các giai đoạn tương lai hay không?
 
-Mục tiêu chính là đánh giá liệu dữ liệu lịch sử giá đóng cửa và khối lượng FPT có khả năng phân loại hướng biến động của phiên kế tiếp tốt hơn baseline hay không. Câu hỏi nghiên cứu:
+Mục tiêu:
 
-> **Các mô hình Logistic Regression, Random Forest và HistGradientBoosting có phân loại xu hướng tăng/giảm phiên kế tiếp của cổ phiếu FPT tốt hơn mô hình baseline trên dữ liệu kiểm tra theo thời gian hay không?**
+1. Xây dựng pipeline thu thập, chuẩn hóa và kiểm toán dữ liệu OHLCV FPT.
+2. Tính đặc trưng chỉ từ dữ liệu có sẵn tại thời điểm dự báo, kiểm tra nguy cơ rò rỉ.
+3. Huấn luyện và so sánh baseline, mô hình tuyến tính và mô hình cây theo thứ tự thời gian.
+4. Đánh giá độc lập trên giai đoạn test mới nhất và phân tích metric, nhầm lẫn, giới hạn.
+5. Cung cấp mã, dữ liệu đã dùng, cấu hình và báo cáo để có thể chạy lại thí nghiệm.
 
-Các mục tiêu cụ thể:
+## 3. Phạm vi dữ liệu
 
-1. Kiểm tra chất lượng dữ liệu OHLCV, mô tả lịch sử giá, khối lượng và phân phối lợi nhuận.
-2. Tạo các đặc trưng kỹ thuật chỉ từ dữ liệu đã biết đến cuối phiên dự báo.
-3. So sánh baseline với các mô hình phân loại tuyến tính và phi tuyến trên cùng các giai đoạn thời gian.
-4. Phân tích sai số bằng Balanced Accuracy, F1, ROC-AUC, confusion matrix và các chỉ số liên quan.
-5. Thực hiện thêm thí nghiệm hồi quy giá đóng cửa phiên kế tiếp để minh họa vì sao sai số giá và dự đoán hướng là hai mục tiêu khác nhau.
+Tập dữ liệu hiện dùng có 4.919 phiên từ 02/01/2007 đến 30/09/2026, gồm <code>time, open, high, low, close, volume</code>. Nguồn giá là VCI (Vietcap), được truy cập qua thư viện Python <code>vnstock</code> 5.1.0 và chuẩn hóa bằng <code>src/fetch_data.py</code>. Giá được giữ theo thang nghìn VND/cổ phiếu của nguồn; volume là số cổ phiếu.
 
-## 3. Phạm vi dữ liệu và xuất xứ
+API ở quyền khách giới hạn lịch sử OHLCV ngày ở 365 ngày. Để tái lập tập nghiên cứu hiện có, script giữ archive lịch sử đã được quản lý trong dự án, lấy cửa sổ mới, rồi kiểm tra và căn chỉnh bốn cột OHLC theo tỷ lệ VCI trả về trên overlap. Lần cập nhật này dùng 8 phiên trùng, hệ số trung vị 0,8875 và độ trải tương đối dưới 0,011%; volume không được điều chỉnh. Nếu không có archive hoặc overlap không đủ tin cậy, script dừng mà không ghi dữ liệu. Hạn mức và basis giá được ghi trong <code>reports/data_lineage.json</code>; tài liệu chính thức: [quyền truy cập](https://www.vnstocks.com/docs/vnstock/tham-khao/cap-quyen-va-gioi-han), [nguồn dữ liệu](https://www.vnstocks.com/docs/vnstock/tham-khao/data-sources).
 
-Đầu vào chính là snapshot `data/raw/fpt/fpt_historical_price.csv` trong repo [DS111 UIT Stock Price Analysis](https://github.com/nguyenlog205/ds111-uit-stock-price-analysis), gồm sáu trường `time, open, high, low, close, volume`, 4.678 phiên từ 2007-01-02 đến 2025-10-09. Kiểm tra trực tiếp notebook [`API_use.ipynb`](https://github.com/nguyenlog205/ds111-uit-stock-price-analysis/blob/main/notebook/data_ingestion/API_use.ipynb) xác định cách trích xuất: `vnstock.Quote(symbol='FPT', source='VCI').history(start='2007-01-01', end='2025-10-09')`, sau đó lưu DataFrame thành CSV. Do đó nguồn được chọn là VCI/Vietcap thông qua thư viện Python `vnstock`, không phải dữ liệu lấy từ widget TradingView hay công cụ Selenium. Tệp có 4.678 hàng, không có giá trị thiếu hoặc ngày lặp; có hai phiên volume bằng 0 và ba hàng có bất nhất high/low được giữ nguyên.
+Phạm vi phiên bản đầu chỉ gồm OHLCV của FPT. Không ghép CPI, GDP, báo cáo tài chính hay tin tức vì chúng có tần suất và thời điểm công bố khác với ngày kỳ báo cáo; ghép sai thời điểm có thể đưa thông tin tương lai vào đặc trưng.
 
-Giá trị được ghi ở thang xấp xỉ nghìn đồng/cổ phiếu (ví dụ `94.2` tương ứng khoảng 94.200 đồng); báo cáo đồ án nguồn cũng ghi sai số dự báo giá theo nghìn VND, dù CSV không lưu metadata đơn vị. Notebook không có cờ hoặc mô tả cho biết VCI trả chuỗi adjusted/unadjusted; snapshot chỉ chứa OHLCV. Dự án vì thế giữ nguyên thang giá từ nhà cung cấp, không tự điều chỉnh. `python src/fetch_data.py --verify` xác nhận SHA-256 nội dung LF-normalized `263eced0cb25bc0380ed0dba7dc6f8d77b409146c7b4e2b1b0fd9f0ddbf25e98`, cấu trúc và khoảng ngày. Chuẩn hóa LF làm hash nhất quán giữa Windows và Linux; API có thể sửa lịch sử nên lần tải sau không được giả định giống snapshot.
+## 4. Định nghĩa nhãn và đặc trưng
 
-Các tệp liên quan trong repo nguồn được ghi xuất xứ riêng: báo cáo thu nhập FPT dùng `vnstock.Finance`/VCI; USD/VND, CPI và XAU/USD được ghi là Investing.com; GDP từ World Bank với dự báo 2025 từ IMF; P/E ngành ICT từ Simply Wall St. Báo cáo nguồn xác nhận macro được tải thủ công thành CSV, market cap/P-E chép thủ công, còn OHLCV và tài chính FPT lấy bằng API vnstock. Tài liệu upstream cũ/mới có chỗ thiếu hoặc không nhất quán về nguồn GDP/XAU; chi tiết được ghi trong [data/README.md](../data/README.md). Repo còn có script dùng Selenium điều khiển Google News và `newspaper3k` để bóc nội dung, nhưng script này không tạo đặc trưng trong CSV huấn luyện của đồ án. Dự án chỉ dùng OHLCV FPT.
+Với phiên \(t\), lợi nhuận mục tiêu là \(r_{t+1}=close_{t+1}/close_t-1\). Nhãn tăng bằng 1 khi \(r_{t+1}>0\), giảm bằng 0 khi \(r_{t+1}<0\); phiên không đổi được báo cáo riêng và loại khỏi phân loại. Bài toán hồi quy dự đoán <code>close(t+1)</code> để bổ trợ cho đánh giá giá.
 
-Không sử dụng `synthetized_dataset.csv`/`predictive_modeling.csv` làm đầu vào. Tập tổng hợp 1.529 ngày thiếu CPI 95,55%, GDP 99,67%, market cap/P-E 98,76%, các biến báo cáo FPT 98,56%, giá/volume 6,28%. Notebook tiền xử lý tạo `predictive_modeling.csv` gọi `fit_transform` trên cả bảng và dùng `bfill`; `src/preprocessor.py` cũng fit `StandardScaler` trên toàn chuỗi. Thời điểm fit không được lưu thành metadata riêng, nên có nguy cơ đưa phân phối tương lai vào giai đoạn trước. Dự án tự tính đặc trưng chỉ từ dữ liệu quá khứ và fit scaler trong pipeline trên tập train.
+Hai mươi ba đặc trưng gồm lợi nhuận trễ 1–20 phiên, tỷ lệ giá với SMA/EMA 5–50 phiên, RSI, MACD và thành phần, Bollinger Bands, biến động 5/20 phiên, thay đổi log-volume và z-score log-volume. Mọi cửa sổ chỉ nhìn về quá khứ. Close phiên kế tiếp chỉ được dùng làm nhãn, không nằm trong đầu vào.
 
-Để tải lại qua VCI (cần cài `vnstock` theo hướng dẫn chính thức):
+## 5. Phương pháp và mô hình
 
-```bash
-python src/fetch_data.py --download --start 2007-01-01 --end 2025-10-09 --output data/raw/fpt/fpt_historical_price.csv
-```
+- **Baseline phân loại:** MajorityClassifier dự đoán lớp thường gặp nhất trong train.
+- **Mô hình tuyến tính:** Logistic Regression với StandardScaler trong pipeline và cân bằng lớp.
+- **Mô hình cây:** Random Forest và HistGradientBoosting.
+- **Hồi quy bổ trợ:** giữ close hiện tại làm persistence baseline, Linear Regression, Random Forest Regressor và HistGradientBoosting Regressor.
 
-Có thể chuẩn hóa tệp xuất sẵn bằng `python src/fetch_data.py --input export.csv --output data/raw/fpt/fpt_historical_price.csv`; lệnh kiểm định snapshot là `python src/fetch_data.py --verify`. Chi tiết audit và giới hạn đơn vị/điều chỉnh được nêu trong [data/README.md](../data/README.md).
-
-## 4. Định nghĩa bài toán
-
-Thời điểm dự báo là sau khi phiên `t` đóng cửa. Từ các quan sát đến hết phiên `t`, mô hình dự đoán phiên giao dịch kế tiếp:
-
-\[
-r_{t+1}=\frac{Close_{t+1}}{Close_t}-1
-\]
-
-Nhãn phân loại chính là `up` nếu \(r_{t+1}>0\), `down` nếu \(r_{t+1}<0\). Trường hợp giá đóng cửa không đổi được xem là trung tính và loại khỏi bài toán nhị phân; trong nguồn có 479 trường hợp như vậy. Quy tắc này tránh gộp các phiên không đổi vào lớp giảm. Tập hồi quy giá phụ vẫn giữ các trường hợp giá không đổi.
-
-## 5. Phương pháp
-
-### 5.1. Tiền xử lý và tạo đặc trưng
-
-Dữ liệu được chuyển cột thời gian sang kiểu ngày, sắp xếp tăng dần và kiểm tra tính duy nhất. Không nội suy hoặc điền ngược dữ liệu. Các NaN đầu chuỗi phát sinh tự nhiên do cửa sổ chỉ báo được loại bỏ; dòng cuối không có nhãn phiên kế tiếp chỉ dùng được để tạo dự đoán mới, không dùng trong đánh giá.
-
-23 đặc trưng phân loại gồm:
-
-- Lợi nhuận trễ 1, 2, 5, 10 và 20 phiên.
-- Tỷ lệ giá đóng cửa so với SMA/EMA ở cửa sổ 5, 10, 20 và 50 phiên.
-- RSI-14; MACD, đường tín hiệu và histogram được chia theo giá đóng cửa.
-- Phần trăm vị trí và độ rộng Bollinger Bands 20 phiên.
-- Độ lệch chuẩn lợi nhuận 5 và 20 phiên.
-- Thay đổi một phiên và z-score 20 phiên của log-volume.
-
-Các chỉ báo đều tính từ hiện tại và quá khứ, không sử dụng giá phiên kế tiếp. Bài toán hồi quy bổ sung giá đóng cửa hiện tại làm đặc trưng để dự báo giá ở thang đo nguồn.
-
-### 5.2. Mô hình
-
-| Vai trò | Mô hình | Thiết lập chính |
-|---|---|---|
-| Baseline phân loại | Majority classifier | Dự đoán lớp phổ biến trong train |
-| Tuyến tính | Logistic Regression | `C=1`, cân bằng lớp, tối đa 3.000 vòng; StandardScaler trong pipeline |
-| Cây tổ hợp | Random Forest | 350 cây, `max_depth=8`, `min_samples_leaf=20`, `balanced_subsample` |
-| Boosting | HistGradientBoosting | `learning_rate=0.05`, `max_iter=160`, tối đa 15 lá, L2=1, tắt early stopping nội bộ |
-
-Trong hồi quy giá, so sánh thêm baseline giữ nguyên giá đóng cửa hiện tại, Linear Regression, Random Forest Regressor và HistGradientBoosting Regressor. Không dùng LSTM/GRU vì dữ liệu một mã cổ phiếu có kích thước vừa phải; ưu tiên các mô hình dễ giải thích và chạy được trên Colab miễn phí.
-
-### 5.3. Chia tập và chống rò rỉ
-
-Chia theo ngày mục tiêu của nhãn, giữ nguyên thứ tự thời gian: khoảng 70% train, 15% validation, 15% test. Kết quả chạy trên tệp hiện tại tạo ra các khoảng:
-
-- Train: nhãn đến 2020-03-19.
-- Validation: 2020-03-20 đến 2022-12-22.
-- Test: 2022-12-23 đến 2025-10-09.
-
-Mô hình và mọi biến đổi được fit trên train để tính validation. Sau khi chọn mô hình theo validation, pipeline được fit lại trên train+validation rồi đánh giá một lần trên test. StandardScaler nằm bên trong pipeline Logistic/Linear Regression, nên không fit trước trên toàn bộ chuỗi.
+Chia train/validation/test theo thứ tự target date, xấp xỉ 70/15/15. Chọn mô hình phân loại bằng Balanced Accuracy validation, tie-break bằng F1 lớp tăng. Chọn mô hình hồi quy bằng MAE validation. Scaler được fit trên train khi đo validation; mô hình cuối fit trên train cộng validation trước khi đánh giá test.
 
 ## 6. Đánh giá
 
-Với phân loại, dùng Accuracy, Balanced Accuracy, Precision, Recall, F1 cho lớp tăng, ROC-AUC và confusion matrix. Balanced Accuracy được báo cáo cùng Accuracy để tránh kết luận phụ thuộc vào chênh lệch tỷ lệ lớp. Tiêu chí chọn classifier là Balanced Accuracy validation cao nhất; nếu hòa, dùng F1 lớp tăng để phân định.
+Phân loại dùng Accuracy, Balanced Accuracy, Precision/Recall/F1 lớp tăng, ROC-AUC và confusion matrix. Hồi quy dùng RMSE, MAE, MAPE và Directional Accuracy. So sánh baseline là yêu cầu quan trọng: nếu mô hình phức tạp không cải thiện kết quả ngoài mẫu, kết luận đó vẫn là kết quả nghiên cứu hợp lệ.
 
-Với hồi quy, báo cáo RMSE, MAE, MAPE và Directional Accuracy. Directional Accuracy so dấu biến động dự đoán với biến động thực tế, chỉ tính trên các phiên có giá thực tế thay đổi. Tiêu chí chọn hồi quy là MAE validation thấp nhất, kể cả baseline giữ nguyên giá.
+Thử nghiệm hiện tại trên test 23/10/2023–30/09/2026 chọn Logistic Regression theo validation, nhưng mô hình đạt Balanced Accuracy 49,73% và ROC-AUC 49,41%. HistGradientBoosting đạt Accuracy 52,88%, còn Random Forest đạt ROC-AUC 55,13%. Baseline hồi quy giữ close đạt MAE 1,114 nghìn VND nhưng không dự báo được chiều biến động. Kết quả sơ bộ cho thấy phải trình bày giới hạn dự báo thay vì giả định trước rằng Machine Learning sẽ thắng baseline.
 
-## 7. Kết quả dự kiến và ý nghĩa
-
-Đề tài dự kiến tạo pipeline chạy lại được, báo cáo so sánh mô hình và phân tích những trường hợp dự đoán sai. Không giả định mô hình sẽ đạt độ chính xác cao: kết quả gần baseline cũng có giá trị vì thể hiện độ khó của bài toán và hạn chế của chỉ báo kỹ thuật đơn biến. Không xem kết quả phân loại là bằng chứng về lợi nhuận đầu tư.
-
-## 8. Kế hoạch 10 tuần
+## 7. Kế hoạch 10 tuần cho nhóm 3 người
 
 | Tuần | Công việc | Sản phẩm |
 |---|---|---|
-| 1 | Chốt câu hỏi, nhãn và phạm vi | Đề cương và định nghĩa dự báo |
-| 2 | Thu thập, kiểm tra dữ liệu | CSV nguồn và kiểm kê dữ liệu |
-| 3 | EDA, trực quan hóa | Biểu đồ giá, volume, lợi nhuận |
-| 4 | Tạo đặc trưng, kiểm tra nhãn | Bảng đặc trưng và kiểm thử căn chỉnh |
-| 5 | Majority baseline, Logistic Regression | Kết quả ban đầu |
-| 6 | Random Forest, HistGradientBoosting | Bảng validation |
-| 7 | Chốt cấu hình, đánh giá test | Metrics, confusion matrix, dự báo giá phụ |
-| 8 | Phân tích lỗi và giới hạn | Phần thảo luận |
-| 9 | Viết báo cáo và slide | Bản thảo hoàn chỉnh |
-| 10 | Kiểm tra tái lập, luyện thuyết trình | Repo và bản trình bày cuối |
+| 1 | Chốt câu hỏi, phạm vi và tiêu chí đánh giá | Proposal và sơ đồ pipeline |
+| 2 | Kiểm tra nguồn, schema, đơn vị và lưu snapshot | Data dictionary, checksum |
+| 3 | EDA và kiểm toán chất lượng | Audit JSON, biểu đồ |
+| 4 | Tạo nhãn và đặc trưng trễ | Bảng đặc trưng, kiểm tra leakage |
+| 5 | Cài baseline và Logistic Regression | Kết quả validation đầu tiên |
+| 6 | Huấn luyện Random Forest và HistGradientBoosting | Bảng so sánh |
+| 7 | Thử nghiệm hồi quy bổ trợ, rà soát split | Metrics và confusion matrix |
+| 8 | Phân tích sai số, kiểm tra độ ổn định | Phần thảo luận |
+| 9 | Hoàn thiện báo cáo và slide | Bản nháp để phản biện nội bộ |
+| 10 | Tái chạy toàn bộ, sửa báo cáo, tập thuyết trình | Bản nộp và demo |
 
-## 9. Phân công đề xuất cho nhóm ba người
+Phân công gợi ý: thành viên 1 phụ trách dữ liệu/EDA; thành viên 2 phụ trách đặc trưng, mô hình và kiểm thử; thành viên 3 phụ trách thiết kế thí nghiệm, phân tích metric, báo cáo và slide. Cả nhóm cùng rà soát tính đúng của nhãn, leakage và kết luận.
 
-- Thành viên 1: dữ liệu, kiểm kê, EDA và trực quan hóa.
-- Thành viên 2: tạo đặc trưng, baseline và Logistic Regression.
-- Thành viên 3: Random Forest/Boosting, đánh giá và lưu artifact.
-- Cả nhóm: rà soát rò rỉ dữ liệu, thống nhất cách diễn giải, viết báo cáo và chuẩn bị thuyết trình.
+## 8. Sản phẩm và giới hạn
 
-## 10. Giới hạn
-
-Thí nghiệm ban đầu chỉ dùng một cổ phiếu, không có VN-Index, nhóm ngành hay tin tức. Nguồn dữ liệu có thể được nhà cung cấp hiệu chỉnh lại theo sự kiện doanh nghiệp; metadata snapshot không xác nhận chính sách adjusted/unadjusted. Đơn vị nghìn đồng là diễn giải theo thang giá của tệp, không phải metadata được lưu. Nguồn kết thúc ngày 2025-10-09 nên chưa phản ánh các phiên sau ngày đó. Đây là các giới hạn cần giữ khi diễn giải kết quả.
+Sản phẩm gồm pipeline Python, snapshot OHLCV đã kiểm toán, các bảng metric, mô hình được chọn, biểu đồ và báo cáo. Dữ liệu thị trường có thể được nguồn cập nhật lại; quyền khách không cấp lịch sử đầy đủ để dựng lại toàn bộ chuỗi từ đầu. Hệ số căn chỉnh archive dựa trên overlap và được lưu để kiểm tra. Một cổ phiếu và OHLCV kỹ thuật không đại diện toàn bộ thông tin thị trường; kết quả không thể dùng như khuyến nghị đầu tư.

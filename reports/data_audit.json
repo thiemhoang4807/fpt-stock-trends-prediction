@@ -1,6 +1,11 @@
 {
-  "input_file": "C:\\Users\\ACER\\OneDrive\\Documents\\ChatGPT\\ML\\fpt-stock-trends-prediction\\data\\raw\\fpt\\fpt_historical_price.csv",
-  "row_count": 4678,
+  "input_file": "data/raw/fpt/fpt_historical_price.csv",
+  "data_provider": "VCI (Vietcap) via vnstock",
+  "price_unit": "nghìn VND/cổ phiếu; giữ nguyên thang giá VCI trả về",
+  "volume_unit": "cổ phiếu",
+  "data_sha256": "7b9f9bbefb2a50280d4761e3cfa73f995c607cf825f2d4b7013cd9204182e2cb",
+  "historical_price_adjustment_factor": 0.8875000000000001,
+  "row_count": 4919,
   "columns": [
     "time",
     "open",
@@ -10,7 +15,13 @@
     "volume"
   ],
   "date_start": "2007-01-02",
-  "date_end": "2025-10-09",
+  "date_end": "2026-09-30",
+  "price_min": 1.562,
+  "price_max": 119.36875,
+  "close_min": 1.61525,
+  "close_max": 118.073,
+  "volume_min": 0,
+  "volume_max": 47840750,
   "missing_values_by_column": {
     "time": 0,
     "open": 0,
@@ -28,21 +39,21 @@
     "2009-06-10",
     "2009-12-07"
   ],
-  "daily_return_min": -0.06989633583085297,
-  "daily_return_max": 0.06992187499999991,
-  "daily_return_mean": 0.0006459662157204318,
-  "daily_return_std": 0.019180368078512054,
+  "daily_return_min": -0.06989633583085308,
+  "daily_return_max": 0.06992187500000013,
+  "daily_return_mean": 0.0005669554090940747,
+  "daily_return_std": 0.01924589664545348,
   "daily_return_quantiles": {
-    "0.01": -0.04946492559975705,
-    "0.25": -0.008663366336633671,
+    "0.01": -0.049435172172673104,
+    "0.25": -0.008948545861297452,
     "0.5": 0.0,
-    "0.75": 0.009422850412249772,
-    "0.99": 0.04970967651274546
+    "0.75": 0.009452544765667092,
+    "0.99": 0.04978031575411482
   },
   "next_session_direction_counts": {
-    "up": 2121,
-    "down": 2077,
-    "unchanged": 479
+    "up": 2224,
+    "down": 2211,
+    "unchanged": 483
   },
   "figures": [
     "figures/01_fpt_close.png",
