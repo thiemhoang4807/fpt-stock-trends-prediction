@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from features import FEATURE_COLUMNS, build_feature_table, load_price_data
+from features import FEATURE_COLUMNS, FULL_OHLCV_FEATURE_COLUMNS, build_feature_table, load_price_data
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -22,7 +22,8 @@ def prepare(input_path: Path, output_path: Path) -> tuple[int, int]:
     print(f"Raw rows: {len(raw)}")
     print(f"Rows with complete backward-looking features: {len(table)}")
     print(f"Labeled next-session rows: {usable_outcomes}")
-    print(f"Feature count: {len(FEATURE_COLUMNS)}")
+    print(f"Core technical feature count (A): {len(FEATURE_COLUMNS)}")
+    print(f"Full OHLCV feature count (B): {len(FULL_OHLCV_FEATURE_COLUMNS)}")
     print(f"Saved: {output_path}")
     return len(table), usable_outcomes
 

@@ -1,70 +1,93 @@
-# Dự đoán xu hướng cổ phiếu FPT
+# Dự đoán xu hướng và giá đóng cửa FPT phiên kế tiếp
 
-Dự án nghiên cứu khả năng dự báo hướng biến động giá đóng cửa FPT ở phiên giao dịch kế tiếp bằng các đặc trưng kỹ thuật tính từ OHLCV quá khứ. Bài toán hồi quy giá đóng cửa được dùng như phần đánh giá bổ trợ. Đây là đồ án học tập, không phải công cụ tư vấn đầu tư.
+Dự án xây dựng pipeline học máy để dự báo (1) close phiên FPT kế tiếp tăng hay giảm so với phiên hiện tại và (2) mức close phiên kế tiếp. Đây là hai đầu ra khác nhau; kết quả dùng cho đồ án học thuật, không phải khuyến nghị đầu tư.
 
 ## Dữ liệu
 
-Tập dữ liệu hiện tại có 4.919 phiên, từ 02/01/2007 đến 30/09/2026, gồm <code>time, open, high, low, close, volume</code>. Nguồn thị trường là VCI (Vietcap), truy cập bằng thư viện Python <code>vnstock</code> phiên bản 5.1.0. Giá trong tệp giữ nguyên thang VCI và được biểu diễn bằng nghìn đồng/cổ phiếu; volume là số cổ phiếu.
+Snapshot giá có 4.919 phiên từ 02/01/2007 đến 30/09/2026, gồm `time, open, high, low, close, volume`. Nguồn OHLCV là VCI (Vietcap) qua `vnstock`; giá theo nghìn VND/cổ phiếu, volume theo cổ phiếu. Kiểm toán ghi nhận 0 giá trị thiếu, 0 ngày trùng, 2 phiên volume bằng 0 và 3 dòng OHLC bất nhất được giữ để truy vết. Xem [data/README.md](data/README.md), `reports/data_audit.json` và `reports/data_lineage.json`.
 
-API ở quyền khách hiện giới hạn lịch sử nến ngày ở 365 ngày. Vì vậy, lệnh thu thập giữ archive lịch sử đã được quản lý trong dự án, tải cửa sổ mới từ VCI, kiểm tra phần ngày trùng và căn chỉnh OHLC cũ về cùng basis giá. Lần tái lập này dùng 8 phiên trùng để tính hệ số 0,8875; độ phân tán giữa các tỷ lệ OHLC dưới 0,011%. Volume không bị nhân hệ số. Chi tiết được lưu trong <code>reports/data_lineage.json</code>. Giới hạn và điều chỉnh lịch sử của VCI được mô tả trong [tài liệu Vnstock về quyền truy cập](https://www.vnstocks.com/docs/vnstock/tham-khao/cap-quyen-va-gioi-han) và [nguồn dữ liệu thị trường](https://www.vnstocks.com/docs/vnstock/tham-khao/data-sources).
+Thử nghiệm đặc trưng:
 
-Kiểm toán dữ liệu ghi nhận: không có ô thiếu hoặc ngày trùng; 2 phiên volume bằng 0; 3 phiên có quan hệ OHLC không nhất quán được giữ nguyên và đánh dấu. Lợi nhuận ngày có trung bình 0,0567%, độ lệch chuẩn 1,9246%, nhỏ nhất −6,9896%, lớn nhất 6,9922%. Nhãn phiên kế tiếp gồm 2.224 tăng, 2.211 giảm và 483 không đổi.
+- **A — Core Technical:** 23 biến tính từ close và volume.
+- **B — Full OHLCV:** A cộng bốn biến nến (biên độ, thân nến, khoảng trống giá mở cửa, vị trí close).
+- **C — Multi-source:** B cộng VN-Index, USD/VND, vàng, CPI, GDP và báo cáo quý FPT sau khi căn đúng ngày có thể biết.
 
-## Kết quả kiểm tra trên tập test
+Lần chạy hiện tại thực hiện A và B trên cùng các phiên Train/Test. Việc tải các nguồn bổ trợ qua Vnstock đã được thử nhưng truy vấn đều không lấy được chính sách máy khách; bộ C hiện được ghi rõ là `not_run`, không có kết quả giả định. Tài liệu Vnstock cho biết Market có các tuyến dữ liệu VN-Index, forex và hàng hóa; Fundamental có giới hạn số kỳ theo quyền; Macro cho GDP/CPI/tỷ giá nội địa yêu cầu quyền mở rộng. [Market](https://vnstocks.com/docs/vnstock/thi-truong-market), [Fundamental](https://vnstocks.com/docs/vnstock/co-ban-fundamental), [Macro](https://vnstocks.com/docs/vnstock/vi-mo-macro).
 
-Tập test theo thời gian bao phủ 23/10/2023–30/09/2026. Bộ phân loại được chọn bằng validation là Logistic Regression. Các metric dưới đây đều tính trên test; F1 là F1 của lớp tăng.
+## Thiết lập
 
-| Bộ phân loại | Accuracy | Balanced Accuracy | F1 tăng | ROC-AUC |
-|---|---:|---:|---:|---:|
-| Majority baseline | 49,09% | 50,00% | 65,85% | 50,00% |
-| Logistic Regression | 49,65% | 49,73% | 51,36% | 49,41% |
-| Random Forest | 51,62% | 51,60% | 50,57% | 55,13% |
-| HistGradientBoosting | 52,88% | 52,91% | 53,02% | 52,63% |
+Dữ liệu có đặc trưng đầy đủ được chia theo thứ tự ngày mục tiêu: 85% đầu làm Train và 15% cuối làm Test. Train kết thúc ngày 20/10/2023; Test từ 23/10/2023 đến 30/09/2026. Classification bỏ nhãn đứng giá; regression giữ tất cả phiên. `StandardScaler` nằm trong Pipeline và chỉ được fit trên Train khi tính metric Test.
 
-Mô hình phân loại được chọn không vượt baseline một cách thuyết phục trên test; kết quả hiện tại không cho thấy khả năng dự báo hướng ổn định. Với hồi quy, baseline giữ giá đóng cửa bằng phiên hiện tại đạt MAE 1,114 nghìn đồng, RMSE 1,536 nghìn đồng, MAPE 1,331%; do dự đoán không đổi nên directional accuracy bằng 0%. Bảng đầy đủ nằm tại <code>reports/classification_test_metrics.csv</code> và <code>reports/regression_test_metrics.csv</code>.
+Các bảng metric Test được dùng để chọn mô hình theo yêu cầu so sánh hiện tại. Do đó, kết quả của mô hình được chọn có thể lạc quan hơn một đánh giá độc lập; báo cáo giữ nguyên giới hạn này. Sau khi đã ghi metric, mô hình được chọn được fit lại trên toàn bộ nhãn có sẵn để tạo dự báo phiên mới nhất.
+
+## Kết quả hiện tại
+
+Bảng dưới ghi mô hình tốt nhất trong mỗi bộ đặc trưng theo quy tắc lựa chọn đã định.
+
+| Bộ | Mô hình phân loại | Accuracy | Balanced Accuracy | F1 (Tăng) | ROC-AUC |
+|---|---|---:|---:|---:|---:|
+| A | HistGradientBoosting | 52,88% | 52,91% | 53,02% | 52,63% |
+| B | Random Forest | 54,01% | 54,00% | 53,35% | 55,91% |
+
+Bộ B tăng Balanced Accuracy 1,09 điểm phần trăm so với kết quả tốt nhất của A. Hiệu quả vẫn ở gần mức ngẫu nhiên, nên chưa thể kết luận mô hình dự báo hướng ổn định.
+
+Last-Close Baseline là mô hình hồi quy được chọn: MAE 1,114 nghìn VND, RMSE 1,536 nghìn VND, MAPE 1,331%, Directional Accuracy 0%. Tolerance Accuracy lần lượt là 26,68% trong ±0,5%, 50,21% trong ±1% và 78,93% trong ±2% giá thực tế. Mô hình giữ nguyên close nên sai số giá thấp nhưng không thể đoán chiều tăng/giảm.
+
+Dự báo cuối snapshot (30/09/2026): Random Forest bộ B dự báo **Tăng** với xác suất 57,50%; Last-Close Baseline dự báo close 63,0 nghìn VND. Đây là output minh họa, không phải tư vấn mua/bán. Bảng đầy đủ nằm tại `reports/classification_test_metrics.csv`, `reports/regression_test_metrics.csv`, `reports/ablation_summary.csv`.
 
 ## Chạy dự án
 
-Tạo môi trường Python, cài thư viện và chạy lần lượt:
+```bash
+python -m pip install -r requirements.txt
+python src/fetch_data.py --verify
+python src/eda.py
+python src/prepare.py
+python src/train.py
+python src/predict.py
+python -m pytest -q
+```
 
-    python -m pip install -r requirements.txt
-    python src/fetch_data.py
-    python src/fetch_data.py --verify
-    python src/eda.py
-    python src/prepare.py
-    python src/train.py
-    python src/predict.py
-    python -m pytest -q
+Để tải các nguồn bổ trợ và tạo dữ liệu C (cần API truy cập được và quyền phù hợp):
 
-Để tải khoảng ngày khác, dùng <code>python src/fetch_data.py --download --start YYYY-MM-DD --end YYYY-MM-DD</code>. Nếu API chỉ trả cửa sổ gần đây, script cần archive cũ có sẵn và phần ngày trùng đủ để xác nhận basis. Nếu bắt đầu từ archive mới hoặc thiếu overlap, script dừng mà không thay dữ liệu hiện hữu. Có thể chuẩn hóa CSV đã xuất bằng <code>python src/fetch_data.py --input FILE.csv --output normalized.csv</code>.
+```bash
+python src/fetch_supplemental.py --start 2007-01-01 --end 2026-09-30
+python src/train.py
+```
 
-## Pipeline
+Nếu API không truy cập được, có thể đặt các CSV đã xuất vào `data/raw/supplemental/` theo tên và cấu trúc trong [data/README.md](data/README.md), rồi chạy:
 
-    VCI → vnstock → src/fetch_data.py → data/raw/fpt/fpt_historical_price.csv
-       → src/eda.py → reports/data_audit.json và figures/
-       → src/prepare.py → data/processed/fpt_next_session_features.csv
-       → src/train.py → models/, reports/, figures/
-       → src/predict.py → reports/latest_prediction.json
+```bash
+python src/fetch_supplemental.py --from-cache
+python src/train.py
+```
 
-Các đặc trưng gồm 23 biến trễ và chỉ báo kỹ thuật. Tập train, validation, test được tách theo thời gian. Scaler nằm bên trong pipeline học máy và chỉ fit trên train trước khi mô hình cuối được fit trên train cộng validation.
+Tập bổ trợ được căn theo thời điểm hiệu lực: CPI +10 ngày, GDP và báo cáo quý +45 ngày, chuỗi FX/vàng +1 ngày, VN-Index dùng sau khi phiên đóng cửa. Không có `backfill`.
+
+## Cách hiểu metric giá
+
+Tolerance Accuracy tính tỷ lệ dự đoán mà sai số tương đối so với close thật không quá 0,5%, 1% hoặc 2%. Ở giá close 63.000 đồng, các ngưỡng tương đương ±315, ±630 và ±1.260 đồng. HOSE có biên độ thông thường ±7% so với tham chiếu, nhưng đây là giới hạn giao dịch và không phải tiêu chuẩn chất lượng của dự đoán. [Tài liệu HOSE](https://staticfile.hsx.vn/Uploads/UploadDocuments/2372201/4.Bien%20do%20dao%20dong%20gia.pdf).
 
 ## Cấu trúc chính
 
-- <code>src/fetch_data.py</code>: tải, chuẩn hóa, nối archive và kiểm định OHLCV.
-- <code>src/eda.py</code>: kiểm toán dữ liệu và tạo biểu đồ khám phá.
-- <code>src/features.py</code>, <code>src/prepare.py</code>: tạo đặc trưng quá khứ và nhãn phiên kế tiếp.
-- <code>src/train.py</code>: huấn luyện, chọn mô hình bằng validation và đánh giá test.
-- <code>src/predict.py</code>: dự đoán phiên kế tiếp sau phiên cuối dữ liệu.
-- <code>data/raw/</code>, <code>data/processed/</code>: dữ liệu nguồn và bảng đặc trưng.
-- <code>models/</code>: bộ phân loại và hồi quy được chọn.
-- <code>reports/</code>: audit, nguồn gốc dữ liệu, ranh giới split, metric, dự đoán.
-- <code>figures/</code>: biểu đồ EDA, confusion matrix và dự đoán giá.
-- <code>tests/</code>: kiểm thử chuẩn hóa, căn chỉnh nguồn, đặc trưng và tách tập thời gian.
-
-## Hình minh họa
-
-![Giá đóng cửa FPT](figures/01_fpt_close.png)
-
-![Phân phối lợi nhuận ngày](figures/03_daily_return_distribution.png)
-
-![Confusion matrix trên test](figures/05_test_confusion_matrix.png)
+```text
+src/
+  fetch_data.py             Tải/chuẩn hóa/kiểm tra OHLCV FPT
+  fetch_supplemental.py      Tải cache và căn thời điểm dữ liệu bổ trợ
+  eda.py                    Kiểm toán OHLCV và tạo biểu đồ
+  features.py                Tạo đặc trưng A/B và nhãn phiên kế tiếp
+  prepare.py                Xuất bảng đặc trưng
+  train.py                  Huấn luyện A/B/C, chấm Test, lưu mô hình
+  predict.py                Tạo dự báo phiên kế tiếp
+data/
+  raw/fpt/                   Snapshot OHLCV FPT
+  raw/supplemental/           Cache nguồn bổ trợ (cục bộ)
+  processed/                  Bảng đặc trưng
+docs/
+  PROPOSAL.md                 Đề xuất theo cấu trúc UIT
+  REPORT.md                   Báo cáo kết quả thực nghiệm
+  CAM_NANG_HIEU_DU_AN.md       Cẩm nang học tập cá nhân, bị Git bỏ qua
+reports/                      Audit, metrics, dự báo và ranh giới split
+figures/                      Biểu đồ EDA, pipeline và đánh giá
+models/                       Mô hình được chọn để dự báo mới nhất
+tests/                        Kiểm thử đặc trưng, split, căn chỉnh và metric
+```

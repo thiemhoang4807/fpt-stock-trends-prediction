@@ -1,57 +1,85 @@
-# Dữ liệu và xuất xứ
+# Dữ liệu nghiên cứu
 
-## Pipeline thu thập
+## Chuỗi xuất xứ
 
-    VCI (Vietcap, dữ liệu giá HOSE)
-        → thư viện kết nối vnstock 5.1.0, Quote.history, source=VCI
-        → src/fetch_data.py: chuẩn hóa time, open, high, low, close, volume
-        → data/raw/fpt/fpt_historical_price.csv
-        → kiểm toán trong src/eda.py và reports/data_audit.json
+```text
+VCI (Vietcap) ── vnstock ──> OHLCV FPT ──> data/raw/fpt/fpt_historical_price.csv
+                                       └──> src/eda.py, src/prepare.py, src/train.py
 
-<code>vnstock</code> là công cụ kết nối Python; dữ liệu thị trường được truy xuất từ VCI. Tài liệu thư viện mô tả VCI là một trong các nguồn cho OHLCV và lưu ý chuỗi lịch sử có thể được điều chỉnh sau sự kiện quyền. Các phiên bản nguồn dữ liệu khác nhau có thể cho giá lịch sử hơi khác; xem [nguồn dữ liệu của thư viện](https://www.vnstocks.com/docs/vnstock/tham-khao/data-sources), [tài liệu API lịch sử](https://www.vnstocks.com/docs/vnstock/advanced-usage/06-quote-price-api) và [quyền truy cập hiện hành](https://www.vnstocks.com/docs/vnstock/tham-khao/cap-quyen-va-gioi-han).
+VN-Index / tỷ giá / vàng / CPI / GDP / báo cáo FPT
+        └──> src/fetch_supplemental.py
+               ├──> data/raw/supplemental/*.csv (cache cục bộ)
+               ├──> căn theo ngày có thể biết, không backfill
+               └──> data/processed/fpt_multisource_features.csv
+                         └──> bộ C nếu có đủ trường và đủ Train/Test
+```
 
-Điều khoản sử dụng Vietcap bảo lưu quyền với nội dung và dữ liệu trên website, đồng thời hạn chế sao chép, phân phối hoặc xuất bản ngoài mục đích cá nhân. Trước khi phát hành công khai snapshot OHLCV hoặc dữ liệu dẫn xuất, cần kiểm tra quyền sử dụng phù hợp với [điều khoản Vietcap](https://www.vietcap.com.vn/dieu-khoan-su-dung-chinh-sach-bao-mat).
+## Dữ liệu FPT đang có
 
-## Cách tái lập lần cập nhật này
+Snapshot OHLCV gồm 4.919 phiên từ 02/01/2007 đến 30/09/2026. Các cột chuẩn:
 
-Chạy <code>python src/fetch_data.py</code> để tải dữ liệu đến 30/09/2026. Script chuẩn hóa tên cột, ngày, số thực, volume nguyên; loại mã khác FPT nếu có; sắp xếp theo thời gian và từ chối ngày trùng hay giá trị thiếu/không hợp lệ. Lệnh <code>python src/fetch_data.py --verify</code> kiểm tra schema, thứ tự thời gian, ngày đầu/cuối, các khoảng giá và SHA-256 hiện tại.
-
-Ở thời điểm thu thập, quyền khách của API VCI chỉ trả tối đa 365 ngày dữ liệu ngày. Vì vậy, lần chạy này giữ archive OHLCV 2007–2025 đã được quản lý trong dự án và lấy cửa sổ VCI mới từ 30/09/2025 đến 30/09/2026. Có 8 phiên trùng để đối chiếu. Tỷ số giá OHLC giữa VCI mới và archive cũ có trung vị 0,8875; độ trải tương đối của các tỷ số dưới 0,011%. Script nhân bốn cột OHLC trong phần archive trước cửa sổ API với hệ số này để cùng basis với chuỗi VCI hiện tại, thay các ngày trùng bằng dữ liệu mới và giữ nguyên volume. Nếu overlap thiếu hoặc hệ số không ổn định, script dừng và không ghi tệp mới.
-
-Đây là bước nối archive và đồng nhất basis giá, không phải một lần tải lại toàn bộ 2007–2026 từ API. Muốn tái tạo toàn bộ chuỗi từ nguồn mà không dùng archive đã quản lý trong dự án cần một quyền dữ liệu có độ phủ đầy đủ hoặc nguồn lịch sử thay thế. Các kết quả hiện tại dựa trên tệp CSV đã lưu và có thể tái lập bằng checksum trong <code>reports/data_lineage.json</code>.
-
-## Định dạng và đơn vị
-
-| Cột | Ý nghĩa | Đơn vị / quy tắc |
+| Cột | Ý nghĩa | Đơn vị |
 |---|---|---|
-| <code>time</code> | Ngày giao dịch | <code>YYYY-MM-DD</code>, giờ Việt Nam được rút về ngày |
-| <code>open</code> | Giá mở cửa | Nghìn VND/cổ phiếu theo thang dữ liệu VCI |
-| <code>high</code> | Giá cao nhất phiên | Nghìn VND/cổ phiếu |
-| <code>low</code> | Giá thấp nhất phiên | Nghìn VND/cổ phiếu |
-| <code>close</code> | Giá đóng cửa | Nghìn VND/cổ phiếu |
-| <code>volume</code> | Khối lượng giao dịch | Số cổ phiếu |
+| `time` | Ngày giao dịch | YYYY-MM-DD |
+| `open` | Giá mở cửa | Nghìn VND/cổ phiếu |
+| `high` | Giá cao nhất trong phiên | Nghìn VND/cổ phiếu |
+| `low` | Giá thấp nhất trong phiên | Nghìn VND/cổ phiếu |
+| `close` | Giá đóng cửa | Nghìn VND/cổ phiếu |
+| `volume` | Khối lượng giao dịch | Cổ phiếu |
 
-Ví dụ giá <code>63.0</code> tương ứng khoảng 63.000 VND/cổ phiếu. Tệp không chuyển đổi giá sang đồng và không có cột <code>adjusted_close</code>; OHLC được giữ theo basis lịch sử do VCI trả về và được căn chỉnh archive như mô tả ở trên. Không diễn giải basis này như chuỗi tổng lợi nhuận có tái đầu tư cổ tức.
+Giá lấy từ VCI (Vietcap) qua `vnstock`; nguồn VCI có thể điều chỉnh lại giá lịch sử sau sự kiện doanh nghiệp. Snapshot đang lưu cùng lineage/hash trong `reports/data_lineage.json`. Tài liệu Vnstock mô tả giá nến cổ phiếu theo nghìn đồng và ghi nhận các nguồn có thể có cách điều chỉnh lịch sử khác nhau. [Tài liệu dữ liệu thị trường](https://vnstocks.com/docs/vnstock/thi-truong-market).
 
-## Kiểm toán snapshot hiện tại
+Kiểm toán snapshot: không có ô thiếu hoặc ngày trùng; 2 phiên volume bằng 0; 3 dòng vi phạm quan hệ OHLC được giữ và báo cáo; lợi nhuận đóng cửa ngày có trung bình 0,0567%, độ lệch chuẩn 1,9246%, nhỏ nhất −6,9896% và lớn nhất 6,9922%. Xem số liệu đầy đủ tại `reports/data_audit.json`.
 
-| Kiểm tra | Kết quả |
-|---|---:|
-| Số phiên | 4.919 |
-| Khoảng ngày | 02/01/2007–30/09/2026 |
-| Cột thiếu | 0 |
-| Ngày trùng | 0 |
-| Phiên volume bằng 0 | 2 |
-| Hàng sai quan hệ OHLC | 3 |
-| Giá thấp nhất / cao nhất | 1,562 / 119,36875 nghìn VND |
-| Close thấp nhất / cao nhất | 1,61525 / 118,073 nghìn VND |
-| Volume thấp nhất / cao nhất | 0 / 47.840.750 cổ phiếu |
-| SHA-256 chuẩn hóa LF | <code>7b9f9bbefb2a50280d4761e3cfa73f995c607cf825f2d4b7013cd9204182e2cb</code> |
+## Đặc trưng
 
-Ba hàng OHLC bất nhất và hai phiên volume bằng 0 được giữ nguyên để không âm thầm sửa dữ liệu nguồn; ngày bất nhất được liệt kê trong <code>reports/data_audit.json</code>. Nhãn biến động phiên kế tiếp: 2.224 tăng, 2.211 giảm, 483 không đổi. Báo cáo EDA đầy đủ nằm trong <code>reports/data_audit.json</code>.
+Bộ A sử dụng 23 đặc trưng kỹ thuật từ close và volume. Bộ B bổ sung:
 
-## Vì sao mô hình dùng OHLCV
+- `candle_range_pct = (high - low) / close`
+- `candle_body_pct = (close - open) / open`
+- `overnight_gap_pct = open / close(t-1) - 1`
+- `close_location_in_range = (close - low) / (high - low)`
 
-Mục tiêu là phân loại tăng/giảm ở phiên kế tiếp, nên đầu vào chỉ dùng các quan sát OHLCV đã biết tại thời điểm đóng cửa phiên hiện tại. Dự án tính lại 23 đặc trưng kỹ thuật bằng rolling/lag theo chiều quá khứ; không dùng bfill hay fit scaler trên toàn chuỗi. Các giá trị chuẩn hóa được học trong pipeline của mô hình, chỉ trên train rồi trên train cộng validation để đánh giá tập test.
+Nếu high bằng low, vị trí close trong nến được đặt bằng 0,5 vì close trùng với mức giá duy nhất trong biên độ. Tất cả đặc trưng đều chỉ dùng thông tin có thể biết tại close phiên hiện tại.
 
-Các chỉ báo vĩ mô và báo cáo tài chính có tần suất thấp, ngày công bố khác ngày kỳ báo cáo và dễ gây rò rỉ nếu ghép theo ngày hiệu lực thay vì thời điểm công bố. Chúng không nằm trong phạm vi phiên bản này.
+## Nguồn bổ trợ và căn chỉnh theo thời điểm
+
+`src/fetch_supplemental.py` dùng các giao diện Vnstock sau:
+
+| Nguồn | Dữ liệu dự kiến | Giao diện | Trễ sử dụng |
+|---|---|---|---:|
+| VCI/KBS | VN-Index theo ngày | `Market().index("VNINDEX").ohlcv()` | 0 ngày, dùng sau khi phiên kết thúc |
+| VCB/nguồn nội địa | USD/VND theo ngày | `Macro().currency().exchange_rate()` | 1 ngày |
+| Dukascopy | Vàng giao ngay XAU/USD | `Market().commodity("XAUUSD").ohlcv()` | 1 ngày |
+| Nguồn vĩ mô qua Vnstock | CPI tháng | `Macro().economy().cpi()` | 10 ngày sau cuối tháng |
+| Nguồn vĩ mô qua Vnstock | GDP quý | `Macro().economy().gdp()` | 45 ngày sau cuối quý |
+| VCI | Báo cáo kết quả kinh doanh quý của FPT | `Fundamental().equity("FPT").income_statement()` | 45 ngày sau cuối quý |
+
+Ngày hiệu lực là ngày kỳ báo cáo cộng số ngày trễ. Ghép dùng quan sát mới nhất có ngày hiệu lực không muộn hơn ngày giao dịch; giá trị chưa có hiệu lực vẫn để thiếu. Không dùng `backfill`. CPI tháng 09/2026 vì vậy không được dùng cho các phiên tháng 09/2026 nếu kỳ đo chỉ công bố sau ngày 30/09; GDP quý III/2026 và báo cáo quý III cũng không xuất hiện trong đặc trưng tính đến ngày 30/09/2026.
+
+Theo tài liệu hiện hành, dữ liệu nến VN-Index, forex và hàng hóa có các chức năng cộng đồng. Báo cáo tài chính ở cấp Khách bị giới hạn tối đa 4 kỳ mỗi lần gọi; CPI, GDP và tỷ giá nội địa qua `Macro()` nằm trong nhóm mở rộng. Do đó, nhóm cần lưu phạm vi ngày thực tế và quyền truy cập; không mặc định rằng mọi nguồn có thể lấy miễn phí hoặc đầy đủ từ năm 2007. [Market](https://vnstocks.com/docs/vnstock/thi-truong-market), [Fundamental](https://vnstocks.com/docs/vnstock/co-ban-fundamental), [Macro](https://vnstocks.com/docs/vnstock/vi-mo-macro).
+
+## Trạng thái lần thu thập hiện tại
+
+Lệnh `python src/fetch_supplemental.py --start 2007-01-01 --end 2026-09-30` đã được thử. Sáu truy vấn hiện trả lỗi vì ứng dụng Vnstock trong môi trường chạy không lấy được chính sách máy khách từ dịch vụ; không có quan sát bổ trợ nào được lưu. Vì vậy:
+
+- `reports/supplemental_data_audit.json` lưu trạng thái lỗi và số dòng 0 cho từng nguồn.
+- Bộ C được đánh dấu `not_run` trong `reports/ablation_summary.csv`.
+- Các CSV nguồn bổ trợ và bảng ghép đa nguồn được giữ cục bộ, không được thêm vào Git khi chưa có dữ liệu hợp lệ.
+- Kết quả A/B chỉ phản ánh OHLCV FPT; không được diễn giải như đã kiểm định tác động của CPI, GDP, tỷ giá hay báo cáo tài chính.
+
+Để chạy lại khi API hoạt động và tài khoản có quyền phù hợp:
+
+```bash
+python src/fetch_supplemental.py --start 2007-01-01 --end 2026-09-30
+python src/train.py
+```
+
+Có thể đặt các tệp CSV đã xuất từ nguồn phù hợp vào `data/raw/supplemental/` theo các tên `vnindex_ohlcv.csv`, `usd_vnd_daily.csv`, `gold_xauusd_daily.csv`, `vietnam_cpi.csv`, `vietnam_gdp.csv`, `fpt_fundamentals_quarterly.csv`, rồi chạy:
+
+```bash
+python src/fetch_supplemental.py --from-cache
+python src/train.py
+```
+
+Các tệp cache cần có cột `time`; từng cột giá trị phải dùng đúng đơn vị và có nguồn/ghi chú riêng. Với báo cáo quý, dùng chuỗi kỳ dạng `YYYY-Qn` hoặc cột ngày cuối kỳ. `--from-cache` áp độ trễ bảo thủ như bảng trên và tạo bảng ngày có thể nhập vào mô hình.

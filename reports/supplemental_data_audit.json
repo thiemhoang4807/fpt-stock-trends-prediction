@@ -1,0 +1,124 @@
+{
+  "date_start": "2007-01-02",
+  "date_end": "2026-09-30",
+  "rows": 4919,
+  "available_feature_columns": [],
+  "source_audit": {
+    "vnindex": {
+      "status": "empty_or_invalid",
+      "file": "vnindex_ohlcv.csv",
+      "rows": 0
+    },
+    "usd_vnd": {
+      "status": "empty_or_invalid",
+      "file": "usd_vnd_daily.csv",
+      "rows": 0
+    },
+    "gold": {
+      "status": "empty_or_invalid",
+      "file": "gold_xauusd_daily.csv",
+      "rows": 0
+    },
+    "cpi": {
+      "status": "empty_or_invalid",
+      "file": "vietnam_cpi.csv",
+      "rows": 0
+    },
+    "gdp": {
+      "status": "empty_or_invalid",
+      "file": "vietnam_gdp.csv",
+      "rows": 0
+    },
+    "financial": {
+      "status": "empty_or_invalid",
+      "file": "fpt_fundamentals_quarterly.csv",
+      "rows": 0
+    }
+  },
+  "no_backfill": true,
+  "release_lags_calendar_days": {
+    "daily_market_and_fx_gold": 1,
+    "monthly_cpi": 10,
+    "quarterly_gdp_and_company_financials": 45
+  },
+  "raw_sources": {
+    "vnindex": {
+      "file": "vnindex_ohlcv.csv",
+      "rows": 0,
+      "first_observation": null,
+      "last_observation": null,
+      "columns": [
+        "time",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume"
+      ]
+    },
+    "fx": {
+      "file": "usd_vnd_daily.csv",
+      "rows": 0,
+      "first_observation": null,
+      "last_observation": null,
+      "columns": [
+        "time",
+        "usd_vnd_market_rate",
+        "usd_vnd_vcb_rate"
+      ]
+    },
+    "gold": {
+      "file": "gold_xauusd_daily.csv",
+      "rows": 0,
+      "first_observation": null,
+      "last_observation": null,
+      "columns": [
+        "time",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume"
+      ]
+    },
+    "cpi": {
+      "file": "vietnam_cpi.csv",
+      "rows": 0,
+      "first_observation": null,
+      "last_observation": null,
+      "columns": [
+        "time",
+        "cpi_total",
+        "cpi_core"
+      ]
+    },
+    "gdp": {
+      "file": "vietnam_gdp.csv",
+      "rows": 0,
+      "first_observation": null,
+      "last_observation": null,
+      "columns": [
+        "time",
+        "gdp"
+      ]
+    },
+    "fundamentals": {
+      "file": "fpt_fundamentals_quarterly.csv",
+      "rows": 0,
+      "first_observation": null,
+      "last_observation": null,
+      "columns": [
+        "time"
+      ]
+    }
+  },
+  "fetch_errors": {
+    "vnindex": "NetworkError: vnstock không lấy được chính sách máy khách hiện hành từ vnstocks.com\n(English: vnstock settings language en)",
+    "fx": "NetworkError: vnstock không lấy được chính sách máy khách hiện hành từ vnstocks.com\n(English: vnstock settings language en)",
+    "gold": "NetworkError: vnstock không lấy được chính sách máy khách hiện hành từ vnstocks.com\n(English: vnstock settings language en)",
+    "cpi": "NetworkError: vnstock không lấy được chính sách máy khách hiện hành từ vnstocks.com\n(English: vnstock settings language en)",
+    "gdp": "NetworkError: vnstock không lấy được chính sách máy khách hiện hành từ vnstocks.com\n(English: vnstock settings language en)",
+    "fundamentals": "NetworkError: vnstock không lấy được chính sách máy khách hiện hành từ vnstocks.com\n(English: vnstock settings language en)"
+  },
+  "output_file": "data\\processed\\fpt_multisource_features.csv"
+}

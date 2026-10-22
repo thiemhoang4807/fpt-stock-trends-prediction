@@ -1,42 +1,35 @@
 # Nhật ký thực hiện
 
-## Mục tiêu hiện tại
+## Mục tiêu
 
-Cập nhật dữ liệu FPT đến phiên cuối tháng 09/2026, chạy lại pipeline học máy, cập nhật tài liệu tiếng Việt, kiểm tra không còn từ khóa nguồn tham khảo bị cấm và đồng bộ thay đổi lên nhánh main.
+Cập nhật pipeline FPT đến 30/09/2026, đối sánh Train/Test, hoàn thiện tài liệu chính thức và giữ riêng cẩm nang học tập.
 
-## Phát hiện về nguồn dữ liệu
+## Dữ liệu
 
-- API lịch sử OHLCV được truy cập từ VCI (Vietcap) bằng vnstock phiên bản 5.1.0, lớp Quote.history, source=VCI.
-- API ở quyền khách trả tối đa 365 ngày. Lượt tải toàn giai đoạn đầu chỉ có 249 phiên; lượt đó không được giữ làm dataset.
-- Snapshot đã quản lý trong dự án được khôi phục sau lượt tải bị giới hạn. Dữ liệu VCI mới có 249 phiên từ 30/09/2025 đến 30/09/2026, gồm 8 phiên overlap với snapshot.
-- Tỷ số OHLC của 8 phiên overlap có trung vị 0,8875 và độ trải tương đối 0,0105%. Script nhân OHLC của archive cũ trước cửa sổ mới với 0,8875, dùng dữ liệu VCI mới cho các ngày overlap và giữ nguyên volume.
-- Tệp hoàn chỉnh hiện có 4.919 hàng, từ 02/01/2007 đến 30/09/2026. SHA-256 chuẩn hóa LF: 7b9f9bbefb2a50280d4761e3cfa73f995c607cf825f2d4b7013cd9204182e2cb.
-- Hạn mức API và cách căn chỉnh archive được ghi trong reports/data_lineage.json, data/README.md, README, proposal và report. Việc tái lập 2007–2026 dựa vào archive đã quản lý trong dự án; đây không phải một truy vấn VCI đơn lẻ tải lại toàn bộ lịch sử.
+- OHLCV lấy qua vnstock từ VCI (Vietcap): 4.919 phiên, 02/01/2007–30/09/2026; thiếu 0, ngày trùng 0, volume bằng 0 ở 2 phiên, 3 hàng OHLC bất nhất được giữ và báo cáo.
+- Giá theo nghìn VND/cổ phiếu, volume theo cổ phiếu. Archive giá cũ được căn cùng thang dữ liệu VCI mới bằng hệ số trung vị 0,8875; volume không đổi.
+- Sáu truy vấn bổ trợ (VN-Index, USD/VND, vàng, CPI, GDP, tài chính FPT) đều lỗi lấy chính sách máy khách, không trả hàng. reports/supplemental_data_audit.json ghi lỗi; C là not_run, không suy đoán metrics.
 
-## Kiểm toán dữ liệu
+## Pipeline và kết quả
 
-- Thiếu giá trị: 0; ngày trùng: 0; sắp theo ngày tăng dần.
-- Volume bằng 0: 2 phiên; hàng OHLC bất nhất: 3 phiên (2007-08-17, 2009-06-10, 2009-12-07), được giữ nguyên và báo cáo.
-- Min/max giá: 1,562 / 119,36875 nghìn VND; min/max close: 1,61525 / 118,073 nghìn VND.
-- Lợi nhuận ngày: trung bình 0,0567%, độ lệch chuẩn 1,9246%, min −6,9896%, max 6,9922%.
-- Nhãn phiên kế tiếp: tăng 2.224, giảm 2.211, không đổi 483.
+- A: 23 đặc trưng close/volume. B: thêm bốn đặc trưng nến, tổng 27. A/B dùng cùng ngày đủ dữ liệu.
+- Split theo target_date: Train 4.138 hàng, 21/03/2007–20/10/2023; Test 731 hàng, 23/10/2023–30/09/2026. Phân loại loại nhãn đứng giá: Train 3.682, Test 711.
+- Phân loại tốt nhất A: HistGradientBoosting, Accuracy 52,88%, Balanced Accuracy 52,91%, F1 tăng 53,02%, ROC-AUC 52,63%.
+- Phân loại tốt nhất B: Random Forest, Accuracy 54,01%, Balanced Accuracy 54,00%, F1 tăng 53,35%, ROC-AUC 55,91%. Confusion matrix hàng thật Giảm/Tăng, cột dự đoán Giảm/Tăng: [[197,165],[162,187]].
+- Hồi quy tốt nhất A/B: Last-Close Baseline, MAE 1,1141 nghìn VND, RMSE 1,5359 nghìn, MAPE 1,3308%, Directional Accuracy 0%; tolerance ±0,5/±1/±2%: 26,68/50,21/78,93%.
+- Dự báo as-of 30/09/2026: Random Forest B dự đoán Tăng, xác suất 57,50%; Last-Close dự đoán 63,0 nghìn VND.
+- Chọn model bằng Test theo yêu cầu hiện tại; điều này có thể làm metric chọn lọc lạc quan. Mô hình triển khai được fit lại trên toàn bộ nhãn đến 30/09/2026 sau khi ghi metrics.
 
-## Pipeline và kết quả chạy
+## Tệp và kiểm thử
 
-- src/fetch_data.py: tải VCI, kiểm tra phạm vi, căn chỉnh overlap, xuất lineage và hỗ trợ verify.
-- src/eda.py: tạo 4 biểu đồ EDA và reports/data_audit.json.
-- src/prepare.py: tạo 4.870 hàng feature, 4.869 nhãn phiên kế tiếp, 23 đặc trưng.
-- src/train.py: split train 21/03/2007–17/11/2020, validation 18/11/2020–20/10/2023, test 23/10/2023–30/09/2026. Số hàng hồi quy 3.408/730/731; phân loại 3.006/676/711.
-- Bộ phân loại được chọn trên validation: Logistic Regression. Trên test: Accuracy 49,65%, Balanced Accuracy 49,73%, F1 tăng 51,36%, ROC-AUC 49,41%. HistGradientBoosting có Accuracy 52,88%; Random Forest có ROC-AUC 55,13%.
-- Hồi quy được chọn: Last close baseline. Test RMSE 1,5359 nghìn VND, MAE 1,1141 nghìn VND, MAPE 1,3308%, Directional Accuracy 0%.
-- src/predict.py: từ phiên 30/09/2026, Logistic Regression dự đoán tăng với xác suất 55,44%; baseline hồi quy dự đoán close 63,0 nghìn VND.
+- Cập nhật src/features.py, prepare.py, train.py, predict.py; thêm src/fetch_supplemental.py và test liên quan.
+- Cập nhật README.md, data/README.md, docs/PROPOSAL.md, docs/REPORT.md và figures/00_pipeline_overview.png.
+- Cẩm nang docs/CAM_NANG_HIEU_DU_AN.md đã viết lại cho người mới, được .gitignore loại trừ và không có trong Git index.
+- Bảng điểm Validation cũ đã xóa để phản ánh giao thức Train/Test.
+- Snapshot verify, EDA, prepare, train và predict chạy thành công. python -m pytest -q: 23 passed. Test Windows dùng thư mục tạm trong workspace để tránh lỗi quyền khi dọn Temp của sandbox.
 
-## Trạng thái công việc
+## Hoàn tất trước khi push
 
-- [x] Thay cách tải mặc định để lệnh python src/fetch_data.py chạy trực tiếp.
-- [x] Tải và nối dữ liệu mới, bảo vệ tệp cũ nếu API/overlap không hợp lệ.
-- [x] Cập nhật audit, chuẩn bị feature, huấn luyện và dự đoán.
-- [x] Viết lại tài liệu dữ liệu, proposal, report và README.
-- [x] Cập nhật test cho verify, nối overlap, mặc định tải và kiểm tra không leakage.
-- [x] Chạy end-to-end lần cuối; 16 unit tests pass; snapshot verify pass; quét các từ khóa bị cấm trên .md, .py, .json không còn kết quả; requirements đã pin vnstock 5.1.0.
-- [ ] Đẩy lên GitHub đang chờ xác nhận quyền công khai dữ liệu: điều khoản Vietcap hiện hành hạn chế sao chép, phân phối và xuất bản nội dung/dữ liệu website nếu không được cho phép.
+- [x] Quét các từ khóa nguồn bị cấm trong tài liệu/code/kết quả.
+- [x] Kiểm tra .gitignore, diff và trạng thái cẩm nang riêng.
+- [ ] Commit và push các tệp chính thức lên main theo yêu cầu.

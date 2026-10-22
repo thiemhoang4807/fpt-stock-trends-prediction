@@ -38,6 +38,15 @@ FEATURE_COLUMNS = [
 
 REGRESSION_FEATURE_COLUMNS = FEATURE_COLUMNS + ["current_close"]
 
+OHLC_FEATURE_COLUMNS = [
+    "candle_range_pct",
+    "candle_body_pct",
+    "overnight_gap_pct",
+    "close_location_in_range",
+]
+FULL_OHLCV_FEATURE_COLUMNS = FEATURE_COLUMNS + OHLC_FEATURE_COLUMNS
+REGRESSION_FULL_OHLCV_FEATURE_COLUMNS = FULL_OHLCV_FEATURE_COLUMNS + ["current_close"]
+
 
 def load_price_data(path: str | Path) -> pd.DataFrame:
     """Load and validate daily OHLCV without filling values from the future."""
@@ -82,8 +91,11 @@ def _rsi(close: pd.Series, period: int = 14) -> pd.Series:
 
 
 def build_feature_table(data: pd.DataFrame) -> pd.DataFrame:
-    """Create features known at close(t) and outcomes for the next observed session."""
+    """Create backward-looking technical and candle features plus next-session outcomes."""
     close = data["close"].astype(float)
+    open_price = data["open"].astype(float)
+    high = data["high"].astype(float)
+    low = data["low"].astype(float)
     log_volume = np.log1p(data["volume"].astype(float))
     one_day_return = close.pct_change()
     result = pd.DataFrame(index=data.index)
@@ -97,6 +109,16 @@ def build_feature_table(data: pd.DataFrame) -> pd.DataFrame:
         [1.0, 0.0],
         default=np.nan,
     )
+
+    previous_close = close.shift(1)
+    intraday_range = high - low
+    result["candle_range_pct"] = intraday_range / close
+    result["candle_body_pct"] = (close - open_price) / open_price
+    result["overnight_gap_pct"] = open_price / previous_close - 1.0
+    close_location = (close - low) / intraday_range.replace(0.0, np.nan)
+    # When high == low, the close is at the only traded price; use a neutral
+    # midpoint value so flat-range sessions do not disappear from the sample.
+    result["close_location_in_range"] = close_location.fillna(0.5)
 
     for period in (1, 2, 5, 10, 20):
         result[f"return_{period}d"] = close.pct_change(period)

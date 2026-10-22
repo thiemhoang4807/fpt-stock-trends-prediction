@@ -8,7 +8,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from features import FEATURE_COLUMNS, build_feature_table
+from features import FEATURE_COLUMNS, FULL_OHLCV_FEATURE_COLUMNS, build_feature_table
 from train import _chronological_splits
 
 
@@ -55,8 +55,30 @@ def test_splits_are_chronological_by_target_date():
     table = build_feature_table(_synthetic_ohlcv())
     masks, _ = _chronological_splits(table)
     train_end = table.loc[masks["train"], "target_date"].max()
-    validation_start = table.loc[masks["validation"], "target_date"].min()
-    validation_end = table.loc[masks["validation"], "target_date"].max()
     test_start = table.loc[masks["test"], "target_date"].min()
-    assert train_end < validation_start
-    assert validation_end < test_start
+    assert train_end < test_start
+    assert "validation" not in masks
+    labeled_rows = int(table["target_date"].notna().sum())
+    assert int(masks["train"].sum()) == int(labeled_rows * 0.85)
+    assert int(masks["test"].sum()) == labeled_rows - int(labeled_rows * 0.85)
+
+
+def test_full_ohlcv_features_are_known_at_close_of_current_session():
+    data = _synthetic_ohlcv()
+    features = build_feature_table(data)
+    row = features.loc[features["date"].eq(data.loc[60, "time"])].iloc[0]
+    current = data.loc[60]
+    previous = data.loc[59, "close"]
+    assert np.isclose(row["candle_range_pct"], (current["high"] - current["low"]) / current["close"])
+    assert np.isclose(row["candle_body_pct"], (current["close"] - current["open"]) / current["open"])
+    assert np.isclose(row["overnight_gap_pct"], current["open"] / previous - 1.0)
+    assert np.isclose(row["close_location_in_range"], (current["close"] - current["low"]) / (current["high"] - current["low"]))
+    assert set(FULL_OHLCV_FEATURE_COLUMNS).issubset(features.columns)
+
+
+def test_flat_range_candle_uses_neutral_close_position_without_dropping_row():
+    data = _synthetic_ohlcv()
+    data.loc[80, ["open", "high", "low", "close"]] = 100.0
+    features = build_feature_table(data)
+    row = features.loc[features["date"].eq(data.loc[80, "time"])].iloc[0]
+    assert row["close_location_in_range"] == 0.5

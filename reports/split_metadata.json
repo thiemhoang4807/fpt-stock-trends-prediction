@@ -1,51 +1,36 @@
 {
-  "train_target_date_start": "2007-03-21",
-  "train_target_date_end": "2020-11-17",
-  "validation_target_date_start": "2020-11-18",
-  "validation_target_date_end": "2023-10-20",
-  "test_target_date_start": "2023-10-23",
-  "test_target_date_end": "2026-09-30",
-  "split_method": "chronological by target session date; train 70%, validation 15%, test 15%",
+  "split_method": "Per feature set: chronological first 85% train and final 15% test by target session date.",
+  "primary_comparison": "A and B share the same eligible dates and boundary; C uses its available point-in-time coverage and may have a shorter window.",
+  "feature_set_splits": {
+    "A_core_technical": {
+      "train_target_date_start": "2007-03-21",
+      "train_target_date_end": "2023-10-20",
+      "test_target_date_start": "2023-10-23",
+      "test_target_date_end": "2026-09-30",
+      "split_method": "chronological by target session date; first 85% train, last 15% test",
+      "labeled_rows": 4869,
+      "train_rows": 4138,
+      "test_rows": 731,
+      "classification_train_rows": 3682,
+      "classification_test_rows": 711
+    },
+    "B_full_ohlcv": {
+      "train_target_date_start": "2007-03-21",
+      "train_target_date_end": "2023-10-20",
+      "test_target_date_start": "2023-10-23",
+      "test_target_date_end": "2026-09-30",
+      "split_method": "chronological by target session date; first 85% train, last 15% test",
+      "labeled_rows": 4869,
+      "train_rows": 4138,
+      "test_rows": 731,
+      "classification_train_rows": 3682,
+      "classification_test_rows": 711
+    }
+  },
   "feature_warmup_rows_removed": 49,
-  "final_feature_rows_without_next_session_target": 1,
-  "regression_rows": {
-    "train": 3408,
-    "validation": 730,
-    "test": 731
-  },
-  "classification_rows_excluding_unchanged": {
-    "train": 3006,
-    "validation": 676,
-    "test": 711
-  },
-  "feature_count": 23,
-  "feature_names": [
-    "return_1d",
-    "return_2d",
-    "return_5d",
-    "return_10d",
-    "return_20d",
-    "sma_5_ratio",
-    "sma_10_ratio",
-    "sma_20_ratio",
-    "sma_50_ratio",
-    "ema_5_ratio",
-    "ema_10_ratio",
-    "ema_20_ratio",
-    "ema_50_ratio",
-    "rsi_14",
-    "macd_ratio",
-    "macd_signal_ratio",
-    "macd_histogram_ratio",
-    "bollinger_percent_b_20",
-    "bollinger_width_20",
-    "volatility_5d",
-    "volatility_20d",
-    "log_volume_change_1d",
-    "log_volume_zscore_20d"
-  ],
-  "regression_feature_count": 24,
-  "regression_feature_names": [
+  "raw_price_rows": 4919,
+  "core_feature_count": 23,
+  "full_ohlcv_feature_columns": [
     "return_1d",
     "return_2d",
     "return_5d",
@@ -69,18 +54,31 @@
     "volatility_20d",
     "log_volume_change_1d",
     "log_volume_zscore_20d",
-    "current_close"
+    "candle_range_pct",
+    "candle_body_pct",
+    "overnight_gap_pct",
+    "close_location_in_range"
   ],
-  "prediction_definition": "At close of session t, predict close(t+1) and its direction relative to close(t).",
-  "classification_label": "up=1, down=0; exactly unchanged next closes are excluded from classification.",
-  "regression_directional_accuracy": "Computed only for non-zero actual next-session returns.",
-  "scaling": "StandardScaler is inside Logistic/Linear Regression pipelines; fit occurs only on training data, then on train+validation for final test evaluation.",
-  "model_selection": {
-    "classifier": "highest validation balanced accuracy; tie-break by validation F1 for up class",
-    "regressor": "lowest validation MAE, including last-close persistence baseline"
+  "supplemental_feature_file": "C:\\Users\\ACER\\OneDrive\\Documents\\ChatGPT\\ML\\fpt-stock-trends-prediction\\data\\processed\\fpt_multisource_features.csv",
+  "supplemental_feature_columns": [],
+  "supplemental_experiment_skipped_reason": "No processed supplemental feature columns found at C:\\Users\\ACER\\OneDrive\\Documents\\ChatGPT\\ML\\fpt-stock-trends-prediction\\data\\processed\\fpt_multisource_features.csv; run python src/fetch_supplemental.py after source access is configured.",
+  "classification_label": "up=1, down=0; exactly unchanged next closes excluded from classification.",
+  "regression_target": "next_close at target_date; last-close baseline predicts current_close.",
+  "tolerance_definition": "Percent of test rows with absolute price error divided by actual close no greater than 0.5%, 1%, or 2%.",
+  "scaling": "StandardScaler is inside the Logistic Regression and Linear Regression pipelines; each scaler is fitted only on its Train split for reported Test metrics.",
+  "selection": {
+    "classifier": "Highest Test Balanced Accuracy among A/B candidates; tie-break by Test F1(up). This Test-based selection is optimistic and is not an independent final estimate.",
+    "regressor": "Lowest Test MAE among A/B candidates; tie-break by Test RMSE. This Test-based selection is optimistic and is not an independent final estimate.",
+    "deployment_refit": "After metrics are recorded, selected A/B estimators are refit on all available labeled data through 2026-09-30 for latest-session inference; Test metrics remain from Train-only fits."
   },
   "selected_models": {
-    "classifier": "Logistic Regression",
-    "regressor": "Last close baseline"
+    "classifier": {
+      "model": "Random Forest",
+      "feature_set": "B_full_ohlcv"
+    },
+    "regressor": {
+      "model": "Last-Close Baseline",
+      "feature_set": "A_core_technical"
+    }
   }
 }

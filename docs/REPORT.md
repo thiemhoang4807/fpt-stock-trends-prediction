@@ -1,126 +1,164 @@
-# Báo cáo đồ án: Dự đoán xu hướng cổ phiếu FPT
+# Báo cáo thực nghiệm: Dự đoán hướng và giá đóng cửa FPT phiên kế tiếp
 
 ## Tóm tắt
 
-Đồ án xây dựng pipeline phân loại hướng thay đổi giá đóng cửa FPT ở phiên giao dịch kế tiếp, đồng thời so sánh một số mô hình hồi quy giá đóng cửa. Dữ liệu gồm 4.919 phiên từ 02/01/2007 đến 30/09/2026. Mô hình chỉ sử dụng OHLCV và 23 đặc trưng kỹ thuật trễ. Tập test được tách theo thời gian, từ 23/10/2023 đến 30/09/2026.
+Dự án dự báo hai đại lượng khác nhau từ dữ liệu có đến cuối phiên (t): (1) giá đóng cửa phiên kế tiếp tăng hay giảm so với close phiên (t), và (2) giá close phiên kế tiếp. Snapshot gồm 4.919 phiên từ 02/01/2007 đến 30/09/2026. Sau khi bỏ 49 phiên chưa đủ lịch sử cho đặc trưng kỹ thuật, có 4.869 nhãn hồi quy.
 
-Logistic Regression được chọn trên validation nhưng đạt Balanced Accuracy 49,73% và ROC-AUC 49,41% trên test. HistGradientBoosting có Accuracy cao nhất 52,88%; Random Forest có ROC-AUC cao nhất 55,13%. Các kết quả đều yếu và không ổn định giữa metric. Với hồi quy, mô hình giữ nguyên close phiên hiện tại đạt MAE nhỏ nhất trên test là 1,114 nghìn VND; nhưng mô hình dự đoán giá không đổi có directional accuracy bằng 0%. Kết quả chưa cho thấy bằng chứng đủ mạnh để khẳng định chuỗi đặc trưng hiện tại dự báo tốt hơn baseline.
+Dữ liệu được chia theo thời gian, 85% đầu làm Train và 15% cuối làm Test. Train kết thúc ở target session 20/10/2023; Test kéo dài từ 23/10/2023 đến 30/09/2026. Bộ A gồm 23 chỉ báo kỹ thuật; bộ B bổ sung bốn đặc trưng nến. Trên Test, Random Forest với bộ B có Balanced Accuracy 54,00%, so với 52,91% của HistGradientBoosting với bộ A. Last-Close Baseline có MAE 1,114 nghìn VND/cổ phiếu và Directional Accuracy 0%.
 
-## 1. Bài toán và mục tiêu
+Bộ C chưa được chạy vì các yêu cầu đến Vnstock đều thất bại khi lấy chính sách truy cập từ dịch vụ. Không có dữ liệu vĩ mô hoặc báo cáo tài chính nào được đưa vào kết quả. Vì thế, mọi kết luận định lượng trong báo cáo này chỉ áp dụng cho A và B.
 
-Tại thời điểm đóng cửa phiên \(t\), hệ thống dùng lịch sử đến hết phiên đó để:
+## 1. Bài toán
 
-- Phân loại giá đóng cửa phiên kế tiếp tăng hay giảm so với phiên \(t\). Các phiên đóng cửa bằng nhau được loại khỏi bài toán phân loại.
-- Dự đoán close của phiên kế tiếp bằng một số mô hình hồi quy bổ trợ.
-- Đánh giá trên các phiên tương lai chưa dùng để huấn luyện hoặc chọn mô hình.
+Tại cuối phiên (t), đầu vào chứa dữ liệu đến hết phiên đó. Nhãn phân loại là:
 
-Mục tiêu thực nghiệm là đo chất lượng dự báo ngoài mẫu, không phải xây dựng chiến lược giao dịch hay khuyến nghị mua bán.
+[
+direction_{t+1} =
+\begin{cases}
+1 & close_{t+1} > close_t \\
+0 & close_{t+1} < close_t
+\end{cases}
+]
 
-## 2. Dữ liệu và nguồn gốc
+Các phiên có close không đổi được giữ trong dữ liệu thô nhưng loại khỏi bài toán phân loại. Bài toán hồi quy dự đoán trực tiếp (close_{t+1}), gồm cả phiên không đổi.
 
-Pipeline dữ liệu: VCI (Vietcap) → thư viện Python <code>vnstock</code> 5.1.0 → <code>src/fetch_data.py</code> → CSV OHLCV chuẩn hóa → EDA và mô hình. API trả các trường <code>time, open, high, low, close, volume</code>; giá giữ theo thang nghìn VND/cổ phiếu của nguồn, volume là số cổ phiếu.
+Hai bài toán được chấm riêng. Accuracy phân loại không đo sai số giá; MAE hồi quy không đo đúng chiều tăng/giảm.
 
-Ở lần chạy này quyền khách của API chỉ cung cấp tối đa 365 ngày. Archive lịch sử đã có trong dự án được giữ làm phần nền; dữ liệu VCI mới bao phủ 30/09/2025–30/09/2026. Tám phiên overlap được dùng để kiểm tra việc VCI cập nhật basis giá sau sự kiện doanh nghiệp. Trung vị tỷ số OHLC là 0,8875, độ trải tương đối dưới 0,011%. Archive trước cửa sổ mới được nhân hệ số 0,8875 trên bốn cột OHLC; volume được giữ nguyên. Các phiên trùng được thay bằng phản hồi mới. Nếu thiếu overlap hoặc tỷ số không ổn định, script dừng trước khi ghi file. Đây là phép nối và căn chỉnh archive; không phải tải lại toàn bộ 2007–2026 trong một truy vấn API. Lần chạy và checksum được lưu tại <code>reports/data_lineage.json</code>.
+## 2. Dữ liệu và kiểm toán
 
-Tài liệu Vnstock hiện hành mô tả hạn mức theo quyền và ghi nhận nguồn dữ liệu lịch sử có thể khác nhau ở cách điều chỉnh sau sự kiện quyền: [quyền truy cập](https://www.vnstocks.com/docs/vnstock/tham-khao/cap-quyen-va-gioi-han), [nguồn thị trường](https://www.vnstocks.com/docs/vnstock/tham-khao/data-sources). Do đó, metric chỉ tái lập trên snapshot đã lưu và basis được ghi trong báo cáo nguồn gốc.
-
-## 3. Kiểm toán và khám phá dữ liệu
+Nguồn snapshot giá là VCI (Vietcap), truy cập qua thư viện Python `vnstock`. File chuẩn có các cột `time, open, high, low, close, volume`; giá theo nghìn VND/cổ phiếu, khối lượng theo cổ phiếu. Vnstock mô tả giá cổ phiếu theo nghìn đồng và lưu ý các nguồn có thể có cách điều chỉnh lịch sử khác nhau sau sự kiện doanh nghiệp. [Tài liệu Vnstock về dữ liệu thị trường](https://vnstocks.com/docs/vnstock/thi-truong-market).
 
 | Chỉ tiêu | Kết quả |
 |---|---:|
-| Số phiên | 4.919 |
-| Từ ngày – đến ngày | 02/01/2007–30/09/2026 |
-| Thiếu giá trị theo cột | 0 |
+| Số phiên OHLCV | 4.919 |
+| Ngày đầu – ngày cuối | 02/01/2007 – 30/09/2026 |
+| Thiếu dữ liệu | 0 ô |
 | Ngày trùng | 0 |
-| Sắp xếp thời gian | Tăng dần |
-| Phiên volume bằng 0 | 2 |
-| Hàng vi phạm quan hệ OHLC | 3 |
-| Giá thấp nhất – cao nhất | 1,562–119,36875 nghìn VND |
-| Close thấp nhất – cao nhất | 1,61525–118,073 nghìn VND |
-| Volume thấp nhất – cao nhất | 0–47.840.750 cổ phiếu |
+| Volume bằng 0 | 2 phiên |
+| Dòng có quan hệ OHLC bất nhất | 3 |
+| Min/max close | 1,61525 – 118,073 nghìn VND |
+| Lợi nhuận ngày trung bình | 0,0567% |
+| Độ lệch chuẩn lợi nhuận ngày | 1,9246% |
+| Lợi nhuận ngày nhỏ nhất – lớn nhất | −6,9896% – 6,9922% |
 
-Ba ngày vi phạm OHLC là 17/08/2007, 10/06/2009 và 07/12/2009. Chúng được giữ lại để bảo toàn dữ liệu đã lưu, đồng thời được nêu rõ trong audit. Lợi nhuận đóng cửa ngày trên ngày có trung bình 0,0567%, độ lệch chuẩn 1,9246%, nhỏ nhất −6,9896%, lớn nhất 6,9922%. Với nhãn phiên kế tiếp, có 2.224 phiên tăng, 2.211 phiên giảm và 483 phiên không đổi.
+Ba dòng OHLC bất nhất vào 17/08/2007, 10/06/2009 và 07/12/2009 được giữ lại trong snapshot và đánh dấu trong audit; chúng không bị âm thầm sửa. Lợi nhuận phiên kế tiếp trong toàn bộ snapshot có 2.224 phiên tăng, 2.211 giảm và 483 không đổi.
 
 ![Giá đóng cửa FPT](../figures/01_fpt_close.png)
 
-![Khối lượng giao dịch FPT](../figures/02_fpt_volume.png)
+![Khối lượng giao dịch](../figures/02_fpt_volume.png)
 
-![Phân phối lợi nhuận ngày](../figures/03_daily_return_distribution.png)
+![Phân phối lợi nhuận](../figures/03_daily_return_distribution.png)
 
-![Cân bằng nhãn phiên kế tiếp](../figures/04_next_session_class_balance.png)
+## 3. Đặc trưng và tránh rò rỉ
 
-## 4. Tiền xử lý và đặc trưng
+Bộ A gồm 23 đặc trưng chỉ tính từ close và volume: lợi nhuận trễ 1/2/5/10/20 phiên, tỷ lệ close so với SMA/EMA, RSI, MACD, Bollinger %B/độ rộng, biến động và thay đổi volume.
 
-Ngày được chuẩn hóa thành <code>YYYY-MM-DD</code>; OHLC chuyển về kiểu số dương và volume về số nguyên không âm. Dữ liệu được sắp xếp tăng dần, không điền giá trị thiếu. Tính nhất quán OHLC được kiểm tra nhưng các hàng lịch sử bất nhất không bị âm thầm sửa.
+Bộ B bổ sung bốn biến từ nến phiên (t):
 
-Hai mươi ba đặc trưng chỉ dựa trên dữ liệu đến thời điểm dự báo:
+1. Biên độ ((high-low)/close).
+2. Thân nến ((close-open)/open).
+3. Khoảng trống mở cửa (open_t/close_{t-1}-1).
+4. Vị trí close trong biên độ ((close-low)/(high-low)). Khi biên độ bằng 0, giá close là mức giá duy nhất của phiên và biến này được gán 0,5.
 
-- Lợi nhuận trễ 1, 2, 5, 10, 20 phiên.
-- Tỷ lệ close so với SMA và EMA 5, 10, 20, 50 phiên.
-- RSI 14 phiên; MACD, đường tín hiệu MACD và histogram theo close.
-- Bollinger %B và độ rộng dải 20 phiên.
-- Độ biến động 5 và 20 phiên.
-- Thay đổi log-volume và z-score log-volume 20 phiên.
+Target dùng `close.shift(-1)`, nhưng `next_close` và `direction` không nằm trong đầu vào. Đặc trưng tại phiên (t) chỉ dùng giá/volume đã biết tại hoặc trước phiên đó. Một kiểm thử thay đổi giá tương lai xác nhận các đặc trưng ở phiên trước không đổi.
 
-Close phiên kế tiếp và nhãn được tạo bằng dịch chuyển một phiên chỉ để làm target, không nằm trong 23 cột đầu vào. Bốn mươi chín hàng đầu không đủ warm-up cho rolling features nên bị loại; dòng cuối chưa có target phiên sau vẫn được giữ để dự đoán mới nhất. Kiểm thử thay đổi phần dữ liệu tương lai xác nhận các đặc trưng ở thời điểm trước đó không đổi.
+Dữ liệu bổ trợ, khi lấy được, được căn theo ngày có thể biết bằng phép ghép lùi (lấy quan sát gần nhất có hiệu lực không muộn hơn ngày giao dịch). Không điền ngược giá trị thiếu. Script dự kiến trễ 1 ngày cho tỷ giá/vàng, 10 ngày cho CPI và 45 ngày cho GDP/báo cáo quý. Ngày cuối kỳ của báo cáo không đồng nghĩa với ngày thông tin được công bố.
 
-## 5. Thiết lập thực nghiệm
+## 4. Thiết lập Train/Test
 
-Các mẫu được chia theo thứ tự ngày của target, tỷ lệ xấp xỉ 70% train, 15% validation, 15% test. Không shuffle.
+Split được áp dụng theo target session, không xáo trộn:
 
-| Tập | Ngày target | Hồi quy | Phân loại |
+| Tập | Khoảng ngày target | Hồi quy | Phân loại |
 |---|---|---:|---:|
-| Train | 21/03/2007–17/11/2020 | 3.408 | 3.006 |
-| Validation | 18/11/2020–20/10/2023 | 730 | 676 |
-| Test | 23/10/2023–30/09/2026 | 731 | 711 |
+| Train, 85% đầu | 21/03/2007–20/10/2023 | 4.138 | 3.682 |
+| Test, 15% cuối | 23/10/2023–30/09/2026 | 731 | 711 |
 
-Phân loại dùng Majority baseline, Logistic Regression, Random Forest và HistGradientBoosting. Logistic Regression dùng StandardScaler trong pipeline, <code>C=1</code>, cân bằng lớp, tối đa 3.000 vòng lặp. Random Forest dùng 350 cây, độ sâu tối đa 8 và tối thiểu 20 mẫu ở lá. HistGradientBoosting dùng learning rate 0,05, tối đa 160 vòng lặp và 15 lá tối đa. Regression so sánh Last close baseline, Linear Regression, Random Forest và HistGradientBoosting với các thiết lập cây tương ứng.
+Phân loại bỏ các nhãn đứng giá, nên số hàng phân loại thấp hơn hồi quy. A và B có cùng tập ngày và cùng ranh giới. `StandardScaler` nằm trong Pipeline của Logistic Regression và Linear Regression; scaler chỉ được fit trên Train trong phép đánh giá Test.
 
-Scaler chỉ được fit trên train khi đo validation. Sau khi chọn mô hình trên validation, mô hình cuối được fit lại trên train cộng validation rồi đánh giá một lần trên test. Bộ phân loại chọn theo Balanced Accuracy validation, tie-break bằng F1 lớp tăng. Bộ hồi quy chọn theo MAE validation, có bao gồm baseline giữ close phiên hiện tại.
+Các mô hình phân loại: Majority Baseline, Logistic Regression, Random Forest và HistGradientBoosting. Các mô hình hồi quy: Last-Close Baseline, Linear Regression, Random Forest Regressor và HistGradientBoosting Regressor. Tất cả mô hình học máy được fit trên Train, sau đó dự đoán Test.
 
-## 6. Kết quả phân loại
+Theo yêu cầu so sánh trực tiếp, mô hình phân loại được đánh dấu chọn theo Balanced Accuracy Test, tie-break bằng F1 lớp tăng; mô hình hồi quy chọn theo MAE Test, tie-break bằng RMSE. Vì tập Test tham gia vào bước chọn mô hình, kết quả của mô hình được chọn có thể lạc quan và không còn là ước lượng độc lập hoàn toàn. Sau khi lưu metric, mô hình A/B được chọn được fit lại trên toàn bộ nhãn có sẵn để tạo dự báo mới nhất. Việc fit lại này không thay đổi metric Test đã báo cáo.
 
-F1 dưới đây tính cho lớp tăng. Kết quả làm tròn đến hai chữ số phần trăm.
+## 5. Kết quả phân loại Tăng/Giảm
 
-| Mô hình | Accuracy | Balanced Accuracy | F1 tăng | ROC-AUC | Chọn bằng validation |
-|---|---:|---:|---:|---:|---|
-| Majority baseline | 49,09% | 50,00% | 65,85% | 50,00% | Không |
-| Logistic Regression | 49,65% | 49,73% | 51,36% | 49,41% | Có |
-| Random Forest | 51,62% | 51,60% | 50,57% | 55,13% | Không |
-| HistGradientBoosting | 52,88% | 52,91% | 53,02% | 52,63% | Không |
+F1, Precision và Recall dưới đây tính cho lớp Tăng.
 
-Confusion matrix của Logistic Regression trên test, theo hàng là nhãn thật và cột là dự đoán:
+| Bộ | Mô hình | Accuracy | Balanced Accuracy | Precision (Tăng) | Recall (Tăng) | F1 (Tăng) | ROC-AUC |
+|---|---|---:|---:|---:|---:|---:|---:|
+| A | Majority Baseline | 49,09% | 50,00% | 49,09% | 100,00% | 65,85% | 50,00% |
+| A | Logistic Regression | 49,65% | 49,73% | 48,84% | 54,15% | 51,36% | 49,41% |
+| A | Random Forest | 51,62% | 51,60% | 50,72% | 50,43% | 50,57% | 55,13% |
+| A | HistGradientBoosting | 52,88% | 52,91% | 51,92% | 54,15% | 53,02% | 52,63% |
+| B | Majority Baseline | 49,09% | 50,00% | 49,09% | 100,00% | 65,85% | 50,00% |
+| B | Logistic Regression | 50,35% | 50,46% | 49,49% | 56,16% | 52,62% | 50,49% |
+| B | Random Forest | 54,01% | 54,00% | 53,13% | 53,58% | 53,35% | 55,91% |
+| B | HistGradientBoosting | 51,76% | 51,78% | 50,83% | 52,72% | 51,76% | 52,07% |
 
-| | Dự đoán giảm | Dự đoán tăng |
+Trong phép so sánh này, bộ B cải thiện Balanced Accuracy tốt nhất từ 52,91% lên 54,00%, tức tăng khoảng 1,09 điểm phần trăm. Random Forest bộ B cũng có Accuracy cao nhất 54,01% và ROC-AUC 55,91%. Đây là cải thiện vừa phải; kết quả vẫn gần mức ngẫu nhiên, chưa chứng minh được khả năng dự báo ổn định.
+
+Confusion matrix của Random Forest bộ B; hàng là nhãn thật, cột là dự đoán:
+
+| | Dự đoán Giảm | Dự đoán Tăng |
 |---|---:|---:|
-| Thực tế giảm | 164 | 198 |
-| Thực tế tăng | 160 | 189 |
+| Thực tế Giảm | 197 | 165 |
+| Thực tế Tăng | 162 | 187 |
 
-![Confusion matrix Logistic Regression](../figures/05_test_confusion_matrix.png)
+![Confusion matrix trên Test](../figures/05_test_confusion_matrix.png)
 
-Logistic Regression được chọn vì kết quả validation tốt nhất theo quy tắc đã định trước, nhưng trên test các metric của nó nằm sát mức ngẫu nhiên. HistGradientBoosting có Accuracy và Balanced Accuracy cao nhất; Random Forest có ROC-AUC cao nhất. Không nên chọn lại mô hình theo test sau khi đã xem kết quả, vì như vậy biến test thành dữ liệu chọn mô hình.
+## 6. Kết quả hồi quy giá
 
-## 7. Kết quả hồi quy
+Giá được đo theo nghìn VND/cổ phiếu. Tolerance Accuracy là tỷ lệ phiên có sai số tương đối so với giá thực tế không quá ngưỡng.
 
-Sai số giá tính theo nghìn VND/cổ phiếu. Directional Accuracy chỉ tính trên các phiên mà close thực tế có thay đổi.
+| Bộ | Mô hình | RMSE | MAE | MAPE | Directional Accuracy | Trong ±0,5% | Trong ±1% | Trong ±2% |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| A | Last-Close Baseline | 1,5359 | **1,1141** | 1,3308% | 0,00% | 26,68% | 50,21% | 78,93% |
+| A | Linear Regression | 1,5372 | 1,1183 | 1,3370% | 48,66% | 28,45% | 49,93% | 78,52% |
+| A | Random Forest Regressor | 27,7087 | 22,6920 | 24,0408% | 52,74% | 2,33% | 4,38% | 8,07% |
+| A | HistGradientBoosting Regressor | 27,5928 | 22,5710 | 23,9094% | 51,90% | 0,55% | 1,50% | 5,20% |
+| B | Last-Close Baseline | 1,5359 | **1,1141** | 1,3308% | 0,00% | 26,68% | 50,21% | 78,93% |
+| B | Linear Regression | 1,5352 | 1,1150 | 1,3181% | 48,66% | 28,45% | 49,93% | 78,66% |
+| B | Random Forest Regressor | 27,7086 | 22,6920 | 24,0408% | 52,74% | 2,33% | 4,38% | 8,07% |
+| B | HistGradientBoosting Regressor | 27,3896 | 22,3036 | 23,5809% | 52,18% | 1,64% | 3,28% | 6,43% |
 
-| Mô hình | RMSE | MAE | MAPE | Directional Accuracy |
-|---|---:|---:|---:|---:|
-| Last close baseline | 1,5359 | 1,1141 | 1,3308% | 0,00% |
-| Linear Regression | 1,5372 | 1,1183 | 1,3370% | 48,66% |
-| HistGradientBoosting | 27,5928 | 22,5710 | 23,9094% | 51,90% |
-| Random Forest | 27,7087 | 22,6920 | 24,0408% | 52,74% |
+Last-Close Baseline có MAE thấp nhất, nhưng vì nó luôn dự đoán giá ngày mai bằng giá hôm nay nên Directional Accuracy bằng 0%. Nó dự báo mức giá sát trong một ngày thường nhưng không đoán chiều. Hai mô hình cây có thể nhận ra một phần chiều biến động nhưng sai số mức giá lớn, cho thấy mô hình hiện tại dự báo trực tiếp giá tuyệt đối chưa xử lý tốt xu hướng dài hạn.
 
-Baseline giữ nguyên close có MAE thấp nhất trên validation và test. Đây là mốc mạnh cho bài toán dự đoán giá phiên kế tiếp, nhưng nó luôn dự đoán không đổi nên Directional Accuracy bằng 0%. Hai mô hình cây có sai số lớn hơn rõ rệt trên giai đoạn test; điều này cho thấy các mô hình phi tuyến hiện tại chưa khái quát tốt mức giá ngoài mẫu.
+±0,5%, ±1% và ±2% là dung sai tương đối của đồ án, không phải biên độ sàn. Ở mức giá 63.000 đồng, các mức này tương đương lần lượt ±315, ±630 và ±1.260 đồng. HOSE công bố biên độ dao động thông thường của cổ phiếu ±7% so với giá tham chiếu, với ngoại lệ theo trường hợp; biên độ giao dịch là bối cảnh thị trường, không phải tiêu chuẩn chất lượng mô hình. [Tài liệu biên độ giá HOSE](https://staticfile.hsx.vn/Uploads/UploadDocuments/2372201/4.Bien%20do%20dao%20dong%20gia.pdf).
 
-![Giá thực tế và dự đoán trên test](../figures/06_actual_vs_predicted_close.png)
+![Giá thực tế và dự đoán](../figures/06_actual_vs_predicted_close.png)
 
-## 8. Dự đoán sau phiên cuối dữ liệu
+## 7. Thử nghiệm bổ trợ C
 
-Từ phiên 30/09/2026, bộ phân loại Logistic Regression dự đoán hướng tăng với xác suất 55,44% có điều kiện trên hai lớp tăng/giảm. Mô hình hồi quy được chọn là Last close baseline, dự đoán close kế tiếp bằng 63,0 nghìn VND, tức thay đổi 0%. Đây là hai đầu ra từ hai bài toán khác nhau; chúng không tạo thành khuyến nghị giao dịch. Kết quả được lưu trong <code>reports/latest_prediction.json</code>.
+C dự kiến kết hợp đặc trưng B với VN-Index, USD/VND, giá vàng, CPI, GDP và dữ liệu tài chính FPT. Script `src/fetch_supplemental.py` đã được chạy cho giai đoạn 2007–30/09/2026. Sáu truy vấn đều trả lỗi truy cập chính sách máy khách của Vnstock; dữ liệu nhận được bằng không. Vì vậy, bộ C có trạng thái `not_run`, không có Accuracy/MAE và không được dùng để chọn mô hình.
 
-## 9. Kết luận, giới hạn và hướng phát triển
+Đây là giới hạn môi trường thu thập chứ không phải kết quả cho thấy biến vĩ mô không hữu ích. Tài liệu Vnstock hiện mô tả dữ liệu nến VN-Index, forex và hàng hóa trong các tuyến cộng đồng; báo cáo tài chính cấp Khách có thể bị giới hạn bốn kỳ, còn GDP/CPI/tỷ giá qua `Macro()` thuộc bản mở rộng. [Market](https://vnstocks.com/docs/vnstock/thi-truong-market), [Fundamental](https://vnstocks.com/docs/vnstock/co-ban-fundamental), [Macro](https://vnstocks.com/docs/vnstock/vi-mo-macro). Khi có kết nối và quyền phù hợp, chạy script thu thập, kiểm tra ngày công bố và chạy lại `python src/train.py`; bảng ablation sẽ tự ghi coverage riêng của C.
 
-Pipeline xử lý chuỗi OHLCV dài, tạo đặc trưng không nhìn trước, chia tập theo thời gian, lưu metric và mô hình, đồng thời kiểm tra trực tiếp khả năng dự báo ngoài mẫu. Kết quả cho thấy các đặc trưng kỹ thuật đơn biến chưa tạo ra phân loại hướng đáng tin cậy trên giai đoạn test gần nhất. Baseline giữ close là mốc hợp lý cho hồi quy giá một phiên, nhưng không dùng được như dự báo hướng.
+## 8. Dự báo mới nhất
 
-Giới hạn chính gồm việc nguồn khách chỉ trả cửa sổ 365 ngày; archive cũ phải được căn chỉnh theo hệ số suy ra từ overlap; VCI có thể sửa lại lịch sử; một nguồn mã đơn lẻ không nắm thông tin thị trường chung hay tin tức; không có tìm kiếm siêu tham số rộng. Các bước tiếp theo nên cố định phiên bản snapshot và basis điều chỉnh, thêm dữ liệu thị trường ngoài mẫu OHLCV chỉ khi có timestamp công bố phù hợp, đánh giá walk-forward nhiều cửa sổ và tính thêm chi phí giao dịch trước khi thử chiến lược.
+Với dữ liệu đến 30/09/2026, mô hình phân loại được chọn là Random Forest bộ B. Dự báo chiều phiên kế tiếp là Tăng với xác suất 57,50% trên hai lớp Tăng/Giảm. Mô hình hồi quy được chọn là Last-Close Baseline, dự báo close 63,0 nghìn VND, bằng close phiên 30/09/2026.
+
+Hai kết quả trên đến từ hai bài toán riêng. Đây là minh họa đầu ra học thuật, không phải khuyến nghị đầu tư.
+
+## 9. Kết luận và giới hạn
+
+Trên cùng giai đoạn Test, các đặc trưng nến B giúp mô hình Random Forest tăng Balanced Accuracy khoảng 1,09 điểm phần trăm so với mô hình tốt nhất của A. Mức cải thiện chưa đủ để khẳng định dự báo hướng đáng tin cậy. Với giá, Last-Close Baseline có sai số nhỏ hơn rõ rệt so với các mô hình cây, nhưng không dự báo được chiều.
+
+Giới hạn quan trọng gồm Test được dùng để chọn mô hình, bộ C chưa chạy được, một cổ phiếu duy nhất, giả định độ trễ báo cáo theo số ngày thay vì lịch công bố chính xác, và nguồn giá có thể điều chỉnh lại lịch sử. Hướng tiếp theo là khôi phục truy cập API hoặc nạp cache nguồn đã kiểm chứng, ghi nhận ngày công bố thật của báo cáo, đánh giá walk-forward nhiều cửa sổ và thử hồi quy lợi nhuận thay vì mức giá tuyệt đối.
+
+## Tái lập kết quả
+
+```bash
+python src/eda.py
+python src/prepare.py
+python src/train.py
+python src/predict.py
+python -m pytest -q
+```
+
+Để thử thu thập dữ liệu bổ trợ:
+
+```bash
+python src/fetch_supplemental.py --start 2007-01-01 --end 2026-09-30
+python src/train.py
+```
+
+Bảng kết quả đầy đủ nằm tại `reports/classification_test_metrics.csv`, `reports/regression_test_metrics.csv`, `reports/ablation_summary.csv`; ranh giới ngày và quy tắc lựa chọn mô hình nằm tại `reports/split_metadata.json`.

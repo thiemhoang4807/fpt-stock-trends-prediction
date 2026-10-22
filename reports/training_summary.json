@@ -1,130 +1,336 @@
 {
-  "classifier_selected": "Logistic Regression",
-  "regressor_selected": "Last close baseline",
+  "classifier_selected": {
+    "model": "Random Forest",
+    "feature_set": "B_full_ohlcv"
+  },
+  "regressor_selected": {
+    "model": "Last-Close Baseline",
+    "feature_set": "A_core_technical"
+  },
   "classification_test_metrics": [
     {
-      "model": "HistGradientBoosting",
-      "accuracy": 0.5288326300984529,
-      "balanced_accuracy": 0.529060931786161,
-      "precision_up": 0.5192307692307693,
-      "recall_up": 0.5415472779369628,
-      "f1_up": 0.5301542776998598,
-      "roc_auc": 0.5263341195839731,
-      "selected_by_validation": false
-    },
-    {
-      "model": "Random Forest",
-      "accuracy": 0.5161744022503516,
-      "balanced_accuracy": 0.5159611518308032,
-      "precision_up": 0.5072046109510087,
-      "recall_up": 0.504297994269341,
-      "f1_up": 0.5057471264367817,
-      "roc_auc": 0.5513463882600642,
-      "selected_by_validation": false
-    },
-    {
+      "feature_set": "A_core_technical",
       "model": "Majority baseline",
+      "test_rows": 711,
+      "test_start": "2023-10-23",
+      "test_end": "2026-09-30",
       "accuracy": 0.4908579465541491,
       "balanced_accuracy": 0.5,
       "precision_up": 0.4908579465541491,
       "recall_up": 1.0,
       "f1_up": 0.6584905660377358,
       "roc_auc": 0.5,
-      "selected_by_validation": false
+      "selected_for_deployment": false
     },
     {
+      "feature_set": "A_core_technical",
       "model": "Logistic Regression",
+      "test_rows": 711,
+      "test_start": "2023-10-23",
+      "test_end": "2026-09-30",
       "accuracy": 0.4964838255977497,
-      "balanced_accuracy": 0.4972929759850559,
+      "balanced_accuracy": 0.49729297598505595,
       "precision_up": 0.4883720930232558,
       "recall_up": 0.5415472779369628,
       "f1_up": 0.5135869565217391,
       "roc_auc": 0.4940714591017746,
-      "selected_by_validation": true
+      "selected_for_deployment": false
+    },
+    {
+      "feature_set": "A_core_technical",
+      "model": "Random Forest",
+      "test_rows": 711,
+      "test_start": "2023-10-23",
+      "test_end": "2026-09-30",
+      "accuracy": 0.5161744022503516,
+      "balanced_accuracy": 0.5159611518308032,
+      "precision_up": 0.5072046109510087,
+      "recall_up": 0.504297994269341,
+      "f1_up": 0.5057471264367817,
+      "roc_auc": 0.5513463882600642,
+      "selected_for_deployment": false
+    },
+    {
+      "feature_set": "A_core_technical",
+      "model": "HistGradientBoosting",
+      "test_rows": 711,
+      "test_start": "2023-10-23",
+      "test_end": "2026-09-30",
+      "accuracy": 0.5288326300984529,
+      "balanced_accuracy": 0.529060931786161,
+      "precision_up": 0.5192307692307693,
+      "recall_up": 0.5415472779369628,
+      "f1_up": 0.5301542776998598,
+      "roc_auc": 0.5263341195839731,
+      "selected_for_deployment": false
+    },
+    {
+      "feature_set": "B_full_ohlcv",
+      "model": "Majority baseline",
+      "test_rows": 711,
+      "test_start": "2023-10-23",
+      "test_end": "2026-09-30",
+      "accuracy": 0.4908579465541491,
+      "balanced_accuracy": 0.5,
+      "precision_up": 0.4908579465541491,
+      "recall_up": 1.0,
+      "f1_up": 0.6584905660377358,
+      "roc_auc": 0.5,
+      "selected_for_deployment": false
+    },
+    {
+      "feature_set": "B_full_ohlcv",
+      "model": "Logistic Regression",
+      "test_rows": 711,
+      "test_start": "2023-10-23",
+      "test_end": "2026-09-30",
+      "accuracy": 0.5035161744022504,
+      "balanced_accuracy": 0.5045591983409584,
+      "precision_up": 0.494949494949495,
+      "recall_up": 0.5616045845272206,
+      "f1_up": 0.5261744966442953,
+      "roc_auc": 0.5048995551615507,
+      "selected_for_deployment": false
+    },
+    {
+      "feature_set": "B_full_ohlcv",
+      "model": "Random Forest",
+      "test_rows": 711,
+      "test_start": "2023-10-23",
+      "test_end": "2026-09-30",
+      "accuracy": 0.540084388185654,
+      "balanced_accuracy": 0.5400077569693995,
+      "precision_up": 0.53125,
+      "recall_up": 0.5358166189111748,
+      "f1_up": 0.5335235378031383,
+      "roc_auc": 0.5590875271098166,
+      "selected_for_deployment": true
+    },
+    {
+      "feature_set": "B_full_ohlcv",
+      "model": "HistGradientBoosting",
+      "test_rows": 711,
+      "test_start": "2023-10-23",
+      "test_end": "2026-09-30",
+      "accuracy": 0.5175808720112518,
+      "balanced_accuracy": 0.5177539615950861,
+      "precision_up": 0.5082872928176796,
+      "recall_up": 0.5272206303724928,
+      "f1_up": 0.5175808720112518,
+      "roc_auc": 0.5207142744067501,
+      "selected_for_deployment": false
     }
   ],
   "regression_test_metrics": [
     {
-      "model": "Last close baseline",
+      "feature_set": "A_core_technical",
+      "model": "Last-Close Baseline",
+      "test_rows": 731,
+      "test_start": "2023-10-23",
+      "test_end": "2026-09-30",
       "rmse": 1.535890277692205,
       "mae": 1.114116621067031,
       "mape_percent": 1.330827425929197,
       "directional_accuracy_nonflat_percent": 0.0,
-      "selected_by_validation": true
+      "tolerance_accuracy_0_5_percent": 26.67578659370725,
+      "tolerance_accuracy_1_percent": 50.20519835841313,
+      "tolerance_accuracy_2_percent": 78.9329685362517,
+      "selected_for_deployment": true
     },
     {
+      "feature_set": "A_core_technical",
       "model": "Linear Regression",
+      "test_rows": 731,
+      "test_start": "2023-10-23",
+      "test_end": "2026-09-30",
       "rmse": 1.5372000470863232,
       "mae": 1.1183274160130496,
       "mape_percent": 1.3369585573593616,
       "directional_accuracy_nonflat_percent": 48.66385372714487,
-      "selected_by_validation": false
+      "tolerance_accuracy_0_5_percent": 28.454172366621066,
+      "tolerance_accuracy_1_percent": 49.93160054719562,
+      "tolerance_accuracy_2_percent": 78.52257181942545,
+      "selected_for_deployment": false
     },
     {
-      "model": "HistGradientBoosting",
+      "feature_set": "A_core_technical",
+      "model": "Random Forest Regressor",
+      "test_rows": 731,
+      "test_start": "2023-10-23",
+      "test_end": "2026-09-30",
+      "rmse": 27.70869294801257,
+      "mae": 22.69202181161482,
+      "mape_percent": 24.04078976142516,
+      "directional_accuracy_nonflat_percent": 52.742616033755276,
+      "tolerance_accuracy_0_5_percent": 2.3255813953488373,
+      "tolerance_accuracy_1_percent": 4.377564979480164,
+      "tolerance_accuracy_2_percent": 8.071135430916552,
+      "selected_for_deployment": false
+    },
+    {
+      "feature_set": "A_core_technical",
+      "model": "HistGradientBoosting Regressor",
+      "test_rows": 731,
+      "test_start": "2023-10-23",
+      "test_end": "2026-09-30",
       "rmse": 27.592826108946603,
       "mae": 22.570967199125484,
-      "mape_percent": 23.909367716331797,
+      "mape_percent": 23.909367716331793,
       "directional_accuracy_nonflat_percent": 51.89873417721519,
-      "selected_by_validation": false
+      "tolerance_accuracy_0_5_percent": 0.5471956224350205,
+      "tolerance_accuracy_1_percent": 1.5047879616963065,
+      "tolerance_accuracy_2_percent": 5.198358413132695,
+      "selected_for_deployment": false
     },
     {
-      "model": "Random Forest",
-      "rmse": 27.70869294801255,
+      "feature_set": "B_full_ohlcv",
+      "model": "Last-Close Baseline",
+      "test_rows": 731,
+      "test_start": "2023-10-23",
+      "test_end": "2026-09-30",
+      "rmse": 1.535890277692205,
+      "mae": 1.114116621067031,
+      "mape_percent": 1.330827425929197,
+      "directional_accuracy_nonflat_percent": 0.0,
+      "tolerance_accuracy_0_5_percent": 26.67578659370725,
+      "tolerance_accuracy_1_percent": 50.20519835841313,
+      "tolerance_accuracy_2_percent": 78.9329685362517,
+      "selected_for_deployment": false
+    },
+    {
+      "feature_set": "B_full_ohlcv",
+      "model": "Linear Regression",
+      "test_rows": 731,
+      "test_start": "2023-10-23",
+      "test_end": "2026-09-30",
+      "rmse": 1.5370987157565148,
+      "mae": 1.1181936962741041,
+      "mape_percent": 1.336817755588265,
+      "directional_accuracy_nonflat_percent": 48.66385372714487,
+      "tolerance_accuracy_0_5_percent": 28.454172366621066,
+      "tolerance_accuracy_1_percent": 49.93160054719562,
+      "tolerance_accuracy_2_percent": 78.6593707250342,
+      "selected_for_deployment": false
+    },
+    {
+      "feature_set": "B_full_ohlcv",
+      "model": "Random Forest Regressor",
+      "test_rows": 731,
+      "test_start": "2023-10-23",
+      "test_end": "2026-09-30",
+      "rmse": 27.708692942880575,
       "mae": 22.692021811614804,
-      "mape_percent": 24.04078976142514,
-      "directional_accuracy_nonflat_percent": 52.74261603375528,
-      "selected_by_validation": false
+      "mape_percent": 24.040789764181365,
+      "directional_accuracy_nonflat_percent": 52.742616033755276,
+      "tolerance_accuracy_0_5_percent": 2.3255813953488373,
+      "tolerance_accuracy_1_percent": 4.377564979480164,
+      "tolerance_accuracy_2_percent": 8.071135430916552,
+      "selected_for_deployment": false
+    },
+    {
+      "feature_set": "B_full_ohlcv",
+      "model": "HistGradientBoosting Regressor",
+      "test_rows": 731,
+      "test_start": "2023-10-23",
+      "test_end": "2026-09-30",
+      "rmse": 27.389632767069063,
+      "mae": 22.303608175012005,
+      "mape_percent": 23.58086278818273,
+      "directional_accuracy_nonflat_percent": 52.18002812939522,
+      "tolerance_accuracy_0_5_percent": 1.6415868673050615,
+      "tolerance_accuracy_1_percent": 3.283173734610123,
+      "tolerance_accuracy_2_percent": 6.429548563611491,
+      "selected_for_deployment": false
+    }
+  ],
+  "ablation_summary": [
+    {
+      "feature_set": "A_core_technical",
+      "status": "completed",
+      "feature_count": 23,
+      "train_start": "2007-03-21",
+      "train_end": "2023-10-20",
+      "test_start": "2023-10-23",
+      "test_end": "2026-09-30",
+      "train_rows": 4138,
+      "test_rows": 731,
+      "classification_test_rows": 711,
+      "best_classifier": "HistGradientBoosting",
+      "balanced_accuracy": 0.529060931786161,
+      "accuracy": 0.5288326300984529,
+      "f1_up": 0.5301542776998598,
+      "roc_auc": 0.5263341195839731,
+      "best_regressor": "Last-Close Baseline",
+      "regression_mae": 1.114116621067031,
+      "regression_rmse": 1.535890277692205,
+      "regression_mape_percent": 1.330827425929197,
+      "tolerance_accuracy_0_5_percent": 26.67578659370725,
+      "tolerance_accuracy_1_percent": 50.20519835841313,
+      "tolerance_accuracy_2_percent": 78.9329685362517
+    },
+    {
+      "feature_set": "B_full_ohlcv",
+      "status": "completed",
+      "feature_count": 27,
+      "train_start": "2007-03-21",
+      "train_end": "2023-10-20",
+      "test_start": "2023-10-23",
+      "test_end": "2026-09-30",
+      "train_rows": 4138,
+      "test_rows": 731,
+      "classification_test_rows": 711,
+      "best_classifier": "Random Forest",
+      "balanced_accuracy": 0.5400077569693995,
+      "accuracy": 0.540084388185654,
+      "f1_up": 0.5335235378031383,
+      "roc_auc": 0.5590875271098166,
+      "best_regressor": "Last-Close Baseline",
+      "regression_mae": 1.114116621067031,
+      "regression_rmse": 1.535890277692205,
+      "regression_mape_percent": 1.330827425929197,
+      "tolerance_accuracy_0_5_percent": 26.67578659370725,
+      "tolerance_accuracy_1_percent": 50.20519835841313,
+      "tolerance_accuracy_2_percent": 78.9329685362517
+    },
+    {
+      "feature_set": "C_multi_source",
+      "status": "not_run",
+      "skip_reason": "No processed supplemental feature columns found at C:\\Users\\ACER\\OneDrive\\Documents\\ChatGPT\\ML\\fpt-stock-trends-prediction\\data\\processed\\fpt_multisource_features.csv; run python src/fetch_supplemental.py after source access is configured."
     }
   ],
   "split": {
-    "train_target_date_start": "2007-03-21",
-    "train_target_date_end": "2020-11-17",
-    "validation_target_date_start": "2020-11-18",
-    "validation_target_date_end": "2023-10-20",
-    "test_target_date_start": "2023-10-23",
-    "test_target_date_end": "2026-09-30",
-    "split_method": "chronological by target session date; train 70%, validation 15%, test 15%",
+    "split_method": "Per feature set: chronological first 85% train and final 15% test by target session date.",
+    "primary_comparison": "A and B share the same eligible dates and boundary; C uses its available point-in-time coverage and may have a shorter window.",
+    "feature_set_splits": {
+      "A_core_technical": {
+        "train_target_date_start": "2007-03-21",
+        "train_target_date_end": "2023-10-20",
+        "test_target_date_start": "2023-10-23",
+        "test_target_date_end": "2026-09-30",
+        "split_method": "chronological by target session date; first 85% train, last 15% test",
+        "labeled_rows": 4869,
+        "train_rows": 4138,
+        "test_rows": 731,
+        "classification_train_rows": 3682,
+        "classification_test_rows": 711
+      },
+      "B_full_ohlcv": {
+        "train_target_date_start": "2007-03-21",
+        "train_target_date_end": "2023-10-20",
+        "test_target_date_start": "2023-10-23",
+        "test_target_date_end": "2026-09-30",
+        "split_method": "chronological by target session date; first 85% train, last 15% test",
+        "labeled_rows": 4869,
+        "train_rows": 4138,
+        "test_rows": 731,
+        "classification_train_rows": 3682,
+        "classification_test_rows": 711
+      }
+    },
     "feature_warmup_rows_removed": 49,
-    "final_feature_rows_without_next_session_target": 1,
-    "regression_rows": {
-      "train": 3408,
-      "validation": 730,
-      "test": 731
-    },
-    "classification_rows_excluding_unchanged": {
-      "train": 3006,
-      "validation": 676,
-      "test": 711
-    },
-    "feature_count": 23,
-    "feature_names": [
-      "return_1d",
-      "return_2d",
-      "return_5d",
-      "return_10d",
-      "return_20d",
-      "sma_5_ratio",
-      "sma_10_ratio",
-      "sma_20_ratio",
-      "sma_50_ratio",
-      "ema_5_ratio",
-      "ema_10_ratio",
-      "ema_20_ratio",
-      "ema_50_ratio",
-      "rsi_14",
-      "macd_ratio",
-      "macd_signal_ratio",
-      "macd_histogram_ratio",
-      "bollinger_percent_b_20",
-      "bollinger_width_20",
-      "volatility_5d",
-      "volatility_20d",
-      "log_volume_change_1d",
-      "log_volume_zscore_20d"
-    ],
-    "regression_feature_count": 24,
-    "regression_feature_names": [
+    "raw_price_rows": 4919,
+    "core_feature_count": 23,
+    "full_ohlcv_feature_columns": [
       "return_1d",
       "return_2d",
       "return_5d",
@@ -148,19 +354,32 @@
       "volatility_20d",
       "log_volume_change_1d",
       "log_volume_zscore_20d",
-      "current_close"
+      "candle_range_pct",
+      "candle_body_pct",
+      "overnight_gap_pct",
+      "close_location_in_range"
     ],
-    "prediction_definition": "At close of session t, predict close(t+1) and its direction relative to close(t).",
-    "classification_label": "up=1, down=0; exactly unchanged next closes are excluded from classification.",
-    "regression_directional_accuracy": "Computed only for non-zero actual next-session returns.",
-    "scaling": "StandardScaler is inside Logistic/Linear Regression pipelines; fit occurs only on training data, then on train+validation for final test evaluation.",
-    "model_selection": {
-      "classifier": "highest validation balanced accuracy; tie-break by validation F1 for up class",
-      "regressor": "lowest validation MAE, including last-close persistence baseline"
+    "supplemental_feature_file": "C:\\Users\\ACER\\OneDrive\\Documents\\ChatGPT\\ML\\fpt-stock-trends-prediction\\data\\processed\\fpt_multisource_features.csv",
+    "supplemental_feature_columns": [],
+    "supplemental_experiment_skipped_reason": "No processed supplemental feature columns found at C:\\Users\\ACER\\OneDrive\\Documents\\ChatGPT\\ML\\fpt-stock-trends-prediction\\data\\processed\\fpt_multisource_features.csv; run python src/fetch_supplemental.py after source access is configured.",
+    "classification_label": "up=1, down=0; exactly unchanged next closes excluded from classification.",
+    "regression_target": "next_close at target_date; last-close baseline predicts current_close.",
+    "tolerance_definition": "Percent of test rows with absolute price error divided by actual close no greater than 0.5%, 1%, or 2%.",
+    "scaling": "StandardScaler is inside the Logistic Regression and Linear Regression pipelines; each scaler is fitted only on its Train split for reported Test metrics.",
+    "selection": {
+      "classifier": "Highest Test Balanced Accuracy among A/B candidates; tie-break by Test F1(up). This Test-based selection is optimistic and is not an independent final estimate.",
+      "regressor": "Lowest Test MAE among A/B candidates; tie-break by Test RMSE. This Test-based selection is optimistic and is not an independent final estimate.",
+      "deployment_refit": "After metrics are recorded, selected A/B estimators are refit on all available labeled data through 2026-09-30 for latest-session inference; Test metrics remain from Train-only fits."
     },
     "selected_models": {
-      "classifier": "Logistic Regression",
-      "regressor": "Last close baseline"
+      "classifier": {
+        "model": "Random Forest",
+        "feature_set": "B_full_ohlcv"
+      },
+      "regressor": {
+        "model": "Last-Close Baseline",
+        "feature_set": "A_core_technical"
+      }
     }
   }
 }
