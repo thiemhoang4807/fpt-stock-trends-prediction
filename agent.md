@@ -32,4 +32,4 @@ Cập nhật pipeline FPT đến 30/09/2026, đối sánh Train/Test, hoàn thi�
 
 - [x] Quét các từ khóa nguồn bị cấm trong tài liệu/code/kết quả.
 - [x] Kiểm tra .gitignore, diff và trạng thái cẩm nang riêng.
-- [ ] Commit và push các tệp chính thức lên main theo yêu cầu.
+- [x] Commit 60cf902 và push lên origin/main thành công.
