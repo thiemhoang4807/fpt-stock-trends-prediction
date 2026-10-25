@@ -1,35 +1,74 @@
-# Nhật ký thực hiện
+# Nhật ký thực hiện CS114
 
-## Mục tiêu
+## Mục tiêu và trạng thái hiện tại
 
-Cập nhật pipeline FPT đến 30/09/2026, đối sánh Train/Test, hoàn thiện tài liệu chính thức và giữ riêng cẩm nang học tập.
+Cắt nghiên cứu về 30/09/2025; dựng hai nhánh giá và đa nguồn, so sánh 5 mô hình phân loại và 5 mô hình hồi quy trên cùng Train 85% / Test 15%; hoàn thiện tài liệu, proposal LaTeX và giữ riêng cẩm nang.
 
-## Dữ liệu
+## Checklist theo giai đoạn
 
-- OHLCV lấy qua vnstock từ VCI (Vietcap): 4.919 phiên, 02/01/2007–30/09/2026; thiếu 0, ngày trùng 0, volume bằng 0 ở 2 phiên, 3 hàng OHLC bất nhất được giữ và báo cáo.
-- Giá theo nghìn VND/cổ phiếu, volume theo cổ phiếu. Archive giá cũ được căn cùng thang dữ liệu VCI mới bằng hệ số trung vị 0,8875; volume không đổi.
-- Sáu truy vấn bổ trợ (VN-Index, USD/VND, vàng, CPI, GDP, tài chính FPT) đều lỗi lấy chính sách máy khách, không trả hàng. reports/supplemental_data_audit.json ghi lỗi; C là not_run, không suy đoán metrics.
+### 1. Dữ liệu và kiểm toán
 
-## Pipeline và kết quả
+- [x] Kiểm tra Git và bảo toàn thay đổi của dự án; đang làm trên main.
+- [x] Kiểm tra quy trình thu thập CSV, API, báo cáo/slide, notebook và lịch sử thay đổi trong bản kiểm toán tạm ngoài workspace.
+- [x] Xóa bản kiểm toán tạm sau khi hoàn tất. Không đưa tên, tác giả hay mã nguồn tham khảo vào dự án.
+- [x] Cắt OHLCV về 02/01/2007–30/09/2025: 4.671 hàng; verify schema, ngày và hash thành công.
+- [x] Chuẩn hóa USD/VND, vàng, CPI, GDP, ngành và tài chính từ snapshot nguồn tài chính; mô tả trung thực quy trình xuất CSV bán tự động.
+- [x] Cắt cả tệp xuất nguồn: loại 7 hàng FX, 31 vàng, 1 CPI, 1 ngành sau cutoff; loại 1 dòng GDP dự báo năm 2025.
+- [x] Trích 10 điểm cổ phiếu lưu hành theo báo cáo và công bố FPT; lưu ngày tham chiếu, cơ sở ngày và URL từng nguồn.
+- [x] Tính đúng EBIT = lợi nhuận trước thuế + trị tuyệt đối chi phí lãi vay; không gán lợi nhuận hoạt động thành EBIT.
+- [x] Thêm data/sources.json và viết lại data/README.md; lưu hash/độ phủ/missing trong reports/supplemental_data_audit.json.
 
-- A: 23 đặc trưng close/volume. B: thêm bốn đặc trưng nến, tổng 27. A/B dùng cùng ngày đủ dữ liệu.
-- Split theo target_date: Train 4.138 hàng, 21/03/2007–20/10/2023; Test 731 hàng, 23/10/2023–30/09/2026. Phân loại loại nhãn đứng giá: Train 3.682, Test 711.
-- Phân loại tốt nhất A: HistGradientBoosting, Accuracy 52,88%, Balanced Accuracy 52,91%, F1 tăng 53,02%, ROC-AUC 52,63%.
-- Phân loại tốt nhất B: Random Forest, Accuracy 54,01%, Balanced Accuracy 54,00%, F1 tăng 53,35%, ROC-AUC 55,91%. Confusion matrix hàng thật Giảm/Tăng, cột dự đoán Giảm/Tăng: [[197,165],[162,187]].
-- Hồi quy tốt nhất A/B: Last-Close Baseline, MAE 1,1141 nghìn VND, RMSE 1,5359 nghìn, MAPE 1,3308%, Directional Accuracy 0%; tolerance ±0,5/±1/±2%: 26,68/50,21/78,93%.
-- Dự báo as-of 30/09/2026: Random Forest B dự đoán Tăng, xác suất 57,50%; Last-Close dự đoán 63,0 nghìn VND.
-- Chọn model bằng Test theo yêu cầu hiện tại; điều này có thể làm metric chọn lọc lạc quan. Mô hình triển khai được fit lại trên toàn bộ nhãn đến 30/09/2026 sau khi ghi metrics.
+Kết quả: OHLCV không thiếu, không trùng ngày; 2 phiên volume=0 và 3 hàng OHLC bất nhất giữ để kiểm toán. Giá theo nghìn VND, volume theo cổ phiếu. Giữ basis VCI của snapshot; lịch sử archive từng được căn OHLC bằng hệ số 0,8875, không thay volume.
 
-## Tệp và kiểm thử
+Nguồn bổ trợ sau cắt: FX 4.893 quan sát; vàng 1.755; CPI 81; GDP 15 năm 2010–2024; ngành 33 snapshot; tài chính 52 quý có khoảng trống 2007–2013; cổ phiếu lưu hành 10 điểm. Vàng quy đổi VND/ounce, không phải vàng miếng nội địa. Ngành công nghệ được dùng làm proxy ICT.
 
-- Cập nhật src/features.py, prepare.py, train.py, predict.py; thêm src/fetch_supplemental.py và test liên quan.
-- Cập nhật README.md, data/README.md, docs/PROPOSAL.md, docs/REPORT.md và figures/00_pipeline_overview.png.
-- Cẩm nang docs/CAM_NANG_HIEU_DU_AN.md đã viết lại cho người mới, được .gitignore loại trừ và không có trong Git index.
-- Bảng điểm Validation cũ đã xóa để phản ánh giao thức Train/Test.
-- Snapshot verify, EDA, prepare, train và predict chạy thành công. python -m pytest -q: 23 passed. Test Windows dùng thư mục tạm trong workspace để tránh lỗi quyền khi dọn Temp của sandbox.
+### 2. Tiền xử lý và hai nhánh
 
-## Hoàn tất trước khi push
+- [x] Áp cutoff trước khi tạo target bằng shift(-1), kể cả khi đầu vào tùy chỉnh có dữ liệu sau cutoff.
+- [x] Nhánh 1 gồm 5 OHLCV gốc và 27 chỉ báo/nến: 32 biến.
+- [x] Nhánh 2 thêm 12 biến vĩ mô/ngành/tài chính/cổ phiếu lưu hành: 44 biến.
+- [x] Chuẩn hóa định dạng ngày riêng từng nguồn; ghép backward as-of, không backfill hoặc nội suy từ kỳ tương lai.
+- [x] Dùng độ trễ: chuỗi ngày/ngành/CPI/cổ phiếu +1 ngày, GDP cuối năm +180 ngày, báo cáo quý +45 ngày.
+- [x] Áp hạn dữ liệu cũ: FX/vàng 10 ngày, CPI 65, ngành 180, quý 150, GDP/cổ phiếu 550 ngày kể từ hiệu lực.
+- [x] Yêu cầu đầy đủ mọi cột bổ trợ đã khai báo; không âm thầm bỏ biến hoặc lùi dự báo về phiên cũ khi thiếu đầu vào mới nhất.
+- [x] Dùng một cohort và ranh giới Train/Test chung cho cả hai nhánh; StandardScaler nằm trong Pipeline, chỉ fit Train khi chấm Test.
 
-- [x] Quét các từ khóa nguồn bị cấm trong tài liệu/code/kết quả.
-- [x] Kiểm tra .gitignore, diff và trạng thái cẩm nang riêng.
-- [x] Commit 60cf902 và push lên origin/main thành công.
+Cohort chung: 1.683 hàng có đầu vào đầy đủ, gồm 1.682 nhãn và một hàng dự báo cuối. Theo target_date: Train 03/01/2019–24/09/2024 (1.429 hồi quy, 1.339 phân loại); Test 25/09/2024–30/09/2025 (253 hồi quy, 244 phân loại). Phân loại loại các phiên đứng giá sau khi xác định ranh giới.
+
+### 3. Mô hình và đầu ra thực nghiệm
+
+- [x] Khai báo/cài XGBoost; seed 42, siêu tham số cố định; không early stopping hoặc tìm tham số trên Test.
+- [x] Huấn luyện Majority, Logistic, Random Forest, XGBoost, HistGradientBoosting trên mỗi nhánh cho phân loại.
+- [x] Huấn luyện Last-Close, Linear, Random Forest, XGBoost, HistGradientBoosting trên mỗi nhánh cho hồi quy trực tiếp next_close.
+- [x] Xuất 10 dòng metrics mỗi bài toán; Accuracy, Balanced Accuracy, Precision, Recall, F1, ROC-AUC; MAE/RMSE/MAPE/Directional/Tolerance.
+- [x] Xuất confusion matrix và dự báo từng phiên cho tất cả 10 bộ phân loại; lưu hyperparameters và feature importance từ mô hình fit Train.
+- [x] Vẽ các đường giá từng mô hình/nhánh, so XGBoost với cửa sổ 80 phiên, so cả 4 thuật toán với cửa sổ 80 phiên và biểu đồ cột metrics.
+- [x] Lưu mô hình được chọn sau thực nghiệm, fit lại trên toàn bộ cohort có nhãn; chạy dự báo từ phiên cuối 30/09/2025.
+
+Kết quả cuối của thiết kế 32/44 biến: Nhánh 1 chọn Logistic Regression, Accuracy 53,69%, Balanced Accuracy 54,07%, F1 tăng 59,50%, ROC-AUC 55,25%. Nhánh 2 tốt nhất XGBoost, Accuracy 52,87%, Balanced Accuracy 53,52%, F1 tăng 62,30%, ROC-AUC 54,82%. Chưa có cải thiện rõ ràng từ dữ liệu bổ trợ; không dùng kết quả tạm 27/38 biến để kết luận.
+
+Last-Close Baseline tốt nhất MAE 1,1942 nghìn VND, RMSE 1,7129, MAPE 1,2342%, Directional Accuracy=0%; tolerance ±0,5/±1/±2% = 34,39/55,34/82,61%. Dự báo minh họa cuối snapshot: Logistic Nhánh 1 dự đoán Tăng, p_up=52,7852%; baseline giá 82,54 nghìn VND. Hai đầu ra thuộc hai bài toán riêng.
+
+### 4. Tài liệu và proposal
+
+- [x] Proposal Markdown/LaTeX: đúng 8 mục, đủ 3 thành viên/vai trò, hai nhánh, mốc 2025, XGBoost, metrics/biểu đồ và kế hoạch 10 tuần.
+- [x] Biên dịch XeLaTeX thành docs/cs114_proposal.pdf, 6 trang; kiểm tra trực quan toàn bộ và kiểm tra các lỗi tiêu đề/thuật ngữ/dung sai đã sửa.
+- [x] Thay hình pipeline bằng sơ đồ hai nhánh.
+- [x] Hoàn tất README và REPORT từ kết quả cuối; kiểm tra chéo cả 10 dòng phân loại và 10 dòng hồi quy với CSV.
+- [x] Hoàn tất cẩm nang riêng 85 KB, 5 phần, ví dụ tính tay và 10 câu vấn đáp; .gitignore loại trừ và Git index không có tệp này.
+
+### 5. Kiểm thử và công bố
+
+- [x] Kiểm thử cuối: python -m pytest -q đạt 34 passed.
+- [x] Kiểm thử cutoff trước target, nhãn t+1, chỉ báo không thay khi sửa tương lai, scaler Train-only, ghép không nhìn trước, hạn dữ liệu cũ và dự báo không dùng phiên cũ.
+- [x] Chuỗi verify → supplemental → EDA → prepare → train → predict → pytest hoàn tất; nhật ký lệnh được giữ trong tmp/pipeline_logs và bị Git bỏ qua.
+- [x] Quét từ khóa bị cấm, kiểm tra links/tài liệu, PDF, diff và kích thước tệp; cẩm nang riêng không nằm trong Git index.
+- [ ] Commit chính thức và push main; ghi xác nhận trạng thái remote sau push.
+
+## Giới hạn phải giữ trong tài liệu
+
+Test được dùng để đánh dấu mô hình tốt nhất sau thực nghiệm theo yêu cầu; điểm mô hình được chọn vì vậy chưa phải đánh giá độc lập. Độ trễ báo cáo quý/GDP là giả định mô phỏng, dữ liệu có thể đã điều chỉnh lại, chưa phải kho lịch sử từng phiên bản. Lịch sử cổ phiếu là các mốc đã thu thập, không phải sổ thay đổi hằng ngày đầy đủ. Không nội suy dựa vào báo cáo tương lai. Một cổ phiếu và một cửa sổ Test chưa chứng minh hiệu quả đầu tư.
+
+## Bước tiếp theo
+
+Stage các tệp chính thức, xác nhận cẩm nang riêng không bị stage, commit và push main. Toàn bộ xử lý/huấn luyện/tài liệu đã hoàn tất; công bố Git đang chờ thực hiện.

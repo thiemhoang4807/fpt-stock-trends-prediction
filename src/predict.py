@@ -7,21 +7,32 @@ import json
 from pathlib import Path
 
 import joblib
-import numpy as np
-
 from features import build_feature_table, load_price_data
+from prepare import merge_supplemental
 
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INPUT = ROOT / "data" / "raw" / "fpt" / "fpt_historical_price.csv"
+DEFAULT_SUPPLEMENTAL = ROOT / "data" / "processed" / "fpt_multisource_features.csv"
 
 
-def predict_latest(input_path: Path, models_dir: Path, output_path: Path) -> dict:
+def predict_latest(input_path: Path, models_dir: Path, output_path: Path, supplemental_path: Path = DEFAULT_SUPPLEMENTAL) -> dict:
     data = load_price_data(input_path)
     table = build_feature_table(data)
-    latest = table.iloc[[-1]]
     classifier = joblib.load(models_dir / "best_classifier.joblib")
     regressor = joblib.load(models_dir / "best_regressor.joblib")
+    required_columns = set(classifier["feature_columns"]) | set(regressor["feature_columns"])
+    if not required_columns.issubset(table.columns):
+        table, _ = merge_supplemental(table, supplemental_path)
+    if not required_columns.issubset(table.columns):
+        missing = sorted(required_columns - set(table.columns))
+        raise ValueError(f"Không thể tạo các đặc trưng cần cho mô hình đã lưu: {missing}")
+    latest = table.iloc[[-1]]
+    if latest["date"].iloc[0] != data["time"].iloc[-1]:
+        raise ValueError("The last raw session has incomplete technical features")
+    missing_latest = sorted(column for column in required_columns if latest[column].isna().any())
+    if missing_latest:
+        raise ValueError(f"Latest session is missing required inputs: {missing_latest}")
     features = latest[classifier["feature_columns"]]
     direction_value = int(classifier["model"].predict(features)[0])
     direction_prob_up = float(classifier["model"].predict_proba(features)[0, 1])
@@ -36,11 +47,11 @@ def predict_latest(input_path: Path, models_dir: Path, output_path: Path) -> dic
         "price_unit": "thousand VND per share",
         "current_close": current_close,
         "classifier_model": classifier["model_name"],
-        "classifier_feature_set": classifier.get("feature_set", "A_core_technical"),
+        "classifier_feature_set": classifier.get("feature_set", "Branch_1_Price_Only"),
         "predicted_direction": "up" if direction_value == 1 else "down",
         "probability_up_conditional_on_nonflat_direction": direction_prob_up,
         "regression_model": regressor["model_name"],
-        "regression_feature_set": regressor.get("feature_set", "A_core_technical"),
+        "regression_feature_set": regressor.get("feature_set", "Branch_1_Price_Only"),
         "predicted_next_close": predicted_close,
         "predicted_change_percent_from_current": (predicted_close / current_close - 1.0) * 100.0,
         "note": "Educational model output based on source history through the as-of session; not an investment recommendation.",
@@ -55,9 +66,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Predict FPT's next observed trading-session direction and close.")
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
     parser.add_argument("--models", type=Path, default=ROOT / "models")
+    parser.add_argument("--supplemental", type=Path, default=DEFAULT_SUPPLEMENTAL)
     parser.add_argument("--output", type=Path, default=ROOT / "reports" / "latest_prediction.json")
     args = parser.parse_args()
-    predict_latest(args.input, args.models, args.output)
+    predict_latest(args.input, args.models, args.output, args.supplemental)
 
 
 if __name__ == "__main__":

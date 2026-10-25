@@ -1,15 +1,15 @@
 {
-  "as_of_session": "2026-09-30",
+  "as_of_session": "2025-09-30",
   "prediction_target": "next observed trading session",
   "price_unit": "thousand VND per share",
-  "current_close": 63.0,
-  "classifier_model": "Random Forest",
-  "classifier_feature_set": "B_full_ohlcv",
+  "current_close": 82.54,
+  "classifier_model": "Logistic Regression",
+  "classifier_feature_set": "Branch_1_Price_Only",
   "predicted_direction": "up",
-  "probability_up_conditional_on_nonflat_direction": 0.5749871115804215,
+  "probability_up_conditional_on_nonflat_direction": 0.5278524238480862,
   "regression_model": "Last-Close Baseline",
-  "regression_feature_set": "A_core_technical",
-  "predicted_next_close": 63.0,
+  "regression_feature_set": "Branch_1_Price_Only",
+  "predicted_next_close": 82.54,
   "predicted_change_percent_from_current": 0.0,
   "note": "Educational model output based on source history through the as-of session; not an investment recommendation."
 }

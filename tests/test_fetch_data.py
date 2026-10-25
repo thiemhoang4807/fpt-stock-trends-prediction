@@ -91,7 +91,7 @@ def test_verify_snapshot_checks_schema_and_requested_date_coverage():
         path = Path(temp_dir) / "prices.csv"
         pd.DataFrame(
             {
-                "time": ["2007-01-02", "2026-09-30"],
+                "time": ["2007-01-02", "2025-09-30"],
                 "open": [10.0, 63.4], "high": [11.0, 64.0],
                 "low": [9.0, 63.0], "close": [10.5, 63.0],
                 "volume": [1000, 3_063_973],
@@ -102,7 +102,7 @@ def test_verify_snapshot_checks_schema_and_requested_date_coverage():
 
         assert summary["rows"] == 2
         assert summary["first_date"] == "2007-01-02"
-        assert summary["last_date"] == "2026-09-30"
+        assert summary["last_date"] == "2025-09-30"
         assert len(summary["sha256"]) == 64
 
 
@@ -111,7 +111,7 @@ def test_verify_snapshot_rejects_wrong_end_date():
         path = Path(temp_dir) / "prices.csv"
         pd.DataFrame(
             {
-                "time": ["2007-01-02", "2026-09-29"],
+                "time": ["2007-01-02", "2025-09-29"],
                 "open": [10.0, 63.7], "high": [11.0, 64.1],
                 "low": [9.0, 63.1], "close": [10.5, 63.2],
                 "volume": [1000, 3_141_350],
@@ -198,7 +198,7 @@ def test_no_mode_defaults_to_download_through_september_cutoff(monkeypatch):
             calls["dates"] = (start, end)
             return pd.DataFrame(
                 {
-                    "time": ["2007-01-02", "2026-09-30"],
+                    "time": ["2007-01-02", "2025-09-30"],
                     "open": [10.0, 63.4], "high": [11.0, 64.0],
                     "low": [9.0, 63.0], "close": [10.5, 63.0],
                     "volume": [1000, 3_063_973],
@@ -209,6 +209,6 @@ def test_no_mode_defaults_to_download_through_september_cutoff(monkeypatch):
         output = tmp_path / "fpt.csv"
 
         assert main(["--output", str(output)]) == 0
-        assert calls["dates"] == ("2007-01-01", "2026-09-30")
-        assert pd.read_csv(output)["time"].iloc[-1] == "2026-09-30"
+        assert calls["dates"] == ("2007-01-01", "2025-09-30")
+        assert pd.read_csv(output)["time"].iloc[-1] == "2025-09-30"
         assert (tmp_path / "reports" / "data_lineage.json").is_file()

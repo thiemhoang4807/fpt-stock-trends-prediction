@@ -35,6 +35,33 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(content).hexdigest()
 
 
+def _draw_pipeline_overview(output_path: Path) -> None:
+    """Draw the two-branch experiment flow used in the proposal and report."""
+    fig, ax = plt.subplots(figsize=(14, 5.6))
+    ax.set_axis_off()
+    boxes = [
+        (0.02, 0.55, "OHLCV FPT\n2007-01-02 to 2025-09-30", "#DCEAF7"),
+        (0.24, 0.55, "Kiểm toán +\n5 OHLCV + 27 chỉ báo/nến", "#E4F1E5"),
+        (0.48, 0.72, "Nhánh 1\nGiá + khối lượng FPT", "#FCE9D8"),
+        (0.48, 0.30, "Nhánh 2\nGiá + vĩ mô/ngành/tài chính\nđã căn ngày có thể biết", "#FCE9D8"),
+        (0.74, 0.55, "Train 85% | Test 15%\nLogistic, RF, XGBoost, HGB\nLinear, RF, XGBoost, HGB", "#EEE1F3"),
+        (0.95, 0.55, "Đầu ra\nHướng tăng/giảm\nGiá close t+1\nMetrics + biểu đồ", "#FFF2CC"),
+    ]
+    for x, y, label, color in boxes:
+        ax.text(
+            x, y, label, ha="center", va="center", fontsize=10,
+            bbox={"boxstyle": "round,pad=0.65", "facecolor": color, "edgecolor": "#46637F", "linewidth": 1.2},
+            transform=ax.transAxes,
+        )
+    arrows = [((0.11, 0.55), (0.18, 0.55)), ((0.31, 0.61), (0.40, 0.70)), ((0.31, 0.49), (0.40, 0.32)), ((0.58, 0.70), (0.66, 0.57)), ((0.58, 0.32), (0.66, 0.53)), ((0.83, 0.55), (0.89, 0.55))]
+    for start, end in arrows:
+        ax.annotate("", xy=end, xytext=start, xycoords="axes fraction", arrowprops={"arrowstyle": "->", "lw": 1.5, "color": "#46637F"})
+    fig.suptitle("Pipeline thực nghiệm: dự đoán phiên FPT kế tiếp", fontsize=15, fontweight="bold", y=0.98)
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=220, bbox_inches="tight")
+    plt.close(fig)
+
+
 def run_eda(input_path: Path, figures_dir: Path, reports_dir: Path) -> dict:
     data = load_price_data(input_path)
     daily_return = data["close"].pct_change().dropna()
@@ -47,6 +74,7 @@ def run_eda(input_path: Path, figures_dir: Path, reports_dir: Path) -> dict:
     ohlc_errors = _ohlc_violations(data)
     figures_dir.mkdir(parents=True, exist_ok=True)
     reports_dir.mkdir(parents=True, exist_ok=True)
+    _draw_pipeline_overview(figures_dir / "00_pipeline_overview.png")
 
     plt.figure(figsize=(12, 5))
     plt.plot(data["time"], data["close"], linewidth=1.0, color="#2457A7")

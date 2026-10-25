@@ -1,35 +1,36 @@
 {
-  "split_method": "Per feature set: chronological first 85% train and final 15% test by target session date.",
-  "primary_comparison": "A and B share the same eligible dates and boundary; C uses its available point-in-time coverage and may have a shorter window.",
+  "split_method": "Shared chronological cohort: first 85% train and final 15% test by target session date.",
+  "primary_comparison": "Both branches use the same availability-aligned eligible dates and the same boundary; financial/GDP release dates include stated assumptions.",
   "feature_set_splits": {
-    "A_core_technical": {
-      "train_target_date_start": "2007-03-21",
-      "train_target_date_end": "2023-10-20",
-      "test_target_date_start": "2023-10-23",
-      "test_target_date_end": "2026-09-30",
+    "Branch_1_Price_Only": {
+      "train_target_date_start": "2019-01-03",
+      "train_target_date_end": "2024-09-24",
+      "test_target_date_start": "2024-09-25",
+      "test_target_date_end": "2025-09-30",
       "split_method": "chronological by target session date; first 85% train, last 15% test",
-      "labeled_rows": 4869,
-      "train_rows": 4138,
-      "test_rows": 731,
-      "classification_train_rows": 3682,
-      "classification_test_rows": 711
+      "labeled_rows": 1682,
+      "train_rows": 1429,
+      "test_rows": 253,
+      "classification_train_rows": 1339,
+      "classification_test_rows": 244
     },
-    "B_full_ohlcv": {
-      "train_target_date_start": "2007-03-21",
-      "train_target_date_end": "2023-10-20",
-      "test_target_date_start": "2023-10-23",
-      "test_target_date_end": "2026-09-30",
+    "Branch_2_Macro_Fundamental": {
+      "train_target_date_start": "2019-01-03",
+      "train_target_date_end": "2024-09-24",
+      "test_target_date_start": "2024-09-25",
+      "test_target_date_end": "2025-09-30",
       "split_method": "chronological by target session date; first 85% train, last 15% test",
-      "labeled_rows": 4869,
-      "train_rows": 4138,
-      "test_rows": 731,
-      "classification_train_rows": 3682,
-      "classification_test_rows": 711
+      "labeled_rows": 1682,
+      "train_rows": 1429,
+      "test_rows": 253,
+      "classification_train_rows": 1339,
+      "classification_test_rows": 244
     }
   },
   "feature_warmup_rows_removed": 49,
-  "raw_price_rows": 4919,
-  "core_feature_count": 23,
+  "raw_price_rows": 4671,
+  "cutoff_date": "2025-09-30",
+  "price_only_feature_count": 32,
   "full_ohlcv_feature_columns": [
     "return_1d",
     "return_2d",
@@ -59,26 +60,38 @@
     "overnight_gap_pct",
     "close_location_in_range"
   ],
-  "supplemental_feature_file": "C:\\Users\\ACER\\OneDrive\\Documents\\ChatGPT\\ML\\fpt-stock-trends-prediction\\data\\processed\\fpt_multisource_features.csv",
-  "supplemental_feature_columns": [],
-  "supplemental_experiment_skipped_reason": "No processed supplemental feature columns found at C:\\Users\\ACER\\OneDrive\\Documents\\ChatGPT\\ML\\fpt-stock-trends-prediction\\data\\processed\\fpt_multisource_features.csv; run python src/fetch_supplemental.py after source access is configured.",
+  "supplemental_feature_file": "data/processed/fpt_multisource_features.csv",
+  "supplemental_feature_columns": [
+    "usd_vnd_rate",
+    "gold_vnd_per_ounce",
+    "cpi_yoy_pct",
+    "gdp_usd",
+    "ict_market_cap_vnd",
+    "ict_pe",
+    "ict_absolute_pe",
+    "fpt_net_revenue_vnd",
+    "fpt_gross_profit_vnd",
+    "fpt_ebit_vnd",
+    "fpt_parent_net_profit_vnd",
+    "fpt_shares_outstanding"
+  ],
   "classification_label": "up=1, down=0; exactly unchanged next closes excluded from classification.",
   "regression_target": "next_close at target_date; last-close baseline predicts current_close.",
   "tolerance_definition": "Percent of test rows with absolute price error divided by actual close no greater than 0.5%, 1%, or 2%.",
   "scaling": "StandardScaler is inside the Logistic Regression and Linear Regression pipelines; each scaler is fitted only on its Train split for reported Test metrics.",
   "selection": {
-    "classifier": "Highest Test Balanced Accuracy among A/B candidates; tie-break by Test F1(up). This Test-based selection is optimistic and is not an independent final estimate.",
-    "regressor": "Lowest Test MAE among A/B candidates; tie-break by Test RMSE. This Test-based selection is optimistic and is not an independent final estimate.",
-    "deployment_refit": "After metrics are recorded, selected A/B estimators are refit on all available labeled data through 2026-09-30 for latest-session inference; Test metrics remain from Train-only fits."
+    "classifier": "Highest Test Balanced Accuracy among both branch candidates; tie-break by Test F1(up). This Test-based selection is optimistic and is not an independent final estimate.",
+    "regressor": "Lowest Test MAE among both branch candidates; tie-break by Test RMSE. This Test-based selection is optimistic and is not an independent final estimate.",
+    "deployment_refit": "After metrics are recorded, selected estimators are refit on all labeled rows of the shared cohort through 2025-09-30 for latest-session inference; Test metrics remain from Train-only fits."
   },
   "selected_models": {
     "classifier": {
-      "model": "Random Forest",
-      "feature_set": "B_full_ohlcv"
+      "model": "Logistic Regression",
+      "feature_set": "Branch_1_Price_Only"
     },
     "regressor": {
       "model": "Last-Close Baseline",
-      "feature_set": "A_core_technical"
+      "feature_set": "Branch_1_Price_Only"
     }
   }
 }

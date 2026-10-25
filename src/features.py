@@ -9,6 +9,7 @@ import pandas as pd
 
 
 REQUIRED_COLUMNS = ("time", "open", "high", "low", "close", "volume")
+RESEARCH_END_DATE = "2025-09-30"
 
 FEATURE_COLUMNS = [
     "return_1d",
@@ -36,8 +37,6 @@ FEATURE_COLUMNS = [
     "log_volume_zscore_20d",
 ]
 
-REGRESSION_FEATURE_COLUMNS = FEATURE_COLUMNS + ["current_close"]
-
 OHLC_FEATURE_COLUMNS = [
     "candle_range_pct",
     "candle_body_pct",
@@ -45,10 +44,11 @@ OHLC_FEATURE_COLUMNS = [
     "close_location_in_range",
 ]
 FULL_OHLCV_FEATURE_COLUMNS = FEATURE_COLUMNS + OHLC_FEATURE_COLUMNS
-REGRESSION_FULL_OHLCV_FEATURE_COLUMNS = FULL_OHLCV_FEATURE_COLUMNS + ["current_close"]
+RAW_PRICE_FEATURE_COLUMNS = ["current_open", "current_high", "current_low", "current_close", "current_volume"]
+PRICE_ONLY_FEATURE_COLUMNS = FULL_OHLCV_FEATURE_COLUMNS + RAW_PRICE_FEATURE_COLUMNS
 
 
-def load_price_data(path: str | Path) -> pd.DataFrame:
+def load_price_data(path: str | Path, end: str = RESEARCH_END_DATE) -> pd.DataFrame:
     """Load and validate daily OHLCV without filling values from the future."""
     data = pd.read_csv(path)
     data.columns = [str(column).strip().lower() for column in data.columns]
@@ -70,11 +70,16 @@ def load_price_data(path: str | Path) -> pd.DataFrame:
     if data["time"].duplicated().any():
         duplicated = data.loc[data["time"].duplicated(keep=False), "time"].dt.strftime("%Y-%m-%d").tolist()
         raise ValueError(f"Duplicate trading dates found: {duplicated[:10]}")
+    if not np.isfinite(data[list(REQUIRED_COLUMNS)[1:]].to_numpy(dtype=float)).all():
+        raise ValueError("OHLCV values must be finite")
     if (data[["open", "high", "low", "close"]] <= 0).any().any():
         raise ValueError("OHLC prices must be strictly positive")
     if (data["volume"] < 0).any():
         raise ValueError("Volume cannot be negative")
 
+    data = data.loc[data["time"].le(pd.Timestamp(end))]
+    if data.empty:
+        raise ValueError(f"No price observations on or before {end}")
     return data.sort_values("time").reset_index(drop=True)
 
 
@@ -102,6 +107,10 @@ def build_feature_table(data: pd.DataFrame) -> pd.DataFrame:
     result["date"] = data["time"]
     result["target_date"] = data["time"].shift(-1)
     result["current_close"] = close
+    result["current_open"] = open_price
+    result["current_high"] = high
+    result["current_low"] = low
+    result["current_volume"] = data["volume"].astype(float)
     result["next_close"] = close.shift(-1)
     result["next_return"] = result["next_close"] / result["current_close"] - 1.0
     result["direction"] = np.select(

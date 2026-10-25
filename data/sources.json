@@ -1,0 +1,79 @@
+{
+  "research_cutoff": "2025-09-30",
+  "collection_mode": "Frozen public-source CSV exports and official company disclosures; normalization is reproducible offline. Online downloads can have access limits or revised history.",
+  "sources": [
+    {
+      "id": "fpt_ohlcv",
+      "provider": "VCI (Vietcap), via vnstock",
+      "file": "raw/fpt/fpt_historical_price.csv",
+      "url": "https://vnstocks.com/docs/vnstock/thi-truong-market",
+      "price_unit": "thousand VND per share",
+      "volume_unit": "shares",
+      "adjustment": "Provider historical basis; an earlier archive alignment applied factor 0.8875 to OHLC, not volume. This is not an unadjusted historical-vintage archive."
+    },
+    {
+      "id": "usd_vnd",
+      "provider": "Investing.com",
+      "file": "raw/supplemental/usd_vnd_source.csv",
+      "url": "https://vn.investing.com/currencies/usd-vnd-historical-data",
+      "date_format": "%d/%m/%Y",
+      "value_column": "Lần cuối",
+      "unit": "VND per USD"
+    },
+    {
+      "id": "gold",
+      "provider": "Investing.com",
+      "file": "raw/supplemental/gold_xauusd_source.csv",
+      "url": "https://vn.investing.com/currencies/xau-usd-historical-data",
+      "date_format": "%d/%m/%Y",
+      "value_column": "Lần cuối",
+      "unit": "USD per troy ounce; multiply aligned gold and FX to obtain VND per troy ounce"
+    },
+    {
+      "id": "cpi",
+      "provider": "Investing.com economic calendar, source General Statistics Office of Vietnam",
+      "file": "raw/supplemental/vietnam_cpi_source.csv",
+      "url": "https://vn.investing.com/economic-calendar/vietnamese-cpi-1851",
+      "date_format": "%m/%d/%Y",
+      "date_column": "Ngày Phát Hành",
+      "value_column": "Thực tế",
+      "unit": "year-over-year percent"
+    },
+    {
+      "id": "gdp",
+      "provider": "World Bank World Development Indicators",
+      "file": "raw/supplemental/vietnam_gdp_source.csv",
+      "url": "https://data.worldbank.org/indicator/NY.GDP.MKTP.CD?locations=VN",
+      "unit": "current USD, annual GDP level",
+      "availability_rule": "year-end plus 180 calendar days; assumed rather than an observed historical release vintage"
+    },
+    {
+      "id": "technology_sector",
+      "provider": "Simply Wall St Vietnam Tech sector",
+      "file": "raw/supplemental/ict_industry_source.csv",
+      "url": "https://simplywall.st/markets/vn/tech",
+      "date_format": "%d-%m-%Y",
+      "market_cap_unit": "VND; t suffix denotes 1e12",
+      "pe_units": "multiples; retain source PE and Absolute PE as separate fields",
+      "limitation": "Sector proxy for ICT; sparse snapshots and historical constituents or revisions are not reconstructed"
+    },
+    {
+      "id": "fpt_quarterly_statements",
+      "provider": "VCI, via vnstock financial statements",
+      "file": "raw/supplemental/fpt_income_statement_source.csv",
+      "url": "https://fpt.com/en/ir/information-disclosures",
+      "unit": "VND per reported quarter",
+      "ebit_definition": "pretax profit plus absolute interest expense",
+      "availability_rule": "quarter-end plus 45 calendar days, assumed; source statements may have been restated"
+    },
+    {
+      "id": "fpt_shares_outstanding",
+      "provider": "FPT Corporation annual reports and issuance disclosures",
+      "file": "raw/supplemental/fpt_shares_outstanding.csv",
+      "url": "https://fpt.com/en/ir/information-disclosures",
+      "unit": "shares outstanding, excluding treasury shares where separately reported",
+      "availability_rule": "Each CSV row records a publication/reference date and exact official report URL; applied one calendar day later",
+      "limitation": "Last-known archived observations, not a full daily register. The 2017 observation uses a conservative assumed availability date."
+    }
+  ]
+}

@@ -1,124 +1,275 @@
 {
+  "cutoff_date": "2025-09-30",
+  "rows": 4671,
   "date_start": "2007-01-02",
-  "date_end": "2026-09-30",
-  "rows": 4919,
-  "available_feature_columns": [],
-  "source_audit": {
-    "vnindex": {
-      "status": "empty_or_invalid",
-      "file": "vnindex_ohlcv.csv",
-      "rows": 0
-    },
-    "usd_vnd": {
-      "status": "empty_or_invalid",
-      "file": "usd_vnd_daily.csv",
-      "rows": 0
-    },
-    "gold": {
-      "status": "empty_or_invalid",
-      "file": "gold_xauusd_daily.csv",
-      "rows": 0
-    },
-    "cpi": {
-      "status": "empty_or_invalid",
-      "file": "vietnam_cpi.csv",
-      "rows": 0
-    },
-    "gdp": {
-      "status": "empty_or_invalid",
-      "file": "vietnam_gdp.csv",
-      "rows": 0
-    },
-    "financial": {
-      "status": "empty_or_invalid",
-      "file": "fpt_fundamentals_quarterly.csv",
-      "rows": 0
-    }
-  },
+  "date_end": "2025-09-30",
   "no_backfill": true,
-  "release_lags_calendar_days": {
-    "daily_market_and_fx_gold": 1,
-    "monthly_cpi": 10,
-    "quarterly_gdp_and_company_financials": 45
+  "alignment": "backward as-of join; each value appears only after its availability date",
+  "release_delays_calendar_days": {
+    "daily_market_fx_gold_and_industry": 1,
+    "cpi_after_source_release_date": 1,
+    "annual_gdp_after_period_end": 180,
+    "quarterly_fundamentals_after_period_end": 45,
+    "shares_outstanding_after_source_availability_date": 1
   },
-  "raw_sources": {
-    "vnindex": {
-      "file": "vnindex_ohlcv.csv",
-      "rows": 0,
-      "first_observation": null,
-      "last_observation": null,
-      "columns": [
-        "time",
-        "open",
-        "high",
-        "low",
-        "close",
-        "volume"
-      ]
-    },
-    "fx": {
+  "model_supplemental_columns": [
+    "usd_vnd_rate",
+    "gold_vnd_per_ounce",
+    "cpi_yoy_pct",
+    "gdp_usd",
+    "ict_market_cap_vnd",
+    "ict_pe",
+    "ict_absolute_pe",
+    "fpt_net_revenue_vnd",
+    "fpt_gross_profit_vnd",
+    "fpt_ebit_vnd",
+    "fpt_parent_net_profit_vnd",
+    "fpt_shares_outstanding"
+  ],
+  "point_in_time_limitations": "Financial +45d and annual GDP +180d are assumed release dates, not a historical release-vintage archive; revisions and index constituent changes can remain.",
+  "source_audit": {
+    "usd_vnd": {
+      "status": "aligned",
       "file": "usd_vnd_daily.csv",
-      "rows": 0,
-      "first_observation": null,
-      "last_observation": null,
-      "columns": [
-        "time",
-        "usd_vnd_market_rate",
-        "usd_vnd_vcb_rate"
-      ]
+      "raw_rows": 4893,
+      "selected_columns": [
+        "usd_vnd_rate"
+      ],
+      "availability_delay_calendar_days": 1,
+      "maximum_age_after_availability_calendar_days": 10,
+      "first_available_session": "2007-01-02",
+      "last_available_session": "2025-09-30",
+      "missing_session_values": {
+        "usd_vnd_rate": 0
+      }
     },
     "gold": {
+      "status": "aligned",
       "file": "gold_xauusd_daily.csv",
-      "rows": 0,
-      "first_observation": null,
-      "last_observation": null,
-      "columns": [
-        "time",
-        "open",
-        "high",
-        "low",
-        "close",
-        "volume"
-      ]
+      "raw_rows": 1755,
+      "selected_columns": [
+        "gold_usd_per_ounce"
+      ],
+      "availability_delay_calendar_days": 1,
+      "maximum_age_after_availability_calendar_days": 10,
+      "first_available_session": "2019-01-02",
+      "last_available_session": "2025-09-30",
+      "missing_session_values": {
+        "gold_usd_per_ounce": 2988
+      }
     },
     "cpi": {
+      "status": "aligned",
       "file": "vietnam_cpi.csv",
-      "rows": 0,
-      "first_observation": null,
-      "last_observation": null,
-      "columns": [
-        "time",
-        "cpi_total",
-        "cpi_core"
-      ]
+      "raw_rows": 81,
+      "selected_columns": [
+        "cpi_yoy_pct"
+      ],
+      "availability_delay_calendar_days": 1,
+      "maximum_age_after_availability_calendar_days": 65,
+      "first_available_session": "2018-12-28",
+      "last_available_session": "2025-09-30",
+      "missing_session_values": {
+        "cpi_yoy_pct": 2987
+      }
     },
     "gdp": {
+      "status": "aligned",
       "file": "vietnam_gdp.csv",
-      "rows": 0,
-      "first_observation": null,
-      "last_observation": null,
-      "columns": [
-        "time",
-        "gdp"
-      ]
+      "raw_rows": 15,
+      "selected_columns": [
+        "gdp_usd"
+      ],
+      "availability_delay_calendar_days": 180,
+      "maximum_age_after_availability_calendar_days": 550,
+      "first_available_session": "2011-06-29",
+      "last_available_session": "2025-09-30",
+      "missing_session_values": {
+        "gdp_usd": 1110
+      }
+    },
+    "industry": {
+      "status": "aligned",
+      "file": "ict_industry.csv",
+      "raw_rows": 33,
+      "selected_columns": [
+        "ict_market_cap_vnd",
+        "ict_pe",
+        "ict_absolute_pe"
+      ],
+      "availability_delay_calendar_days": 1,
+      "maximum_age_after_availability_calendar_days": 180,
+      "first_available_session": "2016-02-15",
+      "last_available_session": "2025-09-30",
+      "missing_session_values": {
+        "ict_market_cap_vnd": 2262,
+        "ict_pe": 2262,
+        "ict_absolute_pe": 2262
+      }
     },
     "fundamentals": {
+      "status": "aligned",
       "file": "fpt_fundamentals_quarterly.csv",
-      "rows": 0,
-      "first_observation": null,
-      "last_observation": null,
-      "columns": [
-        "time"
-      ]
+      "raw_rows": 52,
+      "selected_columns": [
+        "fpt_net_revenue_vnd",
+        "fpt_gross_profit_vnd",
+        "fpt_ebit_vnd",
+        "fpt_parent_net_profit_vnd"
+      ],
+      "availability_delay_calendar_days": 45,
+      "maximum_age_after_availability_calendar_days": 150,
+      "first_available_session": "2007-05-15",
+      "last_available_session": "2025-09-30",
+      "missing_session_values": {
+        "fpt_net_revenue_vnd": 1407,
+        "fpt_gross_profit_vnd": 1407,
+        "fpt_ebit_vnd": 1407,
+        "fpt_parent_net_profit_vnd": 1407
+      }
+    },
+    "shares": {
+      "status": "aligned",
+      "file": "fpt_shares_outstanding.csv",
+      "raw_rows": 10,
+      "selected_columns": [
+        "fpt_shares_outstanding"
+      ],
+      "availability_delay_calendar_days": 1,
+      "maximum_age_after_availability_calendar_days": 550,
+      "first_available_session": "2018-07-02",
+      "last_available_session": "2025-09-30",
+      "missing_session_values": {
+        "fpt_shares_outstanding": 2859
+      }
     }
   },
-  "fetch_errors": {
-    "vnindex": "NetworkError: vnstock không lấy được chính sách máy khách hiện hành từ vnstocks.com\n(English: vnstock settings language en)",
-    "fx": "NetworkError: vnstock không lấy được chính sách máy khách hiện hành từ vnstocks.com\n(English: vnstock settings language en)",
-    "gold": "NetworkError: vnstock không lấy được chính sách máy khách hiện hành từ vnstocks.com\n(English: vnstock settings language en)",
-    "cpi": "NetworkError: vnstock không lấy được chính sách máy khách hiện hành từ vnstocks.com\n(English: vnstock settings language en)",
-    "gdp": "NetworkError: vnstock không lấy được chính sách máy khách hiện hành từ vnstocks.com\n(English: vnstock settings language en)",
-    "fundamentals": "NetworkError: vnstock không lấy được chính sách máy khách hiện hành từ vnstocks.com\n(English: vnstock settings language en)"
+  "normalized_raw_sources": {
+    "usd_vnd_daily.csv": {
+      "rows": 4893,
+      "first_date": "2007-01-01",
+      "last_date": "2025-09-30",
+      "columns": [
+        "time",
+        "usd_vnd_rate"
+      ],
+      "missing_values": {
+        "time": 0,
+        "usd_vnd_rate": 0
+      },
+      "sha256": "d82290ae103bcb25c1590f89ce7ccf6e52b312a206585317c2a957062a2b14ca"
+    },
+    "gold_xauusd_daily.csv": {
+      "rows": 1755,
+      "first_date": "2019-01-01",
+      "last_date": "2025-09-30",
+      "columns": [
+        "time",
+        "gold_usd_per_ounce"
+      ],
+      "missing_values": {
+        "time": 0,
+        "gold_usd_per_ounce": 0
+      },
+      "sha256": "b9691e60840064477841ab14e3f2903ad3b833f4c3150825668f7627f002783a"
+    },
+    "vietnam_cpi.csv": {
+      "rows": 81,
+      "first_date": "2018-12-27",
+      "last_date": "2025-09-06",
+      "columns": [
+        "time",
+        "cpi_yoy_pct"
+      ],
+      "missing_values": {
+        "time": 0,
+        "cpi_yoy_pct": 0
+      },
+      "sha256": "91b5cdb3ebd20e7927b705ca693f7176918001db7d62c5ed8c213e71e830ef04"
+    },
+    "vietnam_gdp.csv": {
+      "rows": 15,
+      "first_date": "2010-12-31",
+      "last_date": "2024-12-31",
+      "columns": [
+        "time",
+        "gdp_usd"
+      ],
+      "missing_values": {
+        "time": 0,
+        "gdp_usd": 0
+      },
+      "sha256": "35cf181db9ccf415e80f592cec47d36d61e35c9e80fcef8062d990a6fd17a1cd"
+    },
+    "ict_industry.csv": {
+      "rows": 33,
+      "first_date": "2016-02-06",
+      "last_date": "2025-07-24",
+      "columns": [
+        "time",
+        "ict_market_cap_vnd",
+        "ict_pe",
+        "ict_absolute_pe"
+      ],
+      "missing_values": {
+        "time": 0,
+        "ict_market_cap_vnd": 0,
+        "ict_pe": 0,
+        "ict_absolute_pe": 0
+      },
+      "sha256": "8a8f29305b135e3639395a8a5040a567b449da1f028b9f1e7983f4b9f2ff0e48"
+    },
+    "fpt_fundamentals_quarterly.csv": {
+      "rows": 52,
+      "first_date": "2007-03-31",
+      "last_date": "2025-06-30",
+      "columns": [
+        "time",
+        "fpt_net_revenue_vnd",
+        "fpt_gross_profit_vnd",
+        "fpt_ebit_vnd",
+        "fpt_parent_net_profit_vnd"
+      ],
+      "missing_values": {
+        "time": 0,
+        "fpt_net_revenue_vnd": 0,
+        "fpt_gross_profit_vnd": 0,
+        "fpt_ebit_vnd": 0,
+        "fpt_parent_net_profit_vnd": 0
+      },
+      "sha256": "fed368fa1c6369184a74f84ac36cfb3cade9c63794a349b17b176621ae056f76"
+    }
   },
-  "output_file": "data\\processed\\fpt_multisource_features.csv"
+  "input_rows_removed_by_cutoff_this_run": {},
+  "input_snapshots": {
+    "fpt_income_statement_source.csv": {
+      "sha256": "06f3062ebe1e094b4c6ad8f83b24df2abee89b5185a7c490e35ee61526b5870b",
+      "bytes": 19264
+    },
+    "gold_xauusd_source.csv": {
+      "sha256": "5c2940dddd0eb963545c8e62ac3216be49cde56c91fa8cebdea27f7d3a817136",
+      "bytes": 109756
+    },
+    "ict_industry_source.csv": {
+      "sha256": "a8182c097d91e99cfb937014c5a6ff8a03a287d4e932274d8e381bb3e01f0014",
+      "bytes": 1821
+    },
+    "usd_vnd_source.csv": {
+      "sha256": "f0407e27f5933c388cab27fff8031a31e5a2dd011774faa39dd72a5686478d11",
+      "bytes": 310275
+    },
+    "vietnam_cpi_source.csv": {
+      "sha256": "9aa3b33a8138a3635425d8b81d5db7110ecda5a23868341331a62affc26bc6fb",
+      "bytes": 2498
+    },
+    "vietnam_gdp_source.csv": {
+      "sha256": "dd3b1a7866584c712c7c1b8adab5ff6512e1e3a0583dc44dfc98a0b2a3a8e1df",
+      "bytes": 329
+    },
+    "fpt_shares_outstanding.csv": {
+      "sha256": "a4382c6287993e9fe55cd005c86bbef840ecc2e755ddf3b09093927351ac2f70",
+      "bytes": 2252
+    }
+  },
+  "output_file": "data/processed/fpt_multisource_features.csv"
 }

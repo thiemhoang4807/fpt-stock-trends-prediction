@@ -16,5 +16,10 @@ Thumbs.db
 *.log
 tmp/
 docs/CAM_NANG_HIEU_DU_AN.md
-data/raw/supplemental/
-data/processed/fpt_multisource_features.csv
+*.aux
+*.toc
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.xdv

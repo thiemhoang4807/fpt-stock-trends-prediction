@@ -1,0 +1,11 @@
+feature_set,model,tn,fp,fn,tp,test_rows
+Branch_1_Price_Only,Majority baseline,0,125,0,119,244
+Branch_1_Price_Only,Logistic Regression,48,77,36,83,244
+Branch_1_Price_Only,Random Forest,51,74,40,79,244
+Branch_1_Price_Only,XGBoost,50,75,43,76,244
+Branch_1_Price_Only,HistGradientBoosting,47,78,37,82,244
+Branch_2_Macro_Fundamental,Majority baseline,0,125,0,119,244
+Branch_2_Macro_Fundamental,Logistic Regression,19,106,14,105,244
+Branch_2_Macro_Fundamental,Random Forest,30,95,23,96,244
+Branch_2_Macro_Fundamental,XGBoost,34,91,24,95,244
+Branch_2_Macro_Fundamental,HistGradientBoosting,33,92,34,85,244

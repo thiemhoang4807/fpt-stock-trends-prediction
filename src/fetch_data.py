@@ -18,7 +18,7 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = PROJECT_ROOT / "data" / "raw" / "fpt" / "fpt_historical_price.csv"
 DEFAULT_START_DATE = "2007-01-01"
-DEFAULT_END_DATE = "2026-09-30"
+DEFAULT_END_DATE = "2025-09-30"
 EXPECTED_FIRST_SESSION = "2007-01-02"
 CANONICAL_COLUMNS = ["time", "open", "high", "low", "close", "volume"]
 
@@ -261,9 +261,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Tải, chuẩn hóa hoặc kiểm định snapshot OHLCV cổ phiếu FPT.",
         epilog=(
-            "Mặc định tải dữ liệu 2007–2026-09-30. Ví dụ: python src/fetch_data.py | "
+            "Mặc định tải dữ liệu 2007–2025-09-30. Ví dụ: python src/fetch_data.py | "
             "python src/fetch_data.py --verify | "
-            "python src/fetch_data.py --download --start 2007-01-01 --end 2026-09-30 "
+            "python src/fetch_data.py --download --start 2007-01-01 --end 2025-09-30 "
             "--output data/raw/fpt/fpt_historical_price.csv | "
             "python src/fetch_data.py --input export.csv --output normalized.csv"
         ),
@@ -340,6 +340,13 @@ def main(argv: list[str] | None = None) -> int:
                 )
         else:
             frame = normalize_ohlcv(_read_export(args.input))
+            start_date = pd.Timestamp(args.start).strftime("%Y-%m-%d")
+            end_date = pd.Timestamp(args.end).strftime("%Y-%m-%d")
+            frame = frame.loc[frame["time"].between(start_date, end_date)].reset_index(drop=True)
+            if frame.empty:
+                raise DataValidationError(
+                    f"Tệp đầu vào không có phiên giao dịch trong khoảng {start_date}–{end_date}."
+                )
             adjustment_factor = None
             overlap_rows = 0
             api_start = None

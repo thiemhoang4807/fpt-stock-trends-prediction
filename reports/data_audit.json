@@ -3,9 +3,9 @@
   "data_provider": "VCI (Vietcap) via vnstock",
   "price_unit": "nghìn VND/cổ phiếu; giữ nguyên thang giá VCI trả về",
   "volume_unit": "cổ phiếu",
-  "data_sha256": "7b9f9bbefb2a50280d4761e3cfa73f995c607cf825f2d4b7013cd9204182e2cb",
+  "data_sha256": "3839e982af4f088da5d8a5e08878124838583d7b65e5bf9eac280c1bddcdc1a6",
   "historical_price_adjustment_factor": 0.8875000000000001,
-  "row_count": 4919,
+  "row_count": 4671,
   "columns": [
     "time",
     "open",
@@ -15,13 +15,13 @@
     "volume"
   ],
   "date_start": "2007-01-02",
-  "date_end": "2026-09-30",
+  "date_end": "2025-09-30",
   "price_min": 1.562,
   "price_max": 119.36875,
   "close_min": 1.61525,
   "close_max": 118.073,
   "volume_min": 0,
-  "volume_max": 47840750,
+  "volume_max": 23514300,
   "missing_values_by_column": {
     "time": 0,
     "open": 0,
@@ -41,19 +41,19 @@
   ],
   "daily_return_min": -0.06989633583085308,
   "daily_return_max": 0.06992187500000013,
-  "daily_return_mean": 0.0005669554090940747,
-  "daily_return_std": 0.01924589664545348,
+  "daily_return_mean": 0.0006440851855642523,
+  "daily_return_std": 0.019189026905547593,
   "daily_return_quantiles": {
-    "0.01": -0.049435172172673104,
-    "0.25": -0.008948545861297452,
+    "0.01": -0.04947271991092215,
+    "0.25": -0.008662026916977428,
     "0.5": 0.0,
-    "0.75": 0.009452544765667092,
-    "0.99": 0.04978031575411482
+    "0.75": 0.009422850412249772,
+    "0.99": 0.04971557853910806
   },
   "next_session_direction_counts": {
-    "up": 2224,
-    "down": 2211,
-    "unchanged": 483
+    "up": 2118,
+    "down": 2074,
+    "unchanged": 478
   },
   "figures": [
     "figures/01_fpt_close.png",

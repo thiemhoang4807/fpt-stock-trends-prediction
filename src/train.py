@@ -35,15 +35,16 @@ from sklearn.metrics import (
 )
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+from xgboost import XGBClassifier, XGBRegressor
 
 from features import (
-    FEATURE_COLUMNS,
     FULL_OHLCV_FEATURE_COLUMNS,
-    REGRESSION_FEATURE_COLUMNS,
-    REGRESSION_FULL_OHLCV_FEATURE_COLUMNS,
-    build_feature_table,
+    PRICE_ONLY_FEATURE_COLUMNS,
+    RESEARCH_END_DATE,
     load_price_data,
 )
+from fetch_supplemental import MODEL_SUPPLEMENTAL_COLUMNS
+from prepare import build_experiment_table
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -106,6 +107,18 @@ def _classifier_models() -> dict[str, object]:
             n_jobs=-1,
             random_state=RANDOM_STATE,
         ),
+        "XGBoost": XGBClassifier(
+            n_estimators=220,
+            max_depth=3,
+            learning_rate=0.04,
+            subsample=0.85,
+            colsample_bytree=0.85,
+            min_child_weight=8,
+            reg_lambda=3.0,
+            eval_metric="logloss",
+            n_jobs=1,
+            random_state=RANDOM_STATE,
+        ),
         "HistGradientBoosting": HistGradientBoostingClassifier(
             learning_rate=0.05,
             max_iter=160,
@@ -127,6 +140,18 @@ def _regressor_models() -> dict[str, object]:
             max_depth=8,
             min_samples_leaf=20,
             n_jobs=-1,
+            random_state=RANDOM_STATE,
+        ),
+        "XGBoost Regressor": XGBRegressor(
+            n_estimators=240,
+            max_depth=3,
+            learning_rate=0.04,
+            subsample=0.85,
+            colsample_bytree=0.85,
+            min_child_weight=8,
+            reg_lambda=3.0,
+            objective="reg:squarederror",
+            n_jobs=1,
             random_state=RANDOM_STATE,
         ),
         "HistGradientBoosting Regressor": HistGradientBoostingRegressor(
@@ -180,29 +205,6 @@ def _regression_metrics(y_true, y_pred, current_close) -> dict[str, float]:
     }
 
 
-def _merge_supplemental(table: pd.DataFrame, path: Path) -> tuple[pd.DataFrame, list[str]]:
-    if not path.is_file():
-        return table, []
-    supplement = pd.read_csv(path)
-    if "date" not in supplement.columns:
-        raise ValueError(f"Supplemental file must include date: {path}")
-    supplement["date"] = pd.to_datetime(supplement["date"], errors="coerce").dt.normalize()
-    if supplement["date"].isna().any() or supplement["date"].duplicated().any():
-        raise ValueError("Supplemental features must have valid, unique session dates")
-    excluded = {"time", "date", "open", "high", "low", "close", "volume"}
-    feature_columns = [
-        column for column in supplement.columns
-        if column not in excluded and pd.to_numeric(supplement[column], errors="coerce").notna().any()
-    ]
-    if not feature_columns:
-        return table, []
-    supplement = supplement[["date", *feature_columns]].copy()
-    for column in feature_columns:
-        supplement[column] = pd.to_numeric(supplement[column], errors="coerce")
-    merged = table.merge(supplement, on="date", how="left", validate="one_to_one")
-    return merged, feature_columns
-
-
 def _fit_test_for_set(
     feature_set: str,
     table: pd.DataFrame,
@@ -253,7 +255,7 @@ def _fit_test_for_set(
         class_models[model_name] = model
         class_predictions[model_name] = (prediction, probability)
 
-    regression_features = feature_columns + ["current_close"]
+    regression_features = list(dict.fromkeys([*feature_columns, "current_close"]))
     y_regression = data["next_close"]
     regression_rows = []
     regression_models = {}
@@ -376,31 +378,18 @@ def run_training(
     for directory in (figures_dir, reports_dir, models_dir, processed_dir):
         directory.mkdir(parents=True, exist_ok=True)
     price_data = load_price_data(input_path)
-    base_table = build_feature_table(price_data)
+    base_table, common_rows, branch_columns = build_experiment_table(input_path, supplemental_path)
     base_table.to_csv(processed_dir / "fpt_next_session_features.csv", index=False)
+    common_rows.to_csv(processed_dir / "fpt_two_branch_features.csv", index=False)
 
-    # A and B use exactly the same rows and chronological boundary.
-    common_ab = base_table.dropna(subset=FULL_OHLCV_FEATURE_COLUMNS).reset_index(drop=True)
-    table_a = common_ab.copy()
-    table_b = common_ab.copy()
-    table_a, supplemental_columns = _merge_supplemental(table_a, supplemental_path)
-    table_b, _ = _merge_supplemental(table_b, supplemental_path)
-    table_c = table_b.copy()
+    # Both branches use the exact same eligible session dates and the exact
+    # same 85/15 boundary. This makes the difference attributable to inputs,
+    # rather than to an easier or later test window.
+    supplemental_columns = list(MODEL_SUPPLEMENTAL_COLUMNS)
     experiments = {}
     skipped = {}
 
-    feature_sets = {
-        "A_core_technical": (table_a, list(FEATURE_COLUMNS)),
-        "B_full_ohlcv": (table_b, list(FULL_OHLCV_FEATURE_COLUMNS)),
-    }
-    c_columns = list(FULL_OHLCV_FEATURE_COLUMNS) + supplemental_columns
-    if supplemental_columns:
-        feature_sets["C_multi_source"] = (table_c, c_columns)
-    else:
-        skipped["C_multi_source"] = (
-            f"No processed supplemental feature columns found at {supplemental_path}; "
-            "run python src/fetch_supplemental.py after source access is configured."
-        )
+    feature_sets = {name: (common_rows.copy(), columns) for name, columns in branch_columns.items()}
 
     for name, (data, columns) in feature_sets.items():
         try:
@@ -410,14 +399,20 @@ def run_training(
 
     if not experiments:
         raise RuntimeError(f"No feature set had enough rows for a train/test experiment: {skipped}")
+    if len(experiments) != 2:
+        raise RuntimeError(f"Both data branches must complete for a fair comparison: {skipped}")
+    splits = [result["boundaries"] for result in experiments.values()]
+    if splits[0] != splits[1]:
+        raise RuntimeError("Branch Train/Test dates or sample counts do not match")
 
     classification_rows = [row for result in experiments.values() for row in result["classification_rows"]]
     regression_rows = [row for result in experiments.values() for row in result["regression_rows"]]
     class_metrics = pd.DataFrame(classification_rows)
     regression_metrics = pd.DataFrame(regression_rows)
 
-    # A/B share the same dates and are the primary model-selection comparison.
-    comparable_sets = [name for name in ("A_core_technical", "B_full_ohlcv") if name in experiments]
+    # The two branches share one chronological cohort and therefore can be
+    # compared model-for-model on an identical test period.
+    comparable_sets = [name for name in ("Branch_1_Price_Only", "Branch_2_Macro_Fundamental") if name in experiments]
     class_primary = class_metrics[class_metrics["feature_set"].isin(comparable_sets)]
     reg_primary = regression_metrics[regression_metrics["feature_set"].isin(comparable_sets)]
     best_class_row = class_primary.sort_values(
@@ -477,15 +472,52 @@ def run_training(
                 "tolerance_accuracy_2_percent": best_reg["tolerance_accuracy_2_percent"],
             }
         )
-    if "C_multi_source" not in experiments:
-        c_summary.append(
-            {
-                "feature_set": "C_multi_source",
-                "status": "not_run",
-                "skip_reason": skipped.get("C_multi_source", "Insufficient point-in-time data coverage"),
-            }
-        )
     pd.DataFrame(c_summary).to_csv(reports_dir / "ablation_summary.csv", index=False)
+
+    confusion_rows = []
+    direction_rows = []
+    importance_rows = []
+    fig, axes = plt.subplots(2, 5, figsize=(16, 6.5))
+    for branch_index, (branch_name, result) in enumerate(experiments.items()):
+        test_class = result["class_data"].loc[result["class_masks"]["test"]].reset_index(drop=True)
+        for model_index, (model_name, (predicted, probability)) in enumerate(result["class_predictions"].items()):
+            cm = confusion_matrix(test_class["direction"].astype(int), predicted, labels=[0, 1])
+            tn, fp, fn, tp = (int(value) for value in cm.ravel())
+            confusion_rows.append({"feature_set": branch_name, "model": model_name, "tn": tn, "fp": fp, "fn": fn, "tp": tp, "test_rows": int(cm.sum())})
+            axis = axes[branch_index, model_index]
+            axis.imshow(cm, cmap="Blues", vmin=0, vmax=len(test_class))
+            axis.set_title(f"Nhánh {branch_index + 1}\n{model_name}", fontsize=10)
+            axis.set_xticks([0, 1], labels=["Giảm", "Tăng"])
+            axis.set_yticks([0, 1], labels=["Giảm", "Tăng"])
+            axis.set_xlabel("Dự đoán")
+            axis.set_ylabel("Thực tế")
+            for row in range(2):
+                for col in range(2):
+                    axis.text(col, row, str(cm[row, col]), ha="center", va="center", fontsize=12)
+            output = test_class[["date", "target_date", "current_close", "next_close", "direction"]].copy()
+            output["feature_set"] = branch_name
+            output["model"] = model_name
+            output["predicted_direction"] = predicted
+            output["probability_up"] = probability
+            direction_rows.append(output)
+            estimator = result["class_models"][model_name]
+            if hasattr(estimator, "feature_importances_"):
+                importance_rows.extend({"feature_set": branch_name, "model": model_name, "feature": feature, "importance": float(value)} for feature, value in zip(result["feature_columns"], estimator.feature_importances_))
+    fig.suptitle("Ma trận nhầm lẫn của toàn bộ mô hình phân loại trên cùng Test", fontsize=14)
+    fig.tight_layout()
+    fig.savefig(figures_dir / "05_all_confusion_matrices.png", dpi=220)
+    plt.close(fig)
+    pd.DataFrame(confusion_rows).to_csv(reports_dir / "confusion_matrices.csv", index=False)
+    pd.concat(direction_rows, ignore_index=True).to_csv(reports_dir / "test_direction_predictions_by_model.csv", index=False)
+    pd.DataFrame(importance_rows).to_csv(reports_dir / "feature_importance_train.csv", index=False)
+
+    hyperparameters = {
+        "random_state": RANDOM_STATE,
+        "tuning": "Fixed parameters; no early stopping on Test, no parameter search on Test",
+        "classification": {name: model.get_params(deep=True) for name, model in _classifier_models().items()},
+        "regression": {name: model.get_params(deep=True) for name, model in _regressor_models().items()},
+    }
+    (reports_dir / "model_hyperparameters.json").write_text(json.dumps(hyperparameters, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
 
     class_test = classifier_experiment["class_data"].loc[classifier_experiment["class_masks"]["test"]].reset_index(drop=True)
     class_pred, class_prob = classifier_experiment["class_predictions"][classifier_name]
@@ -517,6 +549,121 @@ def run_training(
     fig.savefig(figures_dir / "06_actual_vs_predicted_close.png", dpi=160)
     plt.close(fig)
 
+    # One panel per branch lets a reader inspect every requested regression
+    # model against exactly the same observed close path.
+    plotted_regressors = [
+        "Linear Regression",
+        "Random Forest Regressor",
+        "XGBoost Regressor",
+        "HistGradientBoosting Regressor",
+    ]
+    colors = {"Linear Regression": "#376E9F", "Random Forest Regressor": "#D17A22", "XGBoost Regressor": "#6A9F58", "HistGradientBoosting Regressor": "#A45C8A"}
+    fig, axes = plt.subplots(len(experiments), 1, figsize=(13, 5.4 * len(experiments)), sharex=True)
+    axes = np.atleast_1d(axes)
+    long_price_rows = []
+    for axis, (branch_name, result) in zip(axes, experiments.items()):
+        branch_test = result["data"].loc[result["masks"]["test"]].reset_index(drop=True)
+        axis.plot(branch_test["target_date"], branch_test["next_close"], color="#202020", linewidth=1.45, label="Actual close")
+        for model_name in plotted_regressors:
+            prediction = result["regression_predictions"][model_name]
+            axis.plot(branch_test["target_date"], prediction, color=colors[model_name], linewidth=0.95, alpha=0.9, label=model_name)
+            long_price_rows.extend(
+                {
+                    "feature_set": branch_name,
+                    "model": model_name,
+                    "date": row.date.strftime("%Y-%m-%d"),
+                    "target_date": row.target_date.strftime("%Y-%m-%d"),
+                    "actual_close": float(row.next_close),
+                    "predicted_close": float(prediction[index]),
+                }
+                for index, row in branch_test.iterrows()
+            )
+        axis.set_title(branch_name.replace("_", " "))
+        axis.set_ylabel("Close (nghìn VND)")
+        axis.grid(alpha=0.25)
+        axis.legend(ncol=2, fontsize=8)
+    axes[-1].set_xlabel("Ngày mục tiêu")
+    fig.suptitle("Giá thực tế và giá dự đoán của từng mô hình trên tập Test", y=0.995)
+    fig.tight_layout()
+    fig.savefig(figures_dir / "07_regression_lines_by_branch.png", dpi=220)
+    plt.close(fig)
+    pd.DataFrame(long_price_rows).to_csv(reports_dir / "test_price_predictions_by_model.csv", index=False)
+
+    # XGBoost is the common nonlinear comparator in the two branches. The
+    # second panel magnifies the latest 80 sessions without hiding the full path.
+    price_branch = experiments["Branch_1_Price_Only"]
+    macro_branch = experiments["Branch_2_Macro_Fundamental"]
+    comparison_test = price_branch["data"].loc[price_branch["masks"]["test"]].reset_index(drop=True)
+    fig, axes = plt.subplots(2, 1, figsize=(13, 8), sharex=False)
+    for axis, start_index, title in (
+        (axes[0], 0, "Toàn bộ tập Test"),
+        (axes[1], max(0, len(comparison_test) - 80), "Phóng to 80 phiên cuối của tập Test"),
+    ):
+        subset = comparison_test.iloc[start_index:]
+        axis.plot(subset["target_date"], subset["next_close"], color="#202020", linewidth=1.55, label="Actual close")
+        axis.plot(subset["target_date"], price_branch["regression_predictions"]["XGBoost Regressor"][start_index:], color="#376E9F", linewidth=1.05, label="Nhánh 1: XGBoost")
+        axis.plot(subset["target_date"], macro_branch["regression_predictions"]["XGBoost Regressor"][start_index:], color="#C45A3D", linewidth=1.05, label="Nhánh 2: XGBoost")
+        axis.set_title(title)
+        axis.set_ylabel("Close (nghìn VND)")
+        axis.grid(alpha=0.25)
+        axis.legend()
+    axes[-1].set_xlabel("Ngày mục tiêu")
+    fig.tight_layout()
+    fig.savefig(figures_dir / "08_branch_xgboost_comparison_zoom.png", dpi=220)
+    plt.close(fig)
+
+    fig, axes = plt.subplots(4, 2, figsize=(15, 14))
+    for row_index, model_name in enumerate(plotted_regressors):
+        for col_index, start_index in ((0, 0), (1, max(0, len(comparison_test) - 80))):
+            axis = axes[row_index, col_index]
+            subset = comparison_test.iloc[start_index:]
+            axis.plot(subset["target_date"], subset["next_close"], color="#202020", linewidth=1.4, label="Actual close")
+            axis.plot(subset["target_date"], price_branch["regression_predictions"][model_name][start_index:], color="#376E9F", linewidth=0.95, label="Nhánh 1")
+            axis.plot(subset["target_date"], macro_branch["regression_predictions"][model_name][start_index:], color="#C45A3D", linewidth=0.95, label="Nhánh 2")
+            axis.set_title(f"{model_name} / {'Toàn bộ Test' if col_index == 0 else '80 phiên cuối'}", fontsize=11)
+            axis.set_ylabel("Close (nghìn VND)")
+            axis.grid(alpha=0.25)
+            axis.legend(fontsize=8)
+    fig.autofmt_xdate(rotation=20)
+    fig.tight_layout()
+    fig.savefig(figures_dir / "11_all_regressors_branch_comparison_zoom.png", dpi=220)
+    plt.close(fig)
+
+    def _metric_bars(frame: pd.DataFrame, model_names: list[str], metrics: list[str], title: str, filename: str) -> None:
+        labels = [name.replace(" Regressor", "").replace(" Regression", "") for name in model_names]
+        positions = np.arange(len(labels))
+        width = 0.36
+        fig, axes = plt.subplots(1, len(metrics), figsize=(5.2 * len(metrics), 4.8))
+        for axis, metric in zip(np.atleast_1d(axes), metrics):
+            for offset, branch_name in ((-width / 2, "Branch_1_Price_Only"), (width / 2, "Branch_2_Macro_Fundamental")):
+                values = [
+                    float(frame.loc[(frame["feature_set"] == branch_name) & (frame["model"] == model), metric].iloc[0])
+                    for model in model_names
+                ]
+                axis.bar(positions + offset, values, width, label=branch_name.replace("Branch_", "Nhánh ").replace("_", " "))
+            axis.set_title(metric.replace("_", " ").title())
+            axis.set_xticks(positions, labels, rotation=25, ha="right")
+            axis.grid(axis="y", alpha=0.25)
+        axes[0].set_ylabel("Tỷ lệ" if metrics[0] in {"accuracy", "balanced_accuracy", "f1_up"} else "Sai số")
+        axes[0].legend(fontsize=8)
+        fig.suptitle(title, y=1.02)
+        fig.tight_layout()
+        fig.savefig(figures_dir / filename, dpi=220, bbox_inches="tight")
+        plt.close(fig)
+
+    _metric_bars(
+        class_metrics,
+        ["Majority baseline", "Logistic Regression", "Random Forest", "XGBoost", "HistGradientBoosting"],
+        ["accuracy", "balanced_accuracy", "f1_up"],
+        "So sánh chỉ số phân loại giữa hai nhánh", "09_classification_metric_bars.png",
+    )
+    _metric_bars(
+        regression_metrics,
+        ["Last-Close Baseline", "Linear Regression", "Random Forest Regressor", "XGBoost Regressor", "HistGradientBoosting Regressor"],
+        ["mae", "rmse", "mape_percent"],
+        "So sánh sai số hồi quy giữa hai nhánh", "10_regression_metric_bars.png",
+    )
+
     price_output = regression_test[["date", "target_date", "current_close", "next_close", "next_return"]].copy()
     price_output["regression_prediction"] = regression_pred
     price_output["regression_model"] = regressor_name
@@ -533,24 +680,24 @@ def run_training(
 
     splits = {name: result["boundaries"] for name, result in experiments.items()}
     metadata = {
-        "split_method": "Per feature set: chronological first 85% train and final 15% test by target session date.",
-        "primary_comparison": "A and B share the same eligible dates and boundary; C uses its available point-in-time coverage and may have a shorter window.",
+        "split_method": "Shared chronological cohort: first 85% train and final 15% test by target session date.",
+        "primary_comparison": "Both branches use the same availability-aligned eligible dates and the same boundary; financial/GDP release dates include stated assumptions.",
         "feature_set_splits": splits,
         "feature_warmup_rows_removed": int(len(price_data) - len(base_table)),
         "raw_price_rows": int(len(price_data)),
-        "core_feature_count": len(FEATURE_COLUMNS),
+        "cutoff_date": RESEARCH_END_DATE,
+        "price_only_feature_count": len(PRICE_ONLY_FEATURE_COLUMNS),
         "full_ohlcv_feature_columns": FULL_OHLCV_FEATURE_COLUMNS,
-        "supplemental_feature_file": str(supplemental_path) if supplemental_path.is_file() else None,
+        "supplemental_feature_file": supplemental_path.relative_to(ROOT).as_posix() if supplemental_path.is_relative_to(ROOT) else supplemental_path.name,
         "supplemental_feature_columns": supplemental_columns,
-        "supplemental_experiment_skipped_reason": skipped.get("C_multi_source"),
         "classification_label": "up=1, down=0; exactly unchanged next closes excluded from classification.",
         "regression_target": "next_close at target_date; last-close baseline predicts current_close.",
         "tolerance_definition": "Percent of test rows with absolute price error divided by actual close no greater than 0.5%, 1%, or 2%.",
         "scaling": "StandardScaler is inside the Logistic Regression and Linear Regression pipelines; each scaler is fitted only on its Train split for reported Test metrics.",
         "selection": {
-            "classifier": "Highest Test Balanced Accuracy among A/B candidates; tie-break by Test F1(up). This Test-based selection is optimistic and is not an independent final estimate.",
-            "regressor": "Lowest Test MAE among A/B candidates; tie-break by Test RMSE. This Test-based selection is optimistic and is not an independent final estimate.",
-            "deployment_refit": "After metrics are recorded, selected A/B estimators are refit on all available labeled data through 2026-09-30 for latest-session inference; Test metrics remain from Train-only fits.",
+            "classifier": "Highest Test Balanced Accuracy among both branch candidates; tie-break by Test F1(up). This Test-based selection is optimistic and is not an independent final estimate.",
+            "regressor": "Lowest Test MAE among both branch candidates; tie-break by Test RMSE. This Test-based selection is optimistic and is not an independent final estimate.",
+            "deployment_refit": "After metrics are recorded, selected estimators are refit on all labeled rows of the shared cohort through 2025-09-30 for latest-session inference; Test metrics remain from Train-only fits.",
         },
         "selected_models": {
             "classifier": {"model": classifier_name, "feature_set": classifier_set},
