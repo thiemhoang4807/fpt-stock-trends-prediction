@@ -44,6 +44,25 @@ Theo thiết kế hiện tại, mô hình triển khai được chọn sau khi �
 
 ## Chạy dự án
 
+### Chạy bằng Jupyter Notebook hoặc Google Colab
+
+Có thể học và chạy từng ô bằng [notebook tổng hợp `00_RUN_ALL.ipynb`](notebooks/00_RUN_ALL.ipynb). Notebook này đi từ kiểm định dữ liệu đến huấn luyện, xem biểu đồ, dự báo và kiểm thử. Các ô Markdown giải thích bằng tiếng Việt; các ô code gọi cùng những hàm đang dùng trong `src/` để kết quả không bị lệch giữa hai cách chạy.
+
+Nếu chạy trên máy cá nhân, mở terminal tại thư mục gốc rồi thực hiện:
+
+```bash
+python -m pip install -r requirements-notebooks.txt
+python -m jupyterlab
+```
+
+Trong JupyterLab, mở `notebooks/00_RUN_ALL.ipynb` và chọn **Run → Run All Cells**. Với VS Code, mở thư mục dự án, mở tệp `.ipynb`, chọn kernel Python đã cài thư viện rồi nhấn **Run All**. Kernel là tiến trình Python giữ các biến của những ô đã chạy; sau khi sửa một ô phía trên, nên chạy lại từ ô đó trở xuống.
+
+Với Google Colab, mở notebook từ GitHub rồi chạy từ ô đầu. Khi chưa có thư mục dự án trong Colab, ô thiết lập sẽ clone repository chính thức và cài thư viện. Các bước sau mặc định dùng snapshot đã đóng gói, không đòi tải lại từ các website tài chính. Hướng dẫn đầy đủ và danh sách notebook theo từng công đoạn nằm trong [notebooks/README.md](notebooks/README.md).
+
+**Run All tạo lại các tệp chính thức** trong `data/processed/`, `reports/`, `figures/` và `models/`; bước chuẩn hóa bổ trợ cũng có thể ghi lại các bảng chuẩn hóa trong `data/raw/supplemental/`. Notebook giữ nguyên mốc 30/09/2025 và không tự ghi đè snapshot OHLCV bằng dữ liệu trực tuyến. Ô tải OHLCV là tùy chọn, mặc định tắt và lưu tách tại `tmp/notebook_download.csv`.
+
+### Chạy bằng dòng lệnh Python
+
 Python 3.11 trở lên được khuyến nghị; cài các thư viện đã khai báo rồi chạy từ thư mục gốc:
 
 ```bash
@@ -74,6 +93,15 @@ Với thông tin đến 30/09/2025, Logistic Regression Nhánh 1 dự báo **Tă
 ## Cấu trúc thư mục
 
 ```text
+notebooks/
+  00_RUN_ALL.ipynb       Chạy toàn bộ quy trình bằng các ô riêng có giải thích
+  01_fetch_data.ipynb    Kiểm định OHLCV; tùy chọn tải dữ liệu ra tệp riêng
+  02_fetch_supplemental.ipynb  Chuẩn hóa và căn ngày dữ liệu bổ trợ
+  03_eda.ipynb           Khám phá và kiểm toán dữ liệu
+  04_features.ipynb      Hiểu cách tạo đặc trưng và nhãn
+  05_prepare.ipynb       Chuẩn bị bảng hai nhánh dùng chung ngày
+  06_train.ipynb         Chia Train/Test, huấn luyện, đọc điểm và biểu đồ
+  07_predict.ipynb       Dự báo từ mô hình đã lưu
 src/
   fetch_data.py          Tải/chuẩn hóa/kiểm định OHLCV FPT
   fetch_supplemental.py  Chuẩn hóa snapshot bổ trợ, cutoff và ghép theo ngày hiệu lực
@@ -90,6 +118,7 @@ reports/                 Kiểm toán, metrics, dự báo từng mô hình, siê
 figures/                 Sơ đồ, EDA, confusion matrix, line chart và bar chart
 models/                  Mô hình đã chọn, fit lại để minh họa dự báo
 tests/                   Kiểm thử chuẩn hóa, thời gian, dữ liệu rò rỉ và metrics
+requirements-notebooks.txt  Môi trường Jupyter và thư viện của dự án
 docs/
   PROPOSAL.md            Đề xuất đồ án CS114
   cs114_proposal.tex     Nguồn LaTeX

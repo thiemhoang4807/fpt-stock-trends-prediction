@@ -81,3 +81,19 @@ Hoàn tất 100% các giai đoạn của đợt cập nhật. Lần kiểm thử
 - [x] Biên dịch XeLaTeX hai lần, mục lục được cập nhật; PDF 6 trang, không có cảnh báo tràn hộp.
 - [x] Render và kiểm tra trực quan đủ 6 trang: bìa, bảng, sơ đồ, tiêu đề và ký hiệu dung sai hiển thị đúng.
 - [x] Chỉ thay tài liệu Proposal và nhật ký; cẩm nang riêng tiếp tục bị Git bỏ qua.
+
+
+## Giao diện Jupyter Notebook cho pipeline CS114
+
+- [x] Kiểm tra 7 module nguồn, entrypoint và phụ thuộc của từng bước.
+- [x] Tạo 8 notebook: một bản chạy toàn bộ và 7 bản tương ứng module; chia ô, giải thích tiếng Việt.
+- [x] Bổ sung môi trường Jupyter và hướng dẫn chạy local/Colab.
+- [x] Kiểm định cấu trúc, chạy đủ 8 notebook bằng kernel mới và đối chiếu kết quả với pipeline Python.
+- [x] Chạy pytest (34 passed), xác minh dữ liệu nguồn không đổi và cẩm nang riêng bị Git bỏ qua.
+- [ ] Commit và đồng bộ notebook lên GitHub.
+
+Giữ src/*.py và tests/*.py để notebook dùng đúng thuật toán đã kiểm thử; tránh duy trì hai bản thuật toán khác nhau.
+
+Đã tạo 8 notebook với tổng 151 ô (70 ô code, 81 ô hướng dẫn), chú thích tiếng Việt; kiểm định schema nbformat và cú pháp Python của toàn bộ ô đạt. Notebook không chứa output hay đường dẫn máy cá nhân. Cờ tải API mặc định tắt; tải thử ra tmp/ và không ghi đè snapshot. Đang chạy từng notebook bằng kernel mới trong bản sao cách ly tại tmp/notebook_validation để không thay artefact chính thức.
+
+Kết quả thực thi: cả 8 notebook hoàn tất từ đầu đến cuối bằng kernel Python mới (thử cả cwd tại root và notebooks/). Notebook tổng hợp tự chạy 34 kiểm thử đạt. Cả hai CSV metrics đối chiếu từng cột với bản chính thức đạt sai số số học <= 1e-10; JSON dự báo cuối giống hệt; SHA-256 các CSV giá/nguồn bổ trợ/cổ phiếu lưu hành không đổi. Các notebook xuất bản giữ output trống để người học tự chạy; kết quả kiểm định chi tiết ở tmp/notebook_validation/summary.json (không công bố). Nhánh cài/clone riêng của Colab và tải API tùy chọn chưa thực thi trong lần kiểm định local này.
