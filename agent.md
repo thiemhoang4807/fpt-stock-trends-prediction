@@ -72,3 +72,12 @@ Test được dùng để đánh dấu mô hình tốt nhất sau thực nghiệ
 ## Xác nhận hoàn tất
 
 Hoàn tất 100% các giai đoạn của đợt cập nhật. Lần kiểm thử sau stage đạt 34 passed. Commit ce72fd0 đã push lên origin/main. Cẩm nang riêng vẫn tồn tại cục bộ, được git check-ignore xác nhận và git ls-files không liệt kê. Nhật ký này được bổ sung xác nhận sau khi push thành công.
+
+
+## Cập nhật Proposal theo nội dung chủ dự án gửi (26/10/2026)
+
+- [x] Cập nhật LaTeX thành 7 mục theo bản mới; bỏ tiến độ, mục góp ý, vai trò thành viên và dòng lĩnh vực ở bìa.
+- [x] Bổ sung giải nghĩa OHLCV, chỉnh câu về HOSE và nguồn giá FPT; sửa lỗi gõ và escape LaTeX từ tin nhắn.
+- [x] Biên dịch XeLaTeX hai lần, mục lục được cập nhật; PDF 6 trang, không có cảnh báo tràn hộp.
+- [x] Render và kiểm tra trực quan đủ 6 trang: bìa, bảng, sơ đồ, tiêu đề và ký hiệu dung sai hiển thị đúng.
+- [x] Chỉ thay tài liệu Proposal và nhật ký; cẩm nang riêng tiếp tục bị Git bỏ qua.

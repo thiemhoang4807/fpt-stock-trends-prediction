@@ -30,23 +30,22 @@
 {\large \textbf{ĐẠI HỌC QUỐC GIA THÀNH PHỐ HỒ CHÍ MINH}}\\
 {\large \textbf{TRƯỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN}}\\[3.5cm]
 {\Large \textbf{ĐỀ XUẤT Ý TƯỞNG ĐỒ ÁN MÔN HỌC CS114}}\\[0.5cm]
-{\large \textbf{MÁY HỌC}}\\[1.0cm]
+{\Large \textbf{ĐỀ TÀI:}}\\[0.5cm]
 {\Large \textbf{ỨNG DỤNG HỌC MÁY DỰ ĐOÁN XU HƯỚNG VÀ GIÁ ĐÓNG CỬA CỔ PHIẾU FPT Ở PHIÊN KẾ TIẾP}}\\[1.4cm]
 \end{center}
 
 \begin{center}
 \renewcommand{\arraystretch}{1.25}
-\begin{tabular}{cllc}
+\begin{tabular}{cll}
 \toprule
-\textbf{STT} & \textbf{Họ và tên} & \textbf{MSSV} & \textbf{Vai trò}\\
+\textbf{STT} & \textbf{Họ và tên} & \textbf{MSSV}\\
 \midrule
-1 & Lê Vũ Thiêm Hoàng & 25520584 & Leader\\
-2 & Nguyễn Tấn Dũng & 25520367 & Member\\
-3 & Lưu Hoàng Minh Duy & 25520424 & Member\\
+1 & Lê Vũ Thiêm Hoàng & 25520584\\
+2 & Nguyễn Tấn Dũng & 25520367\\
+3 & Lưu Hoàng Minh Duy & 25520424\\
 \bottomrule
 \end{tabular}
 \par\vspace{0.7cm}
-Lĩnh vực: Khoa học dữ liệu và Trí tuệ nhân tạo
 \end{center}
 
 \vfill
@@ -64,14 +63,14 @@ Giá cổ phiếu thay đổi theo thông tin doanh nghiệp, cung cầu và đi
 \section{Mục tiêu của đề tài}
 Mục tiêu chung là xây dựng pipeline tái lập được để dự báo một phiên giao dịch kế tiếp của FPT và đo tác động của các nhóm dữ liệu đầu vào.
 \begin{enumerate}[label=\arabic*.]
-\item Khảo sát OHLCV FPT và dữ liệu bổ trợ trong giai đoạn 2007--30/09/2025.
+\item Khảo sát OHLCV (Open, High, Low, Close, Volume) của cổ phiếu FPT và dữ liệu bổ trợ trong giai đoạn 2007--30/09/2025.
 \item Chuẩn hóa dữ liệu, tạo đặc trưng chỉ từ thông tin đã có tại cuối phiên và căn dữ liệu tần suất thấp theo ngày có hiệu lực.
 \item Huấn luyện, đánh giá các mô hình phân loại hướng và hồi quy giá bằng chia tập thời gian Train 85\% và Test 15\%.
 \item So sánh hai nhánh đầu vào, phân tích sai số, giới hạn và các trường hợp dự báo sai.
 \end{enumerate}
 
 \section{Phạm vi và đối tượng nghiên cứu}
-Đối tượng là mã FPT trên HOSE. Snapshot OHLCV dừng tại 30/09/2025 để giữ mốc dữ liệu đồng bộ với các nguồn vĩ mô và báo cáo tài chính đã kiểm tra được. Mỗi hàng ở cuối phiên $t$ dự báo phiên giao dịch quan sát được kế tiếp $t+1$. Bài toán phân loại có nhãn Tăng hoặc Giảm theo giá đóng cửa; phiên không đổi bị loại khỏi chấm điểm phân loại. Bài toán hồi quy giữ cả phiên không đổi và dự báo giá đóng cửa ở $t+1$.
+Đối tượng là mã FPT trên sàn chứng khoán HOSE. Dữ liệu OHLCV dừng tại 30/09/2025 để giữ mốc dữ liệu đồng bộ với các nguồn vĩ mô và báo cáo tài chính đã kiểm tra được. Mỗi hàng ở cuối phiên $t$ dự báo phiên giao dịch quan sát được kế tiếp $t+1$. Bài toán phân loại có nhãn Tăng hoặc Giảm theo giá đóng cửa; phiên không đổi bị loại khỏi chấm điểm phân loại. Bài toán hồi quy giữ cả phiên không đổi và dự báo giá đóng cửa ở $t+1$.
 
 \newpage
 \section{Đầu vào và đầu ra dự kiến}
@@ -87,7 +86,7 @@ Tài chính FPT & Doanh thu thuần, lợi nhuận gộp, EBIT, lợi nhuận sa
 \bottomrule
 \end{tabularx}}
 
-Các nguồn dự kiến gồm VCI/Vietcap qua vnstock cho FPT; Investing.com cho tỷ giá, vàng và CPI; World Bank cho GDP năm; Simply Wall St cho các snapshot ngành công nghệ Việt Nam. Nhóm sẽ lưu nguồn, đơn vị, khoảng thời gian và ngày có hiệu lực của từng chuỗi. Giá vàng quy đổi bằng giá XAU/USD nhân USD/VND, có đơn vị VND trên một ounce vàng; đây không phải giá vàng miếng trong nước. GDP dùng số liệu thực tế đã công bố, không trộn với dự báo. Chỉ tiêu chưa đủ độ phủ hoặc chưa xác minh được ngày công bố sẽ được ghi rõ trong báo cáo thực nghiệm.
+Các nguồn dự kiến gồm VCI/Vietcap qua vnstock cho giá cổ phiếu FPT; Investing.com cho tỷ giá, vàng và CPI; World Bank cho GDP năm; Simply Wall St cho các snapshot ngành công nghệ Việt Nam. Nhóm sẽ lưu nguồn, đơn vị, khoảng thời gian và ngày có hiệu lực của từng chuỗi. Giá vàng quy đổi bằng giá XAU/USD nhân USD/VND, có đơn vị VND trên một ounce vàng; đây không phải giá vàng miếng trong nước. GDP dùng số liệu thực tế đã công bố, không trộn với dự báo. Chỉ tiêu chưa đủ độ phủ hoặc chưa xác minh được ngày công bố sẽ được ghi rõ trong báo cáo thực nghiệm.
 
 \subsection{Đầu ra}
 {\small\renewcommand{\arraystretch}{1.12}
@@ -140,22 +139,4 @@ Phân loại hướng và hồi quy giá được chấm riêng. Nếu dùng k�
 \section{Kết quả dự kiến}
 Sản phẩm dự kiến gồm pipeline dữ liệu tái lập được, bảng đặc trưng và kiểm toán dữ liệu, mô hình đã huấn luyện kèm lệnh dự báo phiên kế tiếp, cùng báo cáo thực nghiệm hai nhánh. Các kết quả hiện có sẽ được dùng để phân tích trường hợp thêm dữ liệu bổ trợ có cải thiện hay làm giảm hiệu quả dự báo. Nhóm sẽ báo cáo cả kết quả không cải thiện thay vì chỉ chọn mô hình có chỉ số cao.
 
-\subsection{Tiến độ thực hiện trong 10 tuần}
-\begin{tabular}{p{3.5cm}p{10cm}}
-\toprule
-Tuần 1--2 & Kiểm toán dữ liệu OHLCV và chuẩn hóa nguồn bổ trợ.\\
-Tuần 3--4 & Tạo đặc trưng, căn chỉnh theo thời điểm có thể biết, kiểm thử chống rò rỉ.\\
-Tuần 5--6 & Huấn luyện và so sánh mô hình hai nhánh.\\
-Tuần 7--8 & Phân tích lỗi, hoàn thiện biểu đồ và báo cáo.\\
-Tuần 9--10 & Chuẩn bị slide, luyện thuyết trình và hoàn thiện nộp bài.\\
-\bottomrule
-\end{tabular}
-
-\section{Nội dung nhóm mong muốn được giảng viên góp ý}
-\begin{enumerate}[label=\arabic*.]
-\item Nên giữ phạm vi phân tích sâu một mã FPT hay mở rộng sang một số mã ICT.
-\item Mức độ cần thiết của biến vĩ mô và báo cáo quý trong dự báo phiên ngày.
-\item Mức độ phù hợp khi tập trung so sánh mô hình bảng so với mở rộng sang LSTM hoặc Transformer.
-\item Chỉ số đánh giá và ngưỡng kết quả tối thiểu phù hợp với yêu cầu học phần CS114.
-\end{enumerate}
 \end{document}
