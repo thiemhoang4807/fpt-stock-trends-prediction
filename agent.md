@@ -90,7 +90,7 @@ Hoàn tất 100% các giai đoạn của đợt cập nhật. Lần kiểm thử
 - [x] Bổ sung môi trường Jupyter và hướng dẫn chạy local/Colab.
 - [x] Kiểm định cấu trúc, chạy đủ 8 notebook bằng kernel mới và đối chiếu kết quả với pipeline Python.
 - [x] Chạy pytest (34 passed), xác minh dữ liệu nguồn không đổi và cẩm nang riêng bị Git bỏ qua.
-- [ ] Commit và đồng bộ notebook lên GitHub.
+- [x] Commit 5e8ee71 và đồng bộ notebook lên origin/main thành công.
 
 Giữ src/*.py và tests/*.py để notebook dùng đúng thuật toán đã kiểm thử; tránh duy trì hai bản thuật toán khác nhau.
 
