@@ -63,12 +63,12 @@ Last-Close Baseline tốt nhất MAE 1,1942 nghìn VND, RMSE 1,7129, MAPE 1,2342
 - [x] Kiểm thử cutoff trước target, nhãn t+1, chỉ báo không thay khi sửa tương lai, scaler Train-only, ghép không nhìn trước, hạn dữ liệu cũ và dự báo không dùng phiên cũ.
 - [x] Chuỗi verify → supplemental → EDA → prepare → train → predict → pytest hoàn tất; nhật ký lệnh được giữ trong tmp/pipeline_logs và bị Git bỏ qua.
 - [x] Quét từ khóa bị cấm, kiểm tra links/tài liệu, PDF, diff và kích thước tệp; cẩm nang riêng không nằm trong Git index.
-- [ ] Commit chính thức và push main; ghi xác nhận trạng thái remote sau push.
+- [x] Commit chính thức ce72fd0 và push main thành công; mọi tệp chính thức đã được công bố, cẩm nang riêng không thuộc commit.
 
 ## Giới hạn phải giữ trong tài liệu
 
 Test được dùng để đánh dấu mô hình tốt nhất sau thực nghiệm theo yêu cầu; điểm mô hình được chọn vì vậy chưa phải đánh giá độc lập. Độ trễ báo cáo quý/GDP là giả định mô phỏng, dữ liệu có thể đã điều chỉnh lại, chưa phải kho lịch sử từng phiên bản. Lịch sử cổ phiếu là các mốc đã thu thập, không phải sổ thay đổi hằng ngày đầy đủ. Không nội suy dựa vào báo cáo tương lai. Một cổ phiếu và một cửa sổ Test chưa chứng minh hiệu quả đầu tư.
 
-## Bước tiếp theo
+## Xác nhận hoàn tất
 
-Stage các tệp chính thức, xác nhận cẩm nang riêng không bị stage, commit và push main. Toàn bộ xử lý/huấn luyện/tài liệu đã hoàn tất; công bố Git đang chờ thực hiện.
+Hoàn tất 100% các giai đoạn của đợt cập nhật. Lần kiểm thử sau stage đạt 34 passed. Commit ce72fd0 đã push lên origin/main. Cẩm nang riêng vẫn tồn tại cục bộ, được git check-ignore xác nhận và git ls-files không liệt kê. Nhật ký này được bổ sung xác nhận sau khi push thành công.
