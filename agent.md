@@ -108,7 +108,7 @@ Kết quả thực thi: cả 8 notebook hoàn tất từ đầu đến cuối b�
 - [x] SHAP, permutation importance và ablation cùng cohort.
 - [x] Báo cáo/Proposal/LaTeX/cẩm nang riêng/notebook cập nhật kết quả thật.
 - [x] Kiểm thử và kiểm tra nguồn/cẩm nang.
-- [ ] Commit và push main đợt nâng cấp chuỗi thời gian.
+- [x] Commit và push main đợt nâng cấp chuỗi thời gian.
 
 Phát hiện notebook 01 có thay đổi cục bộ từ người dùng; giữ nguyên nội dung đó khi nâng cấp. Test cũ đã từng được xem trong các phiên bản trước, nên holdout mới chỉ độc lập với quy trình lựa chọn lần này, không phải tập chưa từng được nhóm quan sát.
 
@@ -125,4 +125,8 @@ Phát hiện notebook 01 có thay đổi cục bộ từ người dùng; giữ n
 - Đã viết lại cẩm nang riêng 63.858 byte với tính tay chỉ báo, ADF/KPSS, CV, log return, ba họ mô hình, kết quả thật và 10 câu vấn đáp; tiếp tục bị .gitignore loại trừ.
 - Proposal LaTeX/PDF 5 trang đã biên dịch hai lần và kiểm tra trực quan toàn bộ: mục 6, công thức, dấu ±, tên 3 sinh viên và sơ đồ hiển thị đúng. Có hai cảnh báo underfull về khoảng cách chữ, không có tràn nội dung.
 - README, REPORT, PROPOSAL, tài liệu dữ liệu và notebook đồng bộ 32/43 biến và phương pháp mới; thay biểu đồ/importance cũ bằng artefact hiện tại.
-- Kiểm tra cuối 46 passed; SHAP hữu hạn và tổng đóng góp cộng nền khớp raw output; 40/40 fit thống kê CV hội tụ. Snapshot verify đạt và không đổi. Quét tên nguồn không được công bố không có kết quả. Đang chuẩn bị commit/push.
+- Kiểm tra cuối 46 passed; SHAP hữu hạn và tổng đóng góp cộng nền khớp raw output; 40/40 fit thống kê CV hội tụ. Snapshot verify đạt và không đổi. Quét tên nguồn không được công bố không có kết quả. Commit 62fa6f7 đã được push lên origin/main thành công.
+
+### Xác nhận công bố
+
+Đã push commit 62fa6f7 lên main: toàn bộ mã nguồn, kết quả thực nghiệm, 64 artefact mô hình (62 bản đánh giá và 2 bản minh họa), biểu đồ, notebook và tài liệu chính thức. Cẩm nang riêng không có trong Git index/commit. Output cục bộ của notebooks/01_fetch_data.ipynb vẫn giữ nguyên và không được stage. Đợt nâng cấp đã hoàn tất; nhật ký xác nhận này được đồng bộ bằng commit tài liệu tiếp theo.
