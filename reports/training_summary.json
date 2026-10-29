@@ -1,451 +1,615 @@
 {
   "classifier_selected": {
-    "model": "Logistic Regression",
-    "feature_set": "Branch_1_Price_Only"
+    "model": "HistGradientBoosting",
+    "feature_set": "Branch_1_Price_Only",
+    "cv_score": 0.550485225959574
   },
   "regressor_selected": {
-    "model": "Last-Close Baseline",
-    "feature_set": "Branch_1_Price_Only"
+    "model": "ARIMA",
+    "feature_set": "Branch_1_Price_Only",
+    "cv_score": 0.017191953248618545
   },
-  "classification_test_metrics": [
-    {
-      "feature_set": "Branch_1_Price_Only",
-      "model": "Majority baseline",
-      "test_rows": 244,
-      "test_start": "2024-09-25",
-      "test_end": "2025-09-30",
-      "accuracy": 0.48770491803278687,
-      "balanced_accuracy": 0.5,
-      "precision_up": 0.48770491803278687,
-      "recall_up": 1.0,
-      "f1_up": 0.6556473829201102,
-      "roc_auc": 0.5,
-      "selected_for_deployment": false
-    },
-    {
-      "feature_set": "Branch_1_Price_Only",
-      "model": "Logistic Regression",
-      "test_rows": 244,
-      "test_start": "2024-09-25",
-      "test_end": "2025-09-30",
-      "accuracy": 0.5368852459016393,
-      "balanced_accuracy": 0.5407394957983194,
-      "precision_up": 0.51875,
-      "recall_up": 0.6974789915966386,
-      "f1_up": 0.5949820788530465,
-      "roc_auc": 0.5525378151260504,
-      "selected_for_deployment": true
-    },
-    {
-      "feature_set": "Branch_1_Price_Only",
-      "model": "Random Forest",
-      "test_rows": 244,
-      "test_start": "2024-09-25",
-      "test_end": "2025-09-30",
-      "accuracy": 0.5327868852459017,
-      "balanced_accuracy": 0.5359327731092437,
-      "precision_up": 0.5163398692810458,
-      "recall_up": 0.6638655462184874,
-      "f1_up": 0.5808823529411765,
-      "roc_auc": 0.5628235294117646,
-      "selected_for_deployment": false
-    },
-    {
-      "feature_set": "Branch_1_Price_Only",
-      "model": "XGBoost",
-      "test_rows": 244,
-      "test_start": "2024-09-25",
-      "test_end": "2025-09-30",
-      "accuracy": 0.5163934426229508,
-      "balanced_accuracy": 0.5193277310924369,
-      "precision_up": 0.5033112582781457,
-      "recall_up": 0.6386554621848739,
-      "f1_up": 0.562962962962963,
-      "roc_auc": 0.5230252100840336,
-      "selected_for_deployment": false
-    },
-    {
-      "feature_set": "Branch_1_Price_Only",
-      "model": "HistGradientBoosting",
-      "test_rows": 244,
-      "test_start": "2024-09-25",
-      "test_end": "2025-09-30",
-      "accuracy": 0.5286885245901639,
-      "balanced_accuracy": 0.5325378151260505,
-      "precision_up": 0.5125,
-      "recall_up": 0.6890756302521008,
-      "f1_up": 0.5878136200716846,
-      "roc_auc": 0.5622857142857143,
-      "selected_for_deployment": false
-    },
-    {
-      "feature_set": "Branch_2_Macro_Fundamental",
-      "model": "Majority baseline",
-      "test_rows": 244,
-      "test_start": "2024-09-25",
-      "test_end": "2025-09-30",
-      "accuracy": 0.48770491803278687,
-      "balanced_accuracy": 0.5,
-      "precision_up": 0.48770491803278687,
-      "recall_up": 1.0,
-      "f1_up": 0.6556473829201102,
-      "roc_auc": 0.5,
-      "selected_for_deployment": false
-    },
-    {
-      "feature_set": "Branch_2_Macro_Fundamental",
-      "model": "Logistic Regression",
-      "test_rows": 244,
-      "test_start": "2024-09-25",
-      "test_end": "2025-09-30",
-      "accuracy": 0.5081967213114754,
-      "balanced_accuracy": 0.5171764705882352,
-      "precision_up": 0.4976303317535545,
-      "recall_up": 0.8823529411764706,
-      "f1_up": 0.6363636363636364,
-      "roc_auc": 0.5076974789915967,
-      "selected_for_deployment": false
-    },
-    {
-      "feature_set": "Branch_2_Macro_Fundamental",
-      "model": "Random Forest",
-      "test_rows": 244,
-      "test_start": "2024-09-25",
-      "test_end": "2025-09-30",
-      "accuracy": 0.5163934426229508,
-      "balanced_accuracy": 0.5233613445378151,
-      "precision_up": 0.5026178010471204,
-      "recall_up": 0.8067226890756303,
-      "f1_up": 0.6193548387096774,
-      "roc_auc": 0.5498487394957984,
-      "selected_for_deployment": false
-    },
-    {
-      "feature_set": "Branch_2_Macro_Fundamental",
-      "model": "XGBoost",
-      "test_rows": 244,
-      "test_start": "2024-09-25",
-      "test_end": "2025-09-30",
-      "accuracy": 0.5286885245901639,
-      "balanced_accuracy": 0.5351596638655463,
-      "precision_up": 0.510752688172043,
-      "recall_up": 0.7983193277310925,
-      "f1_up": 0.6229508196721312,
-      "roc_auc": 0.548235294117647,
-      "selected_for_deployment": false
-    },
-    {
-      "feature_set": "Branch_2_Macro_Fundamental",
-      "model": "HistGradientBoosting",
-      "test_rows": 244,
-      "test_start": "2024-09-25",
-      "test_end": "2025-09-30",
-      "accuracy": 0.48360655737704916,
-      "balanced_accuracy": 0.48914285714285716,
-      "precision_up": 0.480225988700565,
-      "recall_up": 0.7142857142857143,
-      "f1_up": 0.5743243243243243,
-      "roc_auc": 0.5092436974789916,
-      "selected_for_deployment": false
-    }
-  ],
-  "regression_test_metrics": [
-    {
-      "feature_set": "Branch_1_Price_Only",
-      "model": "Last-Close Baseline",
-      "test_rows": 253,
-      "test_start": "2024-09-25",
-      "test_end": "2025-09-30",
-      "rmse": 1.71293309158517,
-      "mae": 1.1941862648221342,
-      "mape_percent": 1.2342447227413968,
-      "directional_accuracy_nonflat_percent": 0.0,
-      "tolerance_accuracy_0_5_percent": 34.387351778656125,
-      "tolerance_accuracy_1_percent": 55.33596837944664,
-      "tolerance_accuracy_2_percent": 82.6086956521739,
-      "selected_for_deployment": true
-    },
-    {
-      "feature_set": "Branch_1_Price_Only",
-      "model": "Linear Regression",
-      "test_rows": 253,
-      "test_start": "2024-09-25",
-      "test_end": "2025-09-30",
-      "rmse": 1.7212089725349282,
-      "mae": 1.2246899069311852,
-      "mape_percent": 1.2651314824984625,
-      "directional_accuracy_nonflat_percent": 51.229508196721305,
-      "tolerance_accuracy_0_5_percent": 32.015810276679844,
-      "tolerance_accuracy_1_percent": 53.75494071146245,
-      "tolerance_accuracy_2_percent": 82.21343873517787,
-      "selected_for_deployment": false
-    },
-    {
-      "feature_set": "Branch_1_Price_Only",
-      "model": "Random Forest Regressor",
-      "test_rows": 253,
-      "test_start": "2024-09-25",
-      "test_end": "2025-09-30",
-      "rmse": 6.168035081130977,
-      "mae": 4.175632809332292,
-      "mape_percent": 3.92598406982901,
-      "directional_accuracy_nonflat_percent": 52.86885245901639,
-      "tolerance_accuracy_0_5_percent": 11.857707509881422,
-      "tolerance_accuracy_1_percent": 28.063241106719367,
-      "tolerance_accuracy_2_percent": 47.43083003952569,
-      "selected_for_deployment": false
-    },
-    {
-      "feature_set": "Branch_1_Price_Only",
-      "model": "XGBoost Regressor",
-      "test_rows": 253,
-      "test_start": "2024-09-25",
-      "test_end": "2025-09-30",
-      "rmse": 5.835807370458228,
-      "mae": 3.874487788626328,
-      "mape_percent": 3.640060143716242,
-      "directional_accuracy_nonflat_percent": 50.81967213114754,
-      "tolerance_accuracy_0_5_percent": 17.391304347826086,
-      "tolerance_accuracy_1_percent": 30.8300395256917,
-      "tolerance_accuracy_2_percent": 50.59288537549407,
-      "selected_for_deployment": false
-    },
-    {
-      "feature_set": "Branch_1_Price_Only",
-      "model": "HistGradientBoosting Regressor",
-      "test_rows": 253,
-      "test_start": "2024-09-25",
-      "test_end": "2025-09-30",
-      "rmse": 6.013732561614366,
-      "mae": 4.1160117411606505,
-      "mape_percent": 3.884512501019749,
-      "directional_accuracy_nonflat_percent": 51.229508196721305,
-      "tolerance_accuracy_0_5_percent": 11.462450592885375,
-      "tolerance_accuracy_1_percent": 26.877470355731226,
-      "tolerance_accuracy_2_percent": 46.6403162055336,
-      "selected_for_deployment": false
-    },
-    {
-      "feature_set": "Branch_2_Macro_Fundamental",
-      "model": "Last-Close Baseline",
-      "test_rows": 253,
-      "test_start": "2024-09-25",
-      "test_end": "2025-09-30",
-      "rmse": 1.71293309158517,
-      "mae": 1.1941862648221342,
-      "mape_percent": 1.2342447227413968,
-      "directional_accuracy_nonflat_percent": 0.0,
-      "tolerance_accuracy_0_5_percent": 34.387351778656125,
-      "tolerance_accuracy_1_percent": 55.33596837944664,
-      "tolerance_accuracy_2_percent": 82.6086956521739,
-      "selected_for_deployment": false
-    },
-    {
-      "feature_set": "Branch_2_Macro_Fundamental",
-      "model": "Linear Regression",
-      "test_rows": 253,
-      "test_start": "2024-09-25",
-      "test_end": "2025-09-30",
-      "rmse": 1.8552277670043444,
-      "mae": 1.3618206738042369,
-      "mape_percent": 1.4205444485658203,
-      "directional_accuracy_nonflat_percent": 47.950819672131146,
-      "tolerance_accuracy_0_5_percent": 28.063241106719367,
-      "tolerance_accuracy_1_percent": 47.82608695652174,
-      "tolerance_accuracy_2_percent": 76.28458498023716,
-      "selected_for_deployment": false
-    },
-    {
-      "feature_set": "Branch_2_Macro_Fundamental",
-      "model": "Random Forest Regressor",
-      "test_rows": 253,
-      "test_start": "2024-09-25",
-      "test_end": "2025-09-30",
-      "rmse": 6.169301718940805,
-      "mae": 4.180946522225217,
-      "mape_percent": 3.9331022831542906,
-      "directional_accuracy_nonflat_percent": 53.278688524590166,
-      "tolerance_accuracy_0_5_percent": 11.857707509881422,
-      "tolerance_accuracy_1_percent": 27.27272727272727,
-      "tolerance_accuracy_2_percent": 45.45454545454545,
-      "selected_for_deployment": false
-    },
-    {
-      "feature_set": "Branch_2_Macro_Fundamental",
-      "model": "XGBoost Regressor",
-      "test_rows": 253,
-      "test_start": "2024-09-25",
-      "test_end": "2025-09-30",
-      "rmse": 5.828769586560543,
-      "mae": 3.904418673187377,
-      "mape_percent": 3.6786874326279744,
-      "directional_accuracy_nonflat_percent": 51.229508196721305,
-      "tolerance_accuracy_0_5_percent": 16.600790513833992,
-      "tolerance_accuracy_1_percent": 31.225296442687743,
-      "tolerance_accuracy_2_percent": 50.59288537549407,
-      "selected_for_deployment": false
-    },
-    {
-      "feature_set": "Branch_2_Macro_Fundamental",
-      "model": "HistGradientBoosting Regressor",
-      "test_rows": 253,
-      "test_start": "2024-09-25",
-      "test_end": "2025-09-30",
-      "rmse": 6.085193723485677,
-      "mae": 4.270720537689734,
-      "mape_percent": 4.065216028290252,
-      "directional_accuracy_nonflat_percent": 48.36065573770492,
-      "tolerance_accuracy_0_5_percent": 13.438735177865613,
-      "tolerance_accuracy_1_percent": 22.529644268774703,
-      "tolerance_accuracy_2_percent": 43.47826086956522,
-      "selected_for_deployment": false
-    }
-  ],
-  "ablation_summary": [
-    {
-      "feature_set": "Branch_1_Price_Only",
-      "status": "completed",
-      "feature_count": 32,
-      "train_start": "2019-01-03",
-      "train_end": "2024-09-24",
-      "test_start": "2024-09-25",
-      "test_end": "2025-09-30",
-      "train_rows": 1429,
-      "test_rows": 253,
-      "classification_test_rows": 244,
-      "best_classifier": "Logistic Regression",
-      "balanced_accuracy": 0.5407394957983194,
-      "accuracy": 0.5368852459016393,
-      "f1_up": 0.5949820788530465,
-      "roc_auc": 0.5525378151260504,
-      "best_regressor": "Last-Close Baseline",
-      "regression_mae": 1.1941862648221342,
-      "regression_rmse": 1.71293309158517,
-      "regression_mape_percent": 1.2342447227413968,
-      "tolerance_accuracy_0_5_percent": 34.387351778656125,
-      "tolerance_accuracy_1_percent": 55.33596837944664,
-      "tolerance_accuracy_2_percent": 82.6086956521739
-    },
-    {
-      "feature_set": "Branch_2_Macro_Fundamental",
-      "status": "completed",
-      "feature_count": 44,
-      "train_start": "2019-01-03",
-      "train_end": "2024-09-24",
-      "test_start": "2024-09-25",
-      "test_end": "2025-09-30",
-      "train_rows": 1429,
-      "test_rows": 253,
-      "classification_test_rows": 244,
-      "best_classifier": "XGBoost",
-      "balanced_accuracy": 0.5351596638655463,
-      "accuracy": 0.5286885245901639,
-      "f1_up": 0.6229508196721312,
-      "roc_auc": 0.548235294117647,
-      "best_regressor": "Last-Close Baseline",
-      "regression_mae": 1.1941862648221342,
-      "regression_rmse": 1.71293309158517,
-      "regression_mape_percent": 1.2342447227413968,
-      "tolerance_accuracy_0_5_percent": 34.387351778656125,
-      "tolerance_accuracy_1_percent": 55.33596837944664,
-      "tolerance_accuracy_2_percent": 82.6086956521739
-    }
-  ],
   "split": {
-    "split_method": "Shared chronological cohort: first 85% train and final 15% test by target session date.",
-    "primary_comparison": "Both branches use the same availability-aligned eligible dates and the same boundary; financial/GDP release dates include stated assumptions.",
+    "split_method": "85/15 chronological; five TimeSeriesSplit folds on Train with gap=1",
+    "cutoff_date": "2025-09-30",
     "feature_set_splits": {
       "Branch_1_Price_Only": {
-        "train_target_date_start": "2019-01-03",
-        "train_target_date_end": "2024-09-24",
-        "test_target_date_start": "2024-09-25",
-        "test_target_date_end": "2025-09-30",
-        "split_method": "chronological by target session date; first 85% train, last 15% test",
-        "labeled_rows": 1682,
-        "train_rows": 1429,
-        "test_rows": 253,
-        "classification_train_rows": 1339,
-        "classification_test_rows": 244
+        "train_rows": 1325,
+        "test_rows": 234,
+        "train_target_date_start": "2019-04-03",
+        "train_target_date_end": "2024-10-21",
+        "test_target_date_start": "2024-10-22",
+        "test_target_date_end": "2025-09-30"
       },
       "Branch_2_Macro_Fundamental": {
-        "train_target_date_start": "2019-01-03",
-        "train_target_date_end": "2024-09-24",
-        "test_target_date_start": "2024-09-25",
-        "test_target_date_end": "2025-09-30",
-        "split_method": "chronological by target session date; first 85% train, last 15% test",
-        "labeled_rows": 1682,
-        "train_rows": 1429,
-        "test_rows": 253,
-        "classification_train_rows": 1339,
-        "classification_test_rows": 244
+        "train_rows": 1325,
+        "test_rows": 234,
+        "train_target_date_start": "2019-04-03",
+        "train_target_date_end": "2024-10-21",
+        "test_target_date_start": "2024-10-22",
+        "test_target_date_end": "2025-09-30"
       }
     },
-    "feature_warmup_rows_removed": 49,
-    "raw_price_rows": 4671,
-    "cutoff_date": "2025-09-30",
-    "price_only_feature_count": 32,
-    "full_ohlcv_feature_columns": [
-      "return_1d",
-      "return_2d",
-      "return_5d",
-      "return_10d",
-      "return_20d",
-      "sma_5_ratio",
-      "sma_10_ratio",
-      "sma_20_ratio",
-      "sma_50_ratio",
-      "ema_5_ratio",
-      "ema_10_ratio",
-      "ema_20_ratio",
-      "ema_50_ratio",
-      "rsi_14",
-      "macd_ratio",
-      "macd_signal_ratio",
-      "macd_histogram_ratio",
-      "bollinger_percent_b_20",
-      "bollinger_width_20",
-      "volatility_5d",
-      "volatility_20d",
-      "log_volume_change_1d",
-      "log_volume_zscore_20d",
-      "candle_range_pct",
-      "candle_body_pct",
-      "overnight_gap_pct",
-      "close_location_in_range"
+    "cv_folds": [
+      {
+        "fold": 1,
+        "train_rows": 224,
+        "validation_rows": 220,
+        "train_target_end": "2020-02-25",
+        "validation_input_start": "2020-02-26",
+        "validation_target_end": "2021-01-06"
+      },
+      {
+        "fold": 2,
+        "train_rows": 444,
+        "validation_rows": 220,
+        "train_target_end": "2021-01-05",
+        "validation_input_start": "2021-01-06",
+        "validation_target_end": "2022-03-02"
+      },
+      {
+        "fold": 3,
+        "train_rows": 664,
+        "validation_rows": 220,
+        "train_target_end": "2022-03-01",
+        "validation_input_start": "2022-03-02",
+        "validation_target_end": "2023-01-12"
+      },
+      {
+        "fold": 4,
+        "train_rows": 884,
+        "validation_rows": 220,
+        "train_target_end": "2023-01-11",
+        "validation_input_start": "2023-01-12",
+        "validation_target_end": "2023-11-30"
+      },
+      {
+        "fold": 5,
+        "train_rows": 1104,
+        "validation_rows": 220,
+        "train_target_end": "2023-11-29",
+        "validation_input_start": "2023-11-30",
+        "validation_target_end": "2024-10-21"
+      }
     ],
-    "supplemental_feature_file": "data/processed/fpt_multisource_features.csv",
-    "supplemental_feature_columns": [
-      "usd_vnd_rate",
-      "gold_vnd_per_ounce",
-      "cpi_yoy_pct",
-      "gdp_usd",
-      "ict_market_cap_vnd",
-      "ict_pe",
-      "ict_absolute_pe",
-      "fpt_net_revenue_vnd",
-      "fpt_gross_profit_vnd",
-      "fpt_ebit_vnd",
-      "fpt_parent_net_profit_vnd",
-      "fpt_shares_outstanding"
-    ],
-    "classification_label": "up=1, down=0; exactly unchanged next closes excluded from classification.",
-    "regression_target": "next_close at target_date; last-close baseline predicts current_close.",
-    "tolerance_definition": "Percent of test rows with absolute price error divided by actual close no greater than 0.5%, 1%, or 2%.",
-    "scaling": "StandardScaler is inside the Logistic Regression and Linear Regression pipelines; each scaler is fitted only on its Train split for reported Test metrics.",
-    "selection": {
-      "classifier": "Highest Test Balanced Accuracy among both branch candidates; tie-break by Test F1(up). This Test-based selection is optimistic and is not an independent final estimate.",
-      "regressor": "Lowest Test MAE among both branch candidates; tie-break by Test RMSE. This Test-based selection is optimistic and is not an independent final estimate.",
-      "deployment_refit": "After metrics are recorded, selected estimators are refit on all labeled rows of the shared cohort through 2025-09-30 for latest-session inference; Test metrics remain from Train-only fits."
+    "feature_columns": {
+      "Branch_1_Price_Only": [
+        "return_1d",
+        "return_2d",
+        "return_5d",
+        "return_10d",
+        "return_20d",
+        "sma_5_ratio",
+        "sma_10_ratio",
+        "sma_20_ratio",
+        "sma_50_ratio",
+        "ema_5_ratio",
+        "ema_10_ratio",
+        "ema_20_ratio",
+        "ema_50_ratio",
+        "rsi_14",
+        "macd_ratio",
+        "macd_signal_ratio",
+        "macd_histogram_ratio",
+        "bollinger_percent_b_20",
+        "bollinger_width_20",
+        "volatility_5d",
+        "volatility_20d",
+        "log_volume_change_1d",
+        "log_volume_zscore_20d",
+        "candle_range_pct",
+        "candle_body_pct",
+        "overnight_gap_pct",
+        "close_location_in_range",
+        "current_open",
+        "current_high",
+        "current_low",
+        "current_close",
+        "current_volume"
+      ],
+      "Branch_2_Macro_Fundamental": [
+        "return_1d",
+        "return_2d",
+        "return_5d",
+        "return_10d",
+        "return_20d",
+        "sma_5_ratio",
+        "sma_10_ratio",
+        "sma_20_ratio",
+        "sma_50_ratio",
+        "ema_5_ratio",
+        "ema_10_ratio",
+        "ema_20_ratio",
+        "ema_50_ratio",
+        "rsi_14",
+        "macd_ratio",
+        "macd_signal_ratio",
+        "macd_histogram_ratio",
+        "bollinger_percent_b_20",
+        "bollinger_width_20",
+        "volatility_5d",
+        "volatility_20d",
+        "log_volume_change_1d",
+        "log_volume_zscore_20d",
+        "candle_range_pct",
+        "candle_body_pct",
+        "overnight_gap_pct",
+        "close_location_in_range",
+        "current_open",
+        "current_high",
+        "current_low",
+        "current_close",
+        "current_volume",
+        "vnindex_return_1d",
+        "vnindex_volatility_20d",
+        "usd_vnd_rate",
+        "gold_vnd_per_ounce",
+        "cpi_yoy_pct",
+        "gdp_usd",
+        "fpt_net_revenue_vnd",
+        "fpt_gross_profit_vnd",
+        "fpt_ebit_vnd",
+        "fpt_parent_net_profit_vnd",
+        "fpt_shares_outstanding"
+      ]
     },
     "selected_models": {
-      "classifier": {
-        "model": "Logistic Regression",
-        "feature_set": "Branch_1_Price_Only"
+      "classification": {
+        "model": "HistGradientBoosting",
+        "feature_set": "Branch_1_Price_Only",
+        "cv_score": 0.550485225959574
       },
-      "regressor": {
-        "model": "Last-Close Baseline",
-        "feature_set": "Branch_1_Price_Only"
+      "regression": {
+        "model": "ARIMA",
+        "feature_set": "Branch_1_Price_Only",
+        "cv_score": 0.017191953248618545
       }
-    }
+    },
+    "historical_test_caveat": "Test dates were examined in previous versions; excluded from selection in this run but not a never-before-seen external holdout.",
+    "regression_target": "next_log_return; price=current_close*exp(prediction)",
+    "log_return_mape": "Not defined: zeros/near-zero/negative returns make percentage errors inappropriate; MAE/RMSE on returns, MAPE/tolerance on positive reconstructed prices.",
+    "sequence_policy": "Same eligible dates for all L; windows use true consecutive context sessions.",
+    "statistical_diagnostics": [
+      {
+        "feature_set": "Branch_1_Price_Only",
+        "task": "classification",
+        "model": "ARIMA",
+        "fold": 1,
+        "candidate_id": 0,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_1_Price_Only",
+        "task": "classification",
+        "model": "ARIMA",
+        "fold": 2,
+        "candidate_id": 0,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_1_Price_Only",
+        "task": "classification",
+        "model": "ARIMA",
+        "fold": 3,
+        "candidate_id": 0,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_1_Price_Only",
+        "task": "classification",
+        "model": "ARIMA",
+        "fold": 4,
+        "candidate_id": 0,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_1_Price_Only",
+        "task": "classification",
+        "model": "ARIMA",
+        "fold": 5,
+        "candidate_id": 0,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_1_Price_Only",
+        "task": "classification",
+        "model": "ARIMA",
+        "fold": 1,
+        "candidate_id": 1,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_1_Price_Only",
+        "task": "classification",
+        "model": "ARIMA",
+        "fold": 2,
+        "candidate_id": 1,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_1_Price_Only",
+        "task": "classification",
+        "model": "ARIMA",
+        "fold": 3,
+        "candidate_id": 1,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_1_Price_Only",
+        "task": "classification",
+        "model": "ARIMA",
+        "fold": 4,
+        "candidate_id": 1,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_1_Price_Only",
+        "task": "classification",
+        "model": "ARIMA",
+        "fold": 5,
+        "candidate_id": 1,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_1_Price_Only",
+        "task": "regression",
+        "model": "ARIMA",
+        "fold": 1,
+        "candidate_id": 0,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_1_Price_Only",
+        "task": "regression",
+        "model": "ARIMA",
+        "fold": 2,
+        "candidate_id": 0,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_1_Price_Only",
+        "task": "regression",
+        "model": "ARIMA",
+        "fold": 3,
+        "candidate_id": 0,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_1_Price_Only",
+        "task": "regression",
+        "model": "ARIMA",
+        "fold": 4,
+        "candidate_id": 0,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_1_Price_Only",
+        "task": "regression",
+        "model": "ARIMA",
+        "fold": 5,
+        "candidate_id": 0,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_1_Price_Only",
+        "task": "regression",
+        "model": "ARIMA",
+        "fold": 1,
+        "candidate_id": 1,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_1_Price_Only",
+        "task": "regression",
+        "model": "ARIMA",
+        "fold": 2,
+        "candidate_id": 1,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_1_Price_Only",
+        "task": "regression",
+        "model": "ARIMA",
+        "fold": 3,
+        "candidate_id": 1,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_1_Price_Only",
+        "task": "regression",
+        "model": "ARIMA",
+        "fold": 4,
+        "candidate_id": 1,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_1_Price_Only",
+        "task": "regression",
+        "model": "ARIMA",
+        "fold": 5,
+        "candidate_id": 1,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_2_Macro_Fundamental",
+        "task": "classification",
+        "model": "SARIMAX",
+        "fold": 1,
+        "candidate_id": 0,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_2_Macro_Fundamental",
+        "task": "classification",
+        "model": "SARIMAX",
+        "fold": 2,
+        "candidate_id": 0,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_2_Macro_Fundamental",
+        "task": "classification",
+        "model": "SARIMAX",
+        "fold": 3,
+        "candidate_id": 0,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_2_Macro_Fundamental",
+        "task": "classification",
+        "model": "SARIMAX",
+        "fold": 4,
+        "candidate_id": 0,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_2_Macro_Fundamental",
+        "task": "classification",
+        "model": "SARIMAX",
+        "fold": 5,
+        "candidate_id": 0,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_2_Macro_Fundamental",
+        "task": "classification",
+        "model": "SARIMAX",
+        "fold": 1,
+        "candidate_id": 1,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_2_Macro_Fundamental",
+        "task": "classification",
+        "model": "SARIMAX",
+        "fold": 2,
+        "candidate_id": 1,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_2_Macro_Fundamental",
+        "task": "classification",
+        "model": "SARIMAX",
+        "fold": 3,
+        "candidate_id": 1,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_2_Macro_Fundamental",
+        "task": "classification",
+        "model": "SARIMAX",
+        "fold": 4,
+        "candidate_id": 1,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_2_Macro_Fundamental",
+        "task": "classification",
+        "model": "SARIMAX",
+        "fold": 5,
+        "candidate_id": 1,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_2_Macro_Fundamental",
+        "task": "regression",
+        "model": "SARIMAX",
+        "fold": 1,
+        "candidate_id": 0,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_2_Macro_Fundamental",
+        "task": "regression",
+        "model": "SARIMAX",
+        "fold": 2,
+        "candidate_id": 0,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_2_Macro_Fundamental",
+        "task": "regression",
+        "model": "SARIMAX",
+        "fold": 3,
+        "candidate_id": 0,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_2_Macro_Fundamental",
+        "task": "regression",
+        "model": "SARIMAX",
+        "fold": 4,
+        "candidate_id": 0,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_2_Macro_Fundamental",
+        "task": "regression",
+        "model": "SARIMAX",
+        "fold": 5,
+        "candidate_id": 0,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_2_Macro_Fundamental",
+        "task": "regression",
+        "model": "SARIMAX",
+        "fold": 1,
+        "candidate_id": 1,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_2_Macro_Fundamental",
+        "task": "regression",
+        "model": "SARIMAX",
+        "fold": 2,
+        "candidate_id": 1,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_2_Macro_Fundamental",
+        "task": "regression",
+        "model": "SARIMAX",
+        "fold": 3,
+        "candidate_id": 1,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_2_Macro_Fundamental",
+        "task": "regression",
+        "model": "SARIMAX",
+        "fold": 4,
+        "candidate_id": 1,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      },
+      {
+        "feature_set": "Branch_2_Macro_Fundamental",
+        "task": "regression",
+        "model": "SARIMAX",
+        "fold": 5,
+        "candidate_id": 1,
+        "converged": true,
+        "warnings": [
+          "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+        ]
+      }
+    ]
   }
 }

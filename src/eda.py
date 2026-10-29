@@ -43,8 +43,8 @@ def _draw_pipeline_overview(output_path: Path) -> None:
         (0.02, 0.55, "OHLCV FPT\n2007-01-02 to 2025-09-30", "#DCEAF7"),
         (0.24, 0.55, "Kiểm toán +\n5 OHLCV + 27 chỉ báo/nến", "#E4F1E5"),
         (0.48, 0.72, "Nhánh 1\nGiá + khối lượng FPT", "#FCE9D8"),
-        (0.48, 0.30, "Nhánh 2\nGiá + vĩ mô/ngành/tài chính\nđã căn ngày có thể biết", "#FCE9D8"),
-        (0.74, 0.55, "Train 85% | Test 15%\nLogistic, RF, XGBoost, HGB\nLinear, RF, XGBoost, HGB", "#EEE1F3"),
+        (0.48, 0.30, "Nhánh 2\nGiá + thị trường/vĩ mô/tài chính\nđã căn ngày có thể biết", "#FCE9D8"),
+        (0.74, 0.55, "Train85%: CV5fold | Test15%\nML + ARIMA/SARIMAX\nLSTM/GRU; log return", "#EEE1F3"),
         (0.95, 0.55, "Đầu ra\nHướng tăng/giảm\nGiá close t+1\nMetrics + biểu đồ", "#FFF2CC"),
     ]
     for x, y, label, color in boxes:
@@ -165,6 +165,9 @@ def run_eda(input_path: Path, figures_dir: Path, reports_dir: Path) -> dict:
             "figures/04_next_session_class_balance.png",
         ],
     }
+    sector_path = reports_dir / "sector_coverage_audit.json"
+    summary["sector_coverage_audit"] = json.loads(sector_path.read_text(encoding="utf-8")) if sector_path.exists() else {"status": "audit pending"}
+    summary["regression_target"] = "next_log_return = ln(next_close/current_close)"
     audit_path = reports_dir / "data_audit.json"
     audit_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(summary, ensure_ascii=False, indent=2))

@@ -1,97 +1,603 @@
 {
-  "split_method": "Shared chronological cohort: first 85% train and final 15% test by target session date.",
-  "primary_comparison": "Both branches use the same availability-aligned eligible dates and the same boundary; financial/GDP release dates include stated assumptions.",
+  "split_method": "85/15 chronological; five TimeSeriesSplit folds on Train with gap=1",
+  "cutoff_date": "2025-09-30",
   "feature_set_splits": {
     "Branch_1_Price_Only": {
-      "train_target_date_start": "2019-01-03",
-      "train_target_date_end": "2024-09-24",
-      "test_target_date_start": "2024-09-25",
-      "test_target_date_end": "2025-09-30",
-      "split_method": "chronological by target session date; first 85% train, last 15% test",
-      "labeled_rows": 1682,
-      "train_rows": 1429,
-      "test_rows": 253,
-      "classification_train_rows": 1339,
-      "classification_test_rows": 244
+      "train_rows": 1325,
+      "test_rows": 234,
+      "train_target_date_start": "2019-04-03",
+      "train_target_date_end": "2024-10-21",
+      "test_target_date_start": "2024-10-22",
+      "test_target_date_end": "2025-09-30"
     },
     "Branch_2_Macro_Fundamental": {
-      "train_target_date_start": "2019-01-03",
-      "train_target_date_end": "2024-09-24",
-      "test_target_date_start": "2024-09-25",
-      "test_target_date_end": "2025-09-30",
-      "split_method": "chronological by target session date; first 85% train, last 15% test",
-      "labeled_rows": 1682,
-      "train_rows": 1429,
-      "test_rows": 253,
-      "classification_train_rows": 1339,
-      "classification_test_rows": 244
+      "train_rows": 1325,
+      "test_rows": 234,
+      "train_target_date_start": "2019-04-03",
+      "train_target_date_end": "2024-10-21",
+      "test_target_date_start": "2024-10-22",
+      "test_target_date_end": "2025-09-30"
     }
   },
-  "feature_warmup_rows_removed": 49,
-  "raw_price_rows": 4671,
-  "cutoff_date": "2025-09-30",
-  "price_only_feature_count": 32,
-  "full_ohlcv_feature_columns": [
-    "return_1d",
-    "return_2d",
-    "return_5d",
-    "return_10d",
-    "return_20d",
-    "sma_5_ratio",
-    "sma_10_ratio",
-    "sma_20_ratio",
-    "sma_50_ratio",
-    "ema_5_ratio",
-    "ema_10_ratio",
-    "ema_20_ratio",
-    "ema_50_ratio",
-    "rsi_14",
-    "macd_ratio",
-    "macd_signal_ratio",
-    "macd_histogram_ratio",
-    "bollinger_percent_b_20",
-    "bollinger_width_20",
-    "volatility_5d",
-    "volatility_20d",
-    "log_volume_change_1d",
-    "log_volume_zscore_20d",
-    "candle_range_pct",
-    "candle_body_pct",
-    "overnight_gap_pct",
-    "close_location_in_range"
+  "cv_folds": [
+    {
+      "fold": 1,
+      "train_rows": 224,
+      "validation_rows": 220,
+      "train_target_end": "2020-02-25",
+      "validation_input_start": "2020-02-26",
+      "validation_target_end": "2021-01-06"
+    },
+    {
+      "fold": 2,
+      "train_rows": 444,
+      "validation_rows": 220,
+      "train_target_end": "2021-01-05",
+      "validation_input_start": "2021-01-06",
+      "validation_target_end": "2022-03-02"
+    },
+    {
+      "fold": 3,
+      "train_rows": 664,
+      "validation_rows": 220,
+      "train_target_end": "2022-03-01",
+      "validation_input_start": "2022-03-02",
+      "validation_target_end": "2023-01-12"
+    },
+    {
+      "fold": 4,
+      "train_rows": 884,
+      "validation_rows": 220,
+      "train_target_end": "2023-01-11",
+      "validation_input_start": "2023-01-12",
+      "validation_target_end": "2023-11-30"
+    },
+    {
+      "fold": 5,
+      "train_rows": 1104,
+      "validation_rows": 220,
+      "train_target_end": "2023-11-29",
+      "validation_input_start": "2023-11-30",
+      "validation_target_end": "2024-10-21"
+    }
   ],
-  "supplemental_feature_file": "data/processed/fpt_multisource_features.csv",
-  "supplemental_feature_columns": [
-    "usd_vnd_rate",
-    "gold_vnd_per_ounce",
-    "cpi_yoy_pct",
-    "gdp_usd",
-    "ict_market_cap_vnd",
-    "ict_pe",
-    "ict_absolute_pe",
-    "fpt_net_revenue_vnd",
-    "fpt_gross_profit_vnd",
-    "fpt_ebit_vnd",
-    "fpt_parent_net_profit_vnd",
-    "fpt_shares_outstanding"
-  ],
-  "classification_label": "up=1, down=0; exactly unchanged next closes excluded from classification.",
-  "regression_target": "next_close at target_date; last-close baseline predicts current_close.",
-  "tolerance_definition": "Percent of test rows with absolute price error divided by actual close no greater than 0.5%, 1%, or 2%.",
-  "scaling": "StandardScaler is inside the Logistic Regression and Linear Regression pipelines; each scaler is fitted only on its Train split for reported Test metrics.",
-  "selection": {
-    "classifier": "Highest Test Balanced Accuracy among both branch candidates; tie-break by Test F1(up). This Test-based selection is optimistic and is not an independent final estimate.",
-    "regressor": "Lowest Test MAE among both branch candidates; tie-break by Test RMSE. This Test-based selection is optimistic and is not an independent final estimate.",
-    "deployment_refit": "After metrics are recorded, selected estimators are refit on all labeled rows of the shared cohort through 2025-09-30 for latest-session inference; Test metrics remain from Train-only fits."
+  "feature_columns": {
+    "Branch_1_Price_Only": [
+      "return_1d",
+      "return_2d",
+      "return_5d",
+      "return_10d",
+      "return_20d",
+      "sma_5_ratio",
+      "sma_10_ratio",
+      "sma_20_ratio",
+      "sma_50_ratio",
+      "ema_5_ratio",
+      "ema_10_ratio",
+      "ema_20_ratio",
+      "ema_50_ratio",
+      "rsi_14",
+      "macd_ratio",
+      "macd_signal_ratio",
+      "macd_histogram_ratio",
+      "bollinger_percent_b_20",
+      "bollinger_width_20",
+      "volatility_5d",
+      "volatility_20d",
+      "log_volume_change_1d",
+      "log_volume_zscore_20d",
+      "candle_range_pct",
+      "candle_body_pct",
+      "overnight_gap_pct",
+      "close_location_in_range",
+      "current_open",
+      "current_high",
+      "current_low",
+      "current_close",
+      "current_volume"
+    ],
+    "Branch_2_Macro_Fundamental": [
+      "return_1d",
+      "return_2d",
+      "return_5d",
+      "return_10d",
+      "return_20d",
+      "sma_5_ratio",
+      "sma_10_ratio",
+      "sma_20_ratio",
+      "sma_50_ratio",
+      "ema_5_ratio",
+      "ema_10_ratio",
+      "ema_20_ratio",
+      "ema_50_ratio",
+      "rsi_14",
+      "macd_ratio",
+      "macd_signal_ratio",
+      "macd_histogram_ratio",
+      "bollinger_percent_b_20",
+      "bollinger_width_20",
+      "volatility_5d",
+      "volatility_20d",
+      "log_volume_change_1d",
+      "log_volume_zscore_20d",
+      "candle_range_pct",
+      "candle_body_pct",
+      "overnight_gap_pct",
+      "close_location_in_range",
+      "current_open",
+      "current_high",
+      "current_low",
+      "current_close",
+      "current_volume",
+      "vnindex_return_1d",
+      "vnindex_volatility_20d",
+      "usd_vnd_rate",
+      "gold_vnd_per_ounce",
+      "cpi_yoy_pct",
+      "gdp_usd",
+      "fpt_net_revenue_vnd",
+      "fpt_gross_profit_vnd",
+      "fpt_ebit_vnd",
+      "fpt_parent_net_profit_vnd",
+      "fpt_shares_outstanding"
+    ]
   },
   "selected_models": {
-    "classifier": {
-      "model": "Logistic Regression",
-      "feature_set": "Branch_1_Price_Only"
+    "classification": {
+      "model": "HistGradientBoosting",
+      "feature_set": "Branch_1_Price_Only",
+      "cv_score": 0.550485225959574
     },
-    "regressor": {
-      "model": "Last-Close Baseline",
-      "feature_set": "Branch_1_Price_Only"
+    "regression": {
+      "model": "ARIMA",
+      "feature_set": "Branch_1_Price_Only",
+      "cv_score": 0.017191953248618545
     }
-  }
+  },
+  "historical_test_caveat": "Test dates were examined in previous versions; excluded from selection in this run but not a never-before-seen external holdout.",
+  "regression_target": "next_log_return; price=current_close*exp(prediction)",
+  "log_return_mape": "Not defined: zeros/near-zero/negative returns make percentage errors inappropriate; MAE/RMSE on returns, MAPE/tolerance on positive reconstructed prices.",
+  "sequence_policy": "Same eligible dates for all L; windows use true consecutive context sessions.",
+  "statistical_diagnostics": [
+    {
+      "feature_set": "Branch_1_Price_Only",
+      "task": "classification",
+      "model": "ARIMA",
+      "fold": 1,
+      "candidate_id": 0,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_1_Price_Only",
+      "task": "classification",
+      "model": "ARIMA",
+      "fold": 2,
+      "candidate_id": 0,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_1_Price_Only",
+      "task": "classification",
+      "model": "ARIMA",
+      "fold": 3,
+      "candidate_id": 0,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_1_Price_Only",
+      "task": "classification",
+      "model": "ARIMA",
+      "fold": 4,
+      "candidate_id": 0,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_1_Price_Only",
+      "task": "classification",
+      "model": "ARIMA",
+      "fold": 5,
+      "candidate_id": 0,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_1_Price_Only",
+      "task": "classification",
+      "model": "ARIMA",
+      "fold": 1,
+      "candidate_id": 1,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_1_Price_Only",
+      "task": "classification",
+      "model": "ARIMA",
+      "fold": 2,
+      "candidate_id": 1,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_1_Price_Only",
+      "task": "classification",
+      "model": "ARIMA",
+      "fold": 3,
+      "candidate_id": 1,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_1_Price_Only",
+      "task": "classification",
+      "model": "ARIMA",
+      "fold": 4,
+      "candidate_id": 1,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_1_Price_Only",
+      "task": "classification",
+      "model": "ARIMA",
+      "fold": 5,
+      "candidate_id": 1,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_1_Price_Only",
+      "task": "regression",
+      "model": "ARIMA",
+      "fold": 1,
+      "candidate_id": 0,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_1_Price_Only",
+      "task": "regression",
+      "model": "ARIMA",
+      "fold": 2,
+      "candidate_id": 0,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_1_Price_Only",
+      "task": "regression",
+      "model": "ARIMA",
+      "fold": 3,
+      "candidate_id": 0,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_1_Price_Only",
+      "task": "regression",
+      "model": "ARIMA",
+      "fold": 4,
+      "candidate_id": 0,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_1_Price_Only",
+      "task": "regression",
+      "model": "ARIMA",
+      "fold": 5,
+      "candidate_id": 0,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_1_Price_Only",
+      "task": "regression",
+      "model": "ARIMA",
+      "fold": 1,
+      "candidate_id": 1,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_1_Price_Only",
+      "task": "regression",
+      "model": "ARIMA",
+      "fold": 2,
+      "candidate_id": 1,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_1_Price_Only",
+      "task": "regression",
+      "model": "ARIMA",
+      "fold": 3,
+      "candidate_id": 1,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_1_Price_Only",
+      "task": "regression",
+      "model": "ARIMA",
+      "fold": 4,
+      "candidate_id": 1,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_1_Price_Only",
+      "task": "regression",
+      "model": "ARIMA",
+      "fold": 5,
+      "candidate_id": 1,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_2_Macro_Fundamental",
+      "task": "classification",
+      "model": "SARIMAX",
+      "fold": 1,
+      "candidate_id": 0,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_2_Macro_Fundamental",
+      "task": "classification",
+      "model": "SARIMAX",
+      "fold": 2,
+      "candidate_id": 0,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_2_Macro_Fundamental",
+      "task": "classification",
+      "model": "SARIMAX",
+      "fold": 3,
+      "candidate_id": 0,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_2_Macro_Fundamental",
+      "task": "classification",
+      "model": "SARIMAX",
+      "fold": 4,
+      "candidate_id": 0,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_2_Macro_Fundamental",
+      "task": "classification",
+      "model": "SARIMAX",
+      "fold": 5,
+      "candidate_id": 0,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_2_Macro_Fundamental",
+      "task": "classification",
+      "model": "SARIMAX",
+      "fold": 1,
+      "candidate_id": 1,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_2_Macro_Fundamental",
+      "task": "classification",
+      "model": "SARIMAX",
+      "fold": 2,
+      "candidate_id": 1,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_2_Macro_Fundamental",
+      "task": "classification",
+      "model": "SARIMAX",
+      "fold": 3,
+      "candidate_id": 1,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_2_Macro_Fundamental",
+      "task": "classification",
+      "model": "SARIMAX",
+      "fold": 4,
+      "candidate_id": 1,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_2_Macro_Fundamental",
+      "task": "classification",
+      "model": "SARIMAX",
+      "fold": 5,
+      "candidate_id": 1,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_2_Macro_Fundamental",
+      "task": "regression",
+      "model": "SARIMAX",
+      "fold": 1,
+      "candidate_id": 0,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_2_Macro_Fundamental",
+      "task": "regression",
+      "model": "SARIMAX",
+      "fold": 2,
+      "candidate_id": 0,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_2_Macro_Fundamental",
+      "task": "regression",
+      "model": "SARIMAX",
+      "fold": 3,
+      "candidate_id": 0,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_2_Macro_Fundamental",
+      "task": "regression",
+      "model": "SARIMAX",
+      "fold": 4,
+      "candidate_id": 0,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_2_Macro_Fundamental",
+      "task": "regression",
+      "model": "SARIMAX",
+      "fold": 5,
+      "candidate_id": 0,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_2_Macro_Fundamental",
+      "task": "regression",
+      "model": "SARIMAX",
+      "fold": 1,
+      "candidate_id": 1,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_2_Macro_Fundamental",
+      "task": "regression",
+      "model": "SARIMAX",
+      "fold": 2,
+      "candidate_id": 1,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_2_Macro_Fundamental",
+      "task": "regression",
+      "model": "SARIMAX",
+      "fold": 3,
+      "candidate_id": 1,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_2_Macro_Fundamental",
+      "task": "regression",
+      "model": "SARIMAX",
+      "fold": 4,
+      "candidate_id": 1,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    },
+    {
+      "feature_set": "Branch_2_Macro_Fundamental",
+      "task": "regression",
+      "model": "SARIMAX",
+      "fold": 5,
+      "candidate_id": 1,
+      "converged": true,
+      "warnings": [
+        "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
+      ]
+    }
+  ]
 }

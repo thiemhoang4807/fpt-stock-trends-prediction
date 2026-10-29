@@ -7,6 +7,8 @@ import json
 from pathlib import Path
 
 import joblib
+import numpy as np
+from sequence_models import predict_sequence_artifact, predict_statistical_artifact
 from features import build_feature_table, load_price_data
 from prepare import merge_supplemental
 
@@ -33,13 +35,29 @@ def predict_latest(input_path: Path, models_dir: Path, output_path: Path, supple
     missing_latest = sorted(column for column in required_columns if latest[column].isna().any())
     if missing_latest:
         raise ValueError(f"Latest session is missing required inputs: {missing_latest}")
-    features = latest[classifier["feature_columns"]]
-    direction_value = int(classifier["model"].predict(features)[0])
-    direction_prob_up = float(classifier["model"].predict_proba(features)[0, 1])
-    if regressor["strategy"] == "last_close":
-        predicted_close = float(latest["current_close"].iloc[0])
+    def forecast(artifact):
+        kind = artifact.get("model_kind", "tabular")
+        if kind == "sequence":
+            return float(predict_sequence_artifact(artifact, table)[0])
+        if kind == "statistical":
+            return float(predict_statistical_artifact(artifact, table)[0])
+        return float(artifact["model"].predict(latest[artifact["feature_columns"]])[0])
+    kind = classifier.get("model_kind", "tabular")
+    direction_prob_up = None
+    class_score_value = forecast(classifier)
+    if kind == "sequence":
+        direction_prob_up = class_score_value
+        direction_value = int(class_score_value >= .5)
+    elif kind == "statistical":
+        direction_value = int(class_score_value > 0)
     else:
-        predicted_close = float(regressor["model"].predict(latest[regressor["feature_columns"]])[0])
+        direction_value = int(class_score_value)
+        if hasattr(classifier["model"], "predict_proba"):
+            direction_prob_up = float(classifier["model"].predict_proba(latest[classifier["feature_columns"]])[0,1])
+        else:
+            class_score_value = float(classifier["model"].decision_function(latest[classifier["feature_columns"]])[0])
+    predicted_log_return = forecast(regressor)
+    predicted_close = float(latest.current_close.iloc[0] * np.exp(predicted_log_return))
     current_close = float(latest["current_close"].iloc[0])
     result = {
         "as_of_session": latest["date"].iloc[0].strftime("%Y-%m-%d"),
@@ -52,6 +70,9 @@ def predict_latest(input_path: Path, models_dir: Path, output_path: Path, supple
         "probability_up_conditional_on_nonflat_direction": direction_prob_up,
         "regression_model": regressor["model_name"],
         "regression_feature_set": regressor.get("feature_set", "Branch_1_Price_Only"),
+        "predicted_next_log_return": predicted_log_return,
+        "direction_score": class_score_value,
+        "direction_score_note": "Probability is null for SVC margins or statistical return forecasts; do not interpret these scores as probabilities.",
         "predicted_next_close": predicted_close,
         "predicted_change_percent_from_current": (predicted_close / current_close - 1.0) * 100.0,
         "note": "Educational model output based on source history through the as-of session; not an investment recommendation.",

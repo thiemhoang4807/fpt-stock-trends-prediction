@@ -11,11 +11,12 @@ Dự án dùng snapshot (bản chụp dữ liệu đã cố định) để tái 
 | Vàng XAU/USD | Investing.com | Xuất CSV lịch sử; supplemental/gold_xauusd_source.csv | 1.755 quan sát, 01/01/2019–30/09/2025 |
 | CPI Việt Nam | Investing.com, lịch công bố số liệu GSO | Chép/xuất bảng lịch kinh tế; supplemental/vietnam_cpi_source.csv | 81 lần công bố, 27/12/2018–06/09/2025 |
 | GDP Việt Nam | World Bank, NY.GDP.MKTP.CD | Xuất CSV GDP danh nghĩa USD theo năm; supplemental/vietnam_gdp_source.csv | 15 năm, 2010–2024; loại dự báo năm 2025 |
-| Ngành công nghệ Việt Nam | Simply Wall St | Bảng lịch sử 10Y/Data; supplemental/ict_industry_source.csv | 33 snapshot, 06/02/2016–24/07/2025 |
+| Ngành công nghệ Việt Nam (chỉ kiểm toán, loại khỏi mô hình) | Simply Wall St | Bảng lịch sử 10Y/Data; supplemental/ict_industry_source.csv | 33 snapshot, 06/02/2016–24/07/2025 |
+| VN-Index | DNSE API chỉ số | supplemental/vnindex_source.csv; tải tự động bằng --download-market | 4.635 phiên, 02/01/2007–30/09/2025; đơn vị điểm |
 | Báo cáo tài chính FPT | VCI qua vnstock | Báo cáo kết quả kinh doanh quý; supplemental/fpt_income_statement_source.csv | 52 kỳ từ 2007-Q1 đến 2025-Q2; thiếu giai đoạn 2007-Q3–2012-Q4 |
 | Số cổ phiếu lưu hành | Công bố và báo cáo thường niên FPT | Trích chỉ tiêu và ngày có thể biết; supplemental/fpt_shares_outstanding.csv | 10 mốc, báo cáo cuối 2017 đến tăng vốn tháng 7/2025 |
 
-Các tệp dưới supplemental/ đều nằm trong data/raw/. Lần cập nhật này sử dụng các CSV lưu trữ có sẵn và trích bổ sung công bố cổ phiếu từ FPT, sau đó chạy lại chuẩn hóa. Không coi các tệp đó là dữ liệu vừa tải trực tuyến thành công trong lần chạy này.
+Các tệp dưới supplemental/ đều nằm trong data/raw/. Lần cập nhật này sử dụng các CSV lưu trữ có sẵn và trích bổ sung công bố cổ phiếu từ FPT, sau đó chạy lại chuẩn hóa. Các bản xuất vĩ mô/tài chính được tái dùng để giữ khả năng tái lập; riêng VN-Index đã được tải trực tiếp từ API DNSE trong đợt nâng cấp. Hash và thông tin truy xuất nằm trong `data/raw/supplemental/vnindex_lineage.json`.
 
 Nguồn trực tiếp và mô tả công cụ:
 
@@ -28,7 +29,7 @@ Nguồn trực tiếp và mô tả công cụ:
 ## 2. Luồng dữ liệu
 
 ```text
-VCI / các tệp xuất Investing / World Bank / Simply Wall St / công bố FPT
+VCI / các tệp xuất Investing / World Bank / DNSE / công bố FPT
     |
     +-- snapshot OHLCV -> fetch_data.py --verify -> eda.py
     |
@@ -37,11 +38,11 @@ VCI / các tệp xuất Investing / World Bank / Simply Wall St / công bố FPT
                           v
                     fpt_multisource_features.csv
                           |
-OHLCV -> features.py -> prepare.py -> cohort chung đủ 44 biến
+OHLCV -> features.py -> prepare.py -> cohort chung đủ 43 biến
                                       | Nhánh 1: 32 biến OHLCV/kỹ thuật
-                                      | Nhánh 2: 44 biến gồm 12 biến bổ trợ
+                                      | Nhánh 2: 43 biến gồm 11 biến bổ trợ
                                       v
-                                Train 85% / Test 15%
+                                Train 85% (CV 5 fold) / Test 15%
 ```
 
 Không nội suy tuyến tính giữa hai kỳ báo cáo: phép nội suy đó cần giá trị của kỳ tương lai. Không mở rộng giá FPT sang ngày nghỉ rồi tạo giá/volume giả. Tập ngày gốc là các phiên FPT thực sự có trong snapshot.
@@ -61,17 +62,16 @@ Ví dụ close = 82.54 tương ứng 82.540 đồng/cổ phiếu theo thang củ
 
 ## 4. Chuẩn hóa nguồn bổ trợ
 
-src/fetch_supplemental.py đọc sáu tệp *_source.csv, tạo các tệp chuẩn có cột time và các cột số tương ứng, rồi ghép vào phiên FPT.
+src/fetch_supplemental.py đọc các tệp *_source.csv và lịch cổ phiếu lưu hành, tạo các tệp chuẩn có cột time và các cột số tương ứng, rồi ghép vào phiên FPT.
 
 | Trường đầu vào mô hình | Đơn vị/định nghĩa |
 |---|---|
+| vnindex_return_1d | Lợi nhuận logarit một phiên của VN-Index, dùng trễ một ngày lịch |
+| vnindex_volatility_20d | Độ lệch chuẩn 20 lợi nhuận logarit của VN-Index, ddof=0, dùng trễ một ngày lịch |
 | usd_vnd_rate | VND cho 1 USD; lấy cột “Lần cuối”, bỏ dấu phẩy phân cách hàng nghìn |
 | gold_vnd_per_ounce | XAU/USD × USD/VND đã căn ngày; VND cho 1 troy ounce vàng quốc tế, không phải giá SJC |
 | cpi_yoy_pct | Tỷ lệ CPI cùng kỳ theo %, ví dụ 3.24 là 3,24%, không phải mức chỉ số CPI = 103,24 |
 | gdp_usd | GDP danh nghĩa cả năm theo USD, không phải tăng trưởng GDP hay GDP quý |
-| ict_market_cap_vnd | Vốn hóa của nhóm công nghệ do nguồn phân ngành; ₫214.7t = 214,7 × 10^12 VND |
-| ict_pe | Giữ số trong cột PE của bảng nguồn, loại hậu tố x |
-| ict_absolute_pe | Giữ số trong cột Absolute PE; không coi hai cột P/E là cùng một phép tính |
 | fpt_net_revenue_vnd | Doanh thu thuần riêng kỳ quý, VND |
 | fpt_gross_profit_vnd | Lợi nhuận gộp quý, VND |
 | fpt_ebit_vnd | EBIT tính theo quy ước lợi nhuận trước thuế + trị tuyệt đối chi phí lãi vay; VND |
@@ -80,7 +80,7 @@ src/fetch_supplemental.py đọc sáu tệp *_source.csv, tạo các tệp chu�
 
 EBIT không đồng nhất với “Lãi/Lỗ từ hoạt động kinh doanh”. Ví dụ 2025-Q2: 3.141.032.584.460 + 216.761.295.705 = 3.357.793.880.165 VND. Đây là EBIT theo công thức của dự án, không phải một cột EBIT độc lập đã được kiểm toán.
 
-Ngành công nghệ của Simply Wall St là biến đại diện cho nhóm ngành gần ICT, không bảo đảm có cùng tập công ty với một chỉ số ICT chính thức. Các thành phần và lịch sử định giá có thể bị nhà cung cấp điều chỉnh.
+Ba trường ngành được giữ trong dữ liệu chuẩn hóa để kiểm toán nhưng không thuộc danh sách đầu vào. Archive chỉ có 33 mốc từ 2016, không phủ 2007; thiếu thành phần/khối lượng ngành theo thời điểm. VN-Index phản ánh thị trường chung, không được coi là chỉ số ngành ICT. Không tạo rổ giả từ các doanh nghiệp hiện còn niêm yết. Chi tiết quyết định ở `reports/sector_coverage_audit.json`.
 
 Ngày USD/VND và vàng được đọc bằng dd/MM/yyyy; CPI dùng MM/dd/yyyy của tệp xuất; ngành dùng dd-MM-yyyy. Vì vậy “09/06/2025” trong CPI là 06/09/2025. Không suy đoán một quy tắc ngày chung cho mọi nguồn.
 
@@ -88,10 +88,10 @@ Ngày USD/VND và vàng được đọc bằng dd/MM/yyyy; CPI dùng MM/dd/yyyy 
 
 | Nguồn | Ngày dùng trong mô phỏng | Hạn giữ sau ngày có hiệu lực |
 |---|---|---:|
-| USD/VND, XAU/USD | Ngày quan sát + 1 ngày lịch | 10 ngày |
+| VN-Index, USD/VND, XAU/USD | Ngày quan sát + 1 ngày lịch | 10 ngày |
 | CPI | Ngày công bố ghi trong lịch nguồn + 1 ngày | 65 ngày |
 | GDP năm | Cuối năm + 180 ngày, giả định bảo thủ | 550 ngày |
-| Ngành | Ngày snapshot + 1 ngày | 180 ngày |
+| Ngành (chỉ lưu kiểm toán) | Ngày snapshot + 1 ngày | 180 ngày |
 | Báo cáo quý FPT | Cuối quý + 45 ngày, giả định thực nghiệm | 150 ngày |
 | Cổ phiếu lưu hành | Ngày công bố/ngày tham chiếu trong CSV + 1 ngày | 550 ngày |
 
@@ -109,14 +109,14 @@ OHLCV có 0 ô thiếu, 0 ngày trùng, 2 phiên volume bằng 0, 3 hàng quan h
 
 Vàng có 2.988 phiên FPT trước khi đủ dữ liệu; CPI có 2.987; GDP có 1.110; ngành có 2.262; tài chính có 1.407 phiên thiếu sau áp dụng hạn dùng; cổ phiếu lưu hành có 2.859. Những ô thiếu đầu chuỗi không được backfill. Bảng ghép vẫn lưu chúng để kiểm toán.
 
-Sau khi tính chỉ báo và yêu cầu đủ 44 biến, còn 1.683 hàng, trong đó 1.682 hàng có kết quả phiên kế tiếp và một hàng cuối dành cho dự báo. Cả hai nhánh cùng dùng 1.682 hàng có nhãn này:
+Sau bước tạo chỉ báo, cần thêm 60 phiên giao dịch liên tiếp đủ 43 biến để mọi cửa sổ LSTM/GRU dùng cùng các ngày. Còn 1.560 hàng, trong đó 1.559 hàng có nhãn và một hàng cuối dành cho dự báo. Chỉ số phiên gốc được giữ khi một chỉ báo không xác định để không nén lỗ hổng thành các phiên liền nhau.
 
 | Tập | Ngày mục tiêu | Hồi quy | Phân loại |
 |---|---|---:|---:|
-| Train 85% | 03/01/2019–24/09/2024 | 1.429 | 1.339 |
-| Test 15% | 25/09/2024–30/09/2025 | 253 | 244 |
+| Train 85% | 03/04/2019–21/10/2024 | 1.325 | Bỏ riêng nhãn đứng giá khi fit |
+| Test 15% | 22/10/2024–30/09/2025 | 234 | 227 |
 
-Phân loại bỏ nhãn đứng giá sau khi xác định ranh giới chung. Hai nhánh không tự chia trên hai khoảng lịch sử khác nhau. StandardScaler chỉ fit trên Train trong Pipeline của các mô hình tuyến tính. Các bảng kiểm toán chi tiết: reports/data_audit.json, supplemental_data_audit.json, split_metadata.json.
+Phân loại bỏ nhãn đứng giá sau khi xác định ranh giới chung. Trên Train, 5-fold TimeSeriesSplit có gap=1 dùng để chọn tham số/mô hình; mọi scaler chỉ fit ở phần Train của từng fold. Không sử dụng Test để chọn. Mục tiêu hồi quy là log return, sau dự báo mới quy đổi về giá. Các bảng kiểm toán chi tiết: `reports/data_audit.json`, `supplemental_data_audit.json`, `split_metadata.json`.
 
 ## 7. Tái lập và cập nhật
 
@@ -127,7 +127,9 @@ python src/fetch_data.py --verify
 python src/fetch_supplemental.py --from-cache
 python src/eda.py
 python src/prepare.py
+python src/time_series_analysis.py
 python src/train.py
+python src/explain.py
 python src/predict.py
 python -m pytest -q
 ```
@@ -155,3 +157,11 @@ Quy trình làm mới dữ liệu thủ công tại nguồn:
 5. Chạy lại fetch_supplemental.py, xem audit ngày/đơn vị/missing, rồi prepare/train. Script chuẩn hóa không tự vượt đăng nhập, giới hạn API hoặc tải lại website; phần xuất CSV có thể cần thao tác của người thu thập.
 
 Trong lần cắt này, 7 hàng tỷ giá, 31 hàng vàng, 1 hàng CPI, 1 snapshot ngành và 1 dòng GDP dự báo ngoài phạm vi đã bị loại khỏi các tệp nguồn. Những hàng đó có thể tải lại tại nguồn nếu mở rộng một nghiên cứu khác; không còn đi vào mô hình của nghiên cứu này.
+
+Tải mới riêng chỉ số thị trường (sau đó pipeline sẽ chuẩn hóa snapshot):
+
+```bash
+python src/fetch_supplemental.py --download-market --from-cache --end 2025-09-30
+```
+
+API: `https://api.dnse.com.vn/chart-api/v2/ohlcs/index`, `symbol=VNINDEX`, `resolution=1D`. Bộ kiểm định yêu cầu các mảng giá/khối lượng/thời gian cùng độ dài, không trùng ngày, giá hữu hạn và dương. Giữ giá VN-Index theo **điểm**, không áp phép đổi giá cổ phiếu sang nghìn VND. Nguồn có 4.635 quan sát trong khi FPT có 4.671; ghép theo ngày có hiệu lực và hạn 10 ngày, không giả định hai lịch hoàn toàn giống nhau.

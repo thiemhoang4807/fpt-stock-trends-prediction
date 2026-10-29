@@ -1,11 +1,31 @@
-feature_set,model,tn,fp,fn,tp,test_rows
-Branch_1_Price_Only,Majority baseline,0,125,0,119,244
-Branch_1_Price_Only,Logistic Regression,48,77,36,83,244
-Branch_1_Price_Only,Random Forest,51,74,40,79,244
-Branch_1_Price_Only,XGBoost,50,75,43,76,244
-Branch_1_Price_Only,HistGradientBoosting,47,78,37,82,244
-Branch_2_Macro_Fundamental,Majority baseline,0,125,0,119,244
-Branch_2_Macro_Fundamental,Logistic Regression,19,106,14,105,244
-Branch_2_Macro_Fundamental,Random Forest,30,95,23,96,244
-Branch_2_Macro_Fundamental,XGBoost,34,91,24,95,244
-Branch_2_Macro_Fundamental,HistGradientBoosting,33,92,34,85,244
+feature_set,model,tn,fp,fn,tp
+Branch_1_Price_Only,ARIMA,1,114,2,110
+Branch_1_Price_Only,GRU L=10,59,56,41,71
+Branch_1_Price_Only,GRU L=20,59,56,39,73
+Branch_1_Price_Only,GRU L=30,59,56,39,73
+Branch_1_Price_Only,GRU L=60,59,56,39,73
+Branch_1_Price_Only,HistGradientBoosting,56,59,48,64
+Branch_1_Price_Only,LSTM L=10,47,68,41,71
+Branch_1_Price_Only,LSTM L=20,46,69,36,76
+Branch_1_Price_Only,LSTM L=30,49,66,38,74
+Branch_1_Price_Only,LSTM L=60,49,66,40,72
+Branch_1_Price_Only,Logistic Regression,71,44,53,59
+Branch_1_Price_Only,Majority baseline,0,115,0,112
+Branch_1_Price_Only,Random Forest,72,43,65,47
+Branch_1_Price_Only,SVC,41,74,42,70
+Branch_1_Price_Only,XGBoost,37,78,27,85
+Branch_2_Macro_Fundamental,GRU L=10,8,107,8,104
+Branch_2_Macro_Fundamental,GRU L=20,7,108,7,105
+Branch_2_Macro_Fundamental,GRU L=30,8,107,7,105
+Branch_2_Macro_Fundamental,GRU L=60,8,107,7,105
+Branch_2_Macro_Fundamental,HistGradientBoosting,42,73,36,76
+Branch_2_Macro_Fundamental,LSTM L=10,9,106,10,102
+Branch_2_Macro_Fundamental,LSTM L=20,9,106,10,102
+Branch_2_Macro_Fundamental,LSTM L=30,9,106,9,103
+Branch_2_Macro_Fundamental,LSTM L=60,9,106,7,105
+Branch_2_Macro_Fundamental,Logistic Regression,15,100,13,99
+Branch_2_Macro_Fundamental,Majority baseline,0,115,0,112
+Branch_2_Macro_Fundamental,Random Forest,69,46,55,57
+Branch_2_Macro_Fundamental,SARIMAX,0,115,0,112
+Branch_2_Macro_Fundamental,SVC,25,90,22,90
+Branch_2_Macro_Fundamental,XGBoost,41,74,29,83

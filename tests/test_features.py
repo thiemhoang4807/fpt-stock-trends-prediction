@@ -105,3 +105,20 @@ def test_price_branch_includes_current_ohlcv_and_excludes_future_outcomes():
     for raw_name in ("open", "high", "low", "close", "volume"):
         assert row[f"current_{raw_name}"] == data.loc[60, raw_name]
     assert not {"direction", "next_close", "next_return", "target_date"}.intersection(PRICE_ONLY_FEATURE_COLUMNS)
+
+
+def test_log_return_target_reconstructs_price_and_excludes_future_inputs():
+    frame = build_feature_table(_synthetic_ohlcv())
+    labeled = frame.dropna(subset=["next_log_return"])
+    np.testing.assert_allclose(labeled.current_close * np.exp(labeled.next_log_return), labeled.next_close)
+    assert "next_log_return" not in PRICE_ONLY_FEATURE_COLUMNS
+    assert frame.session_index.tolist() == list(range(49, 180))
+
+
+def test_removed_indicator_rows_do_not_compress_trading_session_indices():
+    data = _synthetic_ohlcv()
+    data.loc[80:110, "volume"] = 1000
+    features = build_feature_table(data)
+    assert features.session_index.diff().gt(1).any()
+    for row in features.itertuples():
+        assert row.date == data.iloc[row.session_index].time

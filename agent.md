@@ -97,3 +97,32 @@ Giữ src/*.py và tests/*.py để notebook dùng đúng thuật toán đã ki�
 Đã tạo 8 notebook với tổng 151 ô (70 ô code, 81 ô hướng dẫn), chú thích tiếng Việt; kiểm định schema nbformat và cú pháp Python của toàn bộ ô đạt. Notebook không chứa output hay đường dẫn máy cá nhân. Cờ tải API mặc định tắt; tải thử ra tmp/ và không ghi đè snapshot. Đang chạy từng notebook bằng kernel mới trong bản sao cách ly tại tmp/notebook_validation để không thay artefact chính thức.
 
 Kết quả thực thi: cả 8 notebook hoàn tất từ đầu đến cuối bằng kernel Python mới (thử cả cwd tại root và notebooks/). Notebook tổng hợp tự chạy 34 kiểm thử đạt. Cả hai CSV metrics đối chiếu từng cột với bản chính thức đạt sai số số học <= 1e-10; JSON dự báo cuối giống hệt; SHA-256 các CSV giá/nguồn bổ trợ/cổ phiếu lưu hành không đổi. Các notebook xuất bản giữ output trống để người học tự chạy; kết quả kiểm định chi tiết ở tmp/notebook_validation/summary.json (không công bố). Nhánh cài/clone riêng của Colab và tải API tùy chọn chưa thực thi trong lần kiểm định local này.
+
+
+## Nâng cấp theo phản hồi giảng viên — 29/10/2026
+
+- [x] Kiểm toán độ phủ ngành/thị trường; quyết định giữ/loại có căn cứ.
+- [x] Tạo nhãn log return, nhóm ablation và cửa sổ đúng phiên giao dịch.
+- [x] ADF/KPSS, ACF/PACF, phân rã chuỗi.
+- [x] CV5fold chỉ trên Train; học máy, ARIMA/SARIMAX, LSTM/GRU nhiều cửa sổ.
+- [x] SHAP, permutation importance và ablation cùng cohort.
+- [x] Báo cáo/Proposal/LaTeX/cẩm nang riêng/notebook cập nhật kết quả thật.
+- [x] Kiểm thử và kiểm tra nguồn/cẩm nang.
+- [ ] Commit và push main đợt nâng cấp chuỗi thời gian.
+
+Phát hiện notebook 01 có thay đổi cục bộ từ người dùng; giữ nguyên nội dung đó khi nâng cấp. Test cũ đã từng được xem trong các phiên bản trước, nên holdout mới chỉ độc lập với quy trình lựa chọn lần này, không phải tập chưa từng được nhóm quan sát.
+
+### Kết quả thực hiện ngày 30/10/2026
+
+- Đã kiểm tra 33 snapshot ngành (2016-02-06–2025-07-24), loại ba biến ngành vì thiếu lịch sử/thành phần theo thời điểm. G5 ghi excluded; VN-Index là biến thị trường chung, không phải chỉ số ngành thay thế.
+- Tải trực tiếp DNSE: 4.635 phiên VN-Index, 2007-01-02–2025-09-30, giữ đơn vị điểm. Nguồn và hash trong vnindex_lineage.json.
+- Nhánh 1: 32 đầu vào; Nhánh 2: 43. Cùng 1.559 nhãn, Train 1.325 (2019-04-03–2024-10-21), Test 234 (2024-10-22–2025-09-30); Test phân loại 227. Mọi L dùng phiên liên tiếp với chỉ số phiên gốc, không nén lỗ hổng.
+- Đã chạy 5-fold CV gap=1, 30 dòng kết quả phân loại và 32 dòng hồi quy trên Test. Chọn HGB nhánh giá theo CV BA 0.550485, Test Accuracy 0.528634/BA 0.529193; hồi quy chọn ARIMA theo CV log RMSE 0.017192, Test RMSE giá 1.753715 nghìn VND.
+- ADF log return Train p≈1.05e-17; KPSS p≈0.01638. Ghi nhận hai kiểm định không đồng thuận về tính dừng, không khẳng định chuỗi dừng hoàn toàn.
+- SHAP và permutation chạy trên mô hình cây chọn bằng CV, background SHAP chỉ lấy Train. Ablation đánh giá G1/G2/G3/G4/G6; thêm đa nguồn chưa cải thiện đồng thời cả hai bài toán.
+- Pipeline EDA → prepare → train → explain → predict hoàn tất sau sửa kiểm tra cửa sổ; 46 pytest đạt. Cảnh báo thư viện statsmodels/NumPy được giữ, không phải lỗi test.
+- Đã kiểm định đủ 10 notebook bằng kernel mới: metrics khớp trong dung sai 1e-10, JSON dự báo giống hệt, dữ liệu gốc giữ hash. Bản notebook 01 có output người dùng vẫn giữ cục bộ, không đưa vào commit nâng cấp.
+- Đã viết lại cẩm nang riêng 63.858 byte với tính tay chỉ báo, ADF/KPSS, CV, log return, ba họ mô hình, kết quả thật và 10 câu vấn đáp; tiếp tục bị .gitignore loại trừ.
+- Proposal LaTeX/PDF 5 trang đã biên dịch hai lần và kiểm tra trực quan toàn bộ: mục 6, công thức, dấu ±, tên 3 sinh viên và sơ đồ hiển thị đúng. Có hai cảnh báo underfull về khoảng cách chữ, không có tràn nội dung.
+- README, REPORT, PROPOSAL, tài liệu dữ liệu và notebook đồng bộ 32/43 biến và phương pháp mới; thay biểu đồ/importance cũ bằng artefact hiện tại.
+- Kiểm tra cuối 46 passed; SHAP hữu hạn và tổng đóng góp cộng nền khớp raw output; 40/40 fit thống kê CV hội tụ. Snapshot verify đạt và không đổi. Quét tên nguồn không được công bố không có kết quả. Đang chuẩn bị commit/push.

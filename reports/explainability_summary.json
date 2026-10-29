@@ -1,0 +1,29 @@
+{
+  "models": [
+    {
+      "task": "classification",
+      "model": "XGBoost",
+      "feature_set": "Branch_2_Macro_Fundamental",
+      "selection": "training CV only",
+      "permutation_scoring": "balanced_accuracy",
+      "test_rows": 227,
+      "shap_rows": 150,
+      "background": "100 training rows at most, random seed42",
+      "shap_output": "raw model output; class1 for multiclass-shaped classifier output",
+      "max_additivity_error": 2.5198534014947427e-07
+    },
+    {
+      "task": "regression",
+      "model": "Random Forest Regressor",
+      "feature_set": "Branch_1_Price_Only",
+      "selection": "training CV only",
+      "permutation_scoring": "neg_root_mean_squared_error",
+      "test_rows": 234,
+      "shap_rows": 150,
+      "background": "100 training rows at most, random seed42",
+      "shap_output": "raw model output; class1 for multiclass-shaped classifier output",
+      "max_additivity_error": 1.0560189875330472e-10
+    }
+  ],
+  "limitations": "Post-hoc Test analysis only; no feature removal or retuning afterward. Correlated inputs share credit; permutation breaks temporal dependence and is descriptive, not causal. SHAP background only from Train."
+}

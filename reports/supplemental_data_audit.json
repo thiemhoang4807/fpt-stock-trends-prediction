@@ -13,13 +13,12 @@
     "shares_outstanding_after_source_availability_date": 1
   },
   "model_supplemental_columns": [
+    "vnindex_return_1d",
+    "vnindex_volatility_20d",
     "usd_vnd_rate",
     "gold_vnd_per_ounce",
     "cpi_yoy_pct",
     "gdp_usd",
-    "ict_market_cap_vnd",
-    "ict_pe",
-    "ict_absolute_pe",
     "fpt_net_revenue_vnd",
     "fpt_gross_profit_vnd",
     "fpt_ebit_vnd",
@@ -28,6 +27,13 @@
   ],
   "point_in_time_limitations": "Financial +45d and annual GDP +180d are assumed release dates, not a historical release-vintage archive; revisions and index constituent changes can remain.",
   "source_audit": {
+    "vnindex": {
+      "provider": "DNSE",
+      "raw_rows": 4635,
+      "first_date": "2007-01-02",
+      "last_date": "2025-09-30",
+      "availability_delay_calendar_days": 1
+    },
     "usd_vnd": {
       "status": "aligned",
       "file": "usd_vnd_daily.csv",
@@ -143,6 +149,26 @@
         "fpt_shares_outstanding": 2859
       }
     }
+  },
+  "sector_coverage": {
+    "provider": "Simply Wall St Vietnam Tech",
+    "url": "https://simplywall.st/markets/vn/tech",
+    "archive_rows": 33,
+    "archive_first_date": "2016-02-06",
+    "archive_last_date": "2025-07-24",
+    "covers_2007": false,
+    "largest_gap_calendar_days": 108,
+    "modeling_status": "excluded",
+    "excluded_columns": [
+      "ict_market_cap_vnd",
+      "ict_pe",
+      "ict_absolute_pe"
+    ],
+    "reason": "Sparse sector valuation snapshots; no 2007 coverage and historical constituent membership/weights are not archived. No backward interpolation or fabricated sector history.",
+    "live_page_check_date": "2026-10-29",
+    "live_page_evidence": "Public sector page offers 1Y/3Y/5Y/10Y views and currently aggregated company financials; this does not verify a 2007 point-in-time series.",
+    "alternative_decision": "Retain VN-Index as a broad-market control. It is NOT an ICT-sector replacement. A fixed basket of today's listed technology firms would introduce selection/survivorship bias without historical constituents; therefore no synthetic ICT proxy is claimed.",
+    "ablation_policy": "G5 marked unavailable/excluded; if reported alongside G4, it has exactly the same features and is not an independent industry ablation."
   },
   "normalized_raw_sources": {
     "usd_vnd_daily.csv": {
@@ -265,6 +291,10 @@
     "vietnam_gdp_source.csv": {
       "sha256": "dd3b1a7866584c712c7c1b8adab5ff6512e1e3a0583dc44dfc98a0b2a3a8e1df",
       "bytes": 329
+    },
+    "vnindex_source.csv": {
+      "sha256": "cc348bdcf888c947cf9929c14a58c719553662ff6ae875fc7a0ec9127e1e8d18",
+      "bytes": 224886
     },
     "fpt_shares_outstanding.csv": {
       "sha256": "a4382c6287993e9fe55cd005c86bbef840ecc2e755ddf3b09093927351ac2f70",

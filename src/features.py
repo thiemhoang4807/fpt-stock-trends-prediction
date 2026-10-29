@@ -113,6 +113,8 @@ def build_feature_table(data: pd.DataFrame) -> pd.DataFrame:
     result["current_volume"] = data["volume"].astype(float)
     result["next_close"] = close.shift(-1)
     result["next_return"] = result["next_close"] / result["current_close"] - 1.0
+    result["next_log_return"] = np.log(result["next_close"] / result["current_close"])
+    result["log_return"] = np.log(close / close.shift(1))
     result["direction"] = np.select(
         [result["next_return"].gt(0.0), result["next_return"].lt(0.0)],
         [1.0, 0.0],
@@ -163,4 +165,8 @@ def build_feature_table(data: pd.DataFrame) -> pd.DataFrame:
 
     # Warm-up NaNs arise from backward-looking indicators only. No backward fill is used.
     result = result.replace([np.inf, -np.inf], np.nan)
-    return result.dropna(subset=FEATURE_COLUMNS).reset_index(drop=True)
+    # Preserve original session positions even if an indicator becomes undefined.
+    # A removed row must not silently turn a gapped sequence into adjacent days.
+    result["session_index"] = np.arange(len(result))
+    result = result.dropna(subset=FEATURE_COLUMNS).reset_index(drop=True)
+    return result

@@ -60,5 +60,26 @@
     "figures/02_fpt_volume.png",
     "figures/03_daily_return_distribution.png",
     "figures/04_next_session_class_balance.png"
-  ]
+  ],
+  "sector_coverage_audit": {
+    "provider": "Simply Wall St Vietnam Tech",
+    "url": "https://simplywall.st/markets/vn/tech",
+    "archive_rows": 33,
+    "archive_first_date": "2016-02-06",
+    "archive_last_date": "2025-07-24",
+    "covers_2007": false,
+    "largest_gap_calendar_days": 108,
+    "modeling_status": "excluded",
+    "excluded_columns": [
+      "ict_market_cap_vnd",
+      "ict_pe",
+      "ict_absolute_pe"
+    ],
+    "reason": "Sparse sector valuation snapshots; no 2007 coverage and historical constituent membership/weights are not archived. No backward interpolation or fabricated sector history.",
+    "live_page_check_date": "2026-10-29",
+    "live_page_evidence": "Public sector page offers 1Y/3Y/5Y/10Y views and currently aggregated company financials; this does not verify a 2007 point-in-time series.",
+    "alternative_decision": "Retain VN-Index as a broad-market control. It is NOT an ICT-sector replacement. A fixed basket of today's listed technology firms would introduce selection/survivorship bias without historical constituents; therefore no synthetic ICT proxy is claimed.",
+    "ablation_policy": "G5 marked unavailable/excluded; if reported alongside G4, it has exactly the same features and is not an independent industry ablation."
+  },
+  "regression_target": "next_log_return = ln(next_close/current_close)"
 }

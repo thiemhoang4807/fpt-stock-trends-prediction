@@ -43,6 +43,7 @@ def test_prepared_multisource_table_retains_session_date_and_only_fills_forward(
         pd.DataFrame({"time": ["2024-01-02"], "usd_vnd_rate": [24500.0]}).to_csv(
             raw_dir / "usd_vnd_daily.csv", index=False
         )
+        pd.DataFrame({"time": ["2023-12-29", "2024-01-02"], "close": [1000., 1010.]}).to_csv(raw_dir / "vnindex_source.csv", index=False)
         aligned, audit = prepare_multisource_features(prices, raw_dir)
     assert "date" in aligned.columns
     assert aligned["usd_vnd_rate"].isna().tolist() == [True, True, False]
@@ -106,8 +107,18 @@ def test_committed_sources_have_correct_ebit_and_same_two_branch_cohort():
     assert normalized.iloc[-1]["fpt_ebit_vnd"] == pytest.approx(last["LN trước thuế"] + abs(last["Chi phí tiền lãi vay"]))
     base, common, branches = build_experiment_table(root / "data/raw/fpt/fpt_historical_price.csv")
     assert len(branches[BRANCH_PRICE]) == 32
-    assert len(branches[BRANCH_MACRO]) == 44
+    assert len(branches[BRANCH_MACRO]) == 43
     assert set(MODEL_SUPPLEMENTAL_COLUMNS).issubset(branches[BRANCH_MACRO])
     assert common[branches[BRANCH_MACRO]].notna().all().all()
     assert common["target_date"].dropna().max() == pd.Timestamp("2025-09-30")
     assert not {"direction", "next_close", "next_return"}.intersection(branches[BRANCH_MACRO])
+
+
+def test_vnindex_date_units_and_rejected_mismatched_payload():
+    from fetch_supplemental import normalize_vnindex_response
+    raw={"t":[1704157200],"o":[1100.],"h":[1120.],"l":[1095.],"c":[1110.],"v":[1000.]}
+    got=normalize_vnindex_response(raw,"2024-01-01","2024-01-03")
+    assert got.close.iloc[0] == 1110.
+    raw["v"]=[]
+    with pytest.raises(ValueError,match="equal"):
+        normalize_vnindex_response(raw,"2024-01-01","2024-01-03")

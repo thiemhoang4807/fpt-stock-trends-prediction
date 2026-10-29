@@ -1,0 +1,13 @@
+{
+  "provider": "DNSE public index chart API",
+  "endpoint": "https://api.dnse.com.vn/chart-api/v2/ohlcs/index",
+  "symbol": "VNINDEX",
+  "resolution": "1D",
+  "start": "2007-01-01",
+  "end": "2025-09-30",
+  "rows": 4635,
+  "price_unit": "index points",
+  "sha256_csv": "cc348bdcf888c947cf9929c14a58c719553662ff6ae875fc7a0ec9127e1e8d18",
+  "limitations": "Historical provider precision varies; not a release-vintage archive.",
+  "response_sha256": "7b0598b697d94d4401173f795fd77acd16d0ad619fc73c6f4830c52342f0abff"
+}

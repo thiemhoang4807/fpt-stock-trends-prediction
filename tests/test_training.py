@@ -18,25 +18,21 @@ from fetch_supplemental import MODEL_SUPPLEMENTAL_COLUMNS
 from predict import predict_latest
 
 
-def test_scaler_parameters_are_fitted_on_train_only(monkeypatch, tmp_path):
-    count = 200
-    dates = pd.bdate_range("2020-01-01", periods=count)
-    table = pd.DataFrame({
-        "date": dates,
-        "target_date": dates + pd.offsets.BDay(1),
-        "current_close": np.full(count, 100.0),
-        "next_close": 100.0 + np.where(np.arange(count) % 2, 1.0, -1.0),
-        "direction": np.arange(count) % 2,
-        "x": np.r_[np.arange(170, dtype=float), np.arange(30, dtype=float) + 10000.0],
-    })
-    monkeypatch.setattr(train, "_classifier_models", lambda: {"Logistic Regression": Pipeline([("scaler", StandardScaler()), ("model", LogisticRegression())])})
-    monkeypatch.setattr(train, "_regressor_models", lambda: {"Linear Regression": Pipeline([("scaler", StandardScaler()), ("model", LinearRegression())])})
-    result = train._fit_test_for_set("test", table, ["x"], tmp_path, tmp_path)
-    for model in [result["class_models"]["Logistic Regression"], result["regression_models"]["Linear Regression"]]:
-        scaler = model.named_steps["scaler"]
-        assert scaler.n_samples_seen_ == 170
-        assert scaler.mean_[0] == pytest.approx(84.5)
-        assert scaler.mean_[0] != pytest.approx(table["x"].mean())
+def test_fold_scaler_does_not_learn_from_validation():
+    frame = pd.DataFrame({"x": np.r_[np.arange(80), np.arange(20)+10000.], "next_log_return": np.sin(np.arange(100))*.01, "direction": np.arange(100)%2})
+    for task,name in [("classification","Logistic Regression"),("regression","Linear Regression")]:
+        spec=("tabular",train.candidate_models(task)[name][0])
+        _,_,artifact=train.fit_candidate(spec,task,frame,["x"],np.arange(80),np.arange(81,100))
+        scaler=artifact["model"].named_steps["standardscaler"]
+        assert scaler.n_samples_seen_ == 80
+        assert scaler.mean_[0] == pytest.approx(39.5)
+
+
+def test_five_folds_have_purge_and_never_use_holdout():
+    for a,b in train.cv_splits(850):
+        assert a.max()+1 < b.min()
+        assert b.max() < 850
+    assert len(train.cv_splits(850)) == 5
 
 
 def test_predict_rejects_missing_latest_source_instead_of_reusing_old_session(tmp_path):
@@ -60,8 +56,8 @@ def test_predict_rejects_missing_latest_source_instead_of_reusing_old_session(tm
 
 
 def test_all_required_model_families_are_available():
-    assert set(train._classifier_models()) == {"Majority baseline", "Logistic Regression", "Random Forest", "XGBoost", "HistGradientBoosting"}
-    assert set(train._regressor_models()) == {"Linear Regression", "Random Forest Regressor", "XGBoost Regressor", "HistGradientBoosting Regressor"}
+    assert set(train._classifier_models()) == {"SVC", "Majority baseline", "Logistic Regression", "Random Forest", "XGBoost", "HistGradientBoosting"}
+    assert set(train._regressor_models()) == {"Last-Close Baseline", "Ridge Regression", "SVR", "Linear Regression", "Random Forest Regressor", "XGBoost Regressor", "HistGradientBoosting Regressor"}
 
 
 def test_exported_results_cover_both_branches_and_all_classifiers():
@@ -69,8 +65,8 @@ def test_exported_results_cover_both_branches_and_all_classifiers():
     metrics = pd.read_csv(root / "reports/classification_test_metrics.csv")
     matrices = pd.read_csv(root / "reports/confusion_matrices.csv")
     predictions = pd.read_csv(root / "reports/test_direction_predictions_by_model.csv")
-    assert len(metrics) == len(matrices) == 10
-    assert metrics.groupby("feature_set")["model"].nunique().tolist() == [5, 5]
+    assert len(metrics) == len(matrices) == 30
+    assert metrics.groupby("feature_set")["model"].nunique().tolist() == [15, 15]
     assert metrics["test_start"].nunique() == metrics["test_end"].nunique() == 1
     assert metrics["test_end"].iloc[0] == "2025-09-30"
     for row in metrics.itertuples():
@@ -79,16 +75,32 @@ def test_exported_results_cover_both_branches_and_all_classifiers():
         assert (matrix["tn"] + matrix["tp"]) / row.test_rows == pytest.approx(row.accuracy)
         per_session = predictions.loc[(predictions["feature_set"] == row.feature_set) & (predictions["model"] == row.model)]
         assert len(per_session) == row.test_rows
-        assert float((per_session["direction"] == per_session["predicted_direction"]).mean()) == pytest.approx(row.accuracy)
+        assert float((per_session["direction"] == per_session["prediction"]).mean()) == pytest.approx(row.accuracy)
 
 
 def test_regression_table_reports_five_models_per_branch_and_ordered_tolerances():
     root = Path(__file__).resolve().parents[1]
     metrics = pd.read_csv(root / "reports/regression_test_metrics.csv")
-    assert len(metrics) == 10
-    assert metrics.groupby("feature_set")["model"].nunique().tolist() == [5, 5]
+    assert len(metrics) == 32
+    assert metrics.groupby("feature_set")["model"].nunique().tolist() == [16, 16]
     assert (metrics["tolerance_accuracy_0_5_percent"] <= metrics["tolerance_accuracy_1_percent"]).all()
     assert (metrics["tolerance_accuracy_1_percent"] <= metrics["tolerance_accuracy_2_percent"]).all()
     baselines = metrics.loc[metrics["model"].eq("Last-Close Baseline")]
     assert baselines["mae"].nunique() == 1
     assert baselines["directional_accuracy_nonflat_percent"].eq(0).all()
+
+
+def test_published_selection_matches_cv_not_test():
+    root=Path(__file__).resolve().parents[1]
+    for task in ["classification","regression"]:
+        metrics=pd.read_csv(root/f"reports/{task}_test_metrics.csv")
+        selected=metrics.loc[metrics.selected_for_deployment].iloc[0]
+        expected=metrics.cv_score.max() if task=="classification" else metrics.cv_score.min()
+        assert selected.cv_score == pytest.approx(expected)
+
+
+def test_price_predictions_are_reconstructed_from_log_return():
+    root=Path(__file__).resolve().parents[1]
+    p=pd.read_csv(root/"reports/test_price_predictions_by_model.csv")
+    # XGBoost emits float32; exp(float32) differs from CSV float64 reconstruction by <0.02 VND.
+    np.testing.assert_allclose(p.predicted_close,p.current_close*np.exp(p.prediction),rtol=2e-7,atol=1e-10)

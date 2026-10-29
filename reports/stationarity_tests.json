@@ -1,0 +1,160 @@
+{
+  "train_history_end": "2024-10-21",
+  "alpha": 0.05,
+  "regression": "constant (level stationarity)",
+  "note": "Full-snapshot diagnostics are descriptive only, not used to choose parameters. KPSS endpoint p-values may be bounds; see warnings.",
+  "tests": [
+    {
+      "series": "close",
+      "scope": "train_history",
+      "test": "ADF",
+      "n": 4437,
+      "statistic": 4.821512596045682,
+      "p_value": 1.0,
+      "lags": 27,
+      "critical_values": {
+        "1%": -3.4318340352231185,
+        "5%": -2.862195763748743,
+        "10%": -2.567119067159428
+      },
+      "null_hypothesis": "unit root",
+      "reject_null_at_5pct": false,
+      "conclusion": "unit root not rejected",
+      "warnings": []
+    },
+    {
+      "series": "close",
+      "scope": "train_history",
+      "test": "KPSS",
+      "n": 4437,
+      "statistic": 6.7465738062254985,
+      "p_value": 0.01,
+      "lags": 41,
+      "critical_values": {
+        "10%": 0.347,
+        "5%": 0.463,
+        "2.5%": 0.574,
+        "1%": 0.739
+      },
+      "null_hypothesis": "level stationary",
+      "reject_null_at_5pct": true,
+      "conclusion": "level stationarity rejected",
+      "warnings": [
+        "The test statistic is outside of the range of p-values available in the\nlook-up table. The actual p-value is smaller than the p-value returned.\n"
+      ]
+    },
+    {
+      "series": "log_return",
+      "scope": "train_history",
+      "test": "ADF",
+      "n": 4436,
+      "statistic": -10.102951400459062,
+      "p_value": 1.047768336552807e-17,
+      "lags": 30,
+      "critical_values": {
+        "1%": -3.4318353836012094,
+        "5%": -2.862196359419743,
+        "10%": -2.5671193842643474
+      },
+      "null_hypothesis": "unit root",
+      "reject_null_at_5pct": true,
+      "conclusion": "evidence against unit root",
+      "warnings": []
+    },
+    {
+      "series": "log_return",
+      "scope": "train_history",
+      "test": "KPSS",
+      "n": 4436,
+      "statistic": 0.6688465872416803,
+      "p_value": 0.01637758297802906,
+      "lags": 14,
+      "critical_values": {
+        "10%": 0.347,
+        "5%": 0.463,
+        "2.5%": 0.574,
+        "1%": 0.739
+      },
+      "null_hypothesis": "level stationary",
+      "reject_null_at_5pct": true,
+      "conclusion": "level stationarity rejected",
+      "warnings": []
+    },
+    {
+      "series": "close",
+      "scope": "full_snapshot_descriptive_only",
+      "test": "ADF",
+      "n": 4671,
+      "statistic": 0.5243161044340395,
+      "p_value": 0.9855937235504632,
+      "lags": 30,
+      "critical_values": {
+        "1%": -3.431760112362477,
+        "5%": -2.862163106543053,
+        "10%": -2.5671016821956747
+      },
+      "null_hypothesis": "unit root",
+      "reject_null_at_5pct": false,
+      "conclusion": "unit root not rejected",
+      "warnings": []
+    },
+    {
+      "series": "close",
+      "scope": "full_snapshot_descriptive_only",
+      "test": "KPSS",
+      "n": 4671,
+      "statistic": 7.295579887844211,
+      "p_value": 0.01,
+      "lags": 41,
+      "critical_values": {
+        "10%": 0.347,
+        "5%": 0.463,
+        "2.5%": 0.574,
+        "1%": 0.739
+      },
+      "null_hypothesis": "level stationary",
+      "reject_null_at_5pct": true,
+      "conclusion": "level stationarity rejected",
+      "warnings": [
+        "The test statistic is outside of the range of p-values available in the\nlook-up table. The actual p-value is smaller than the p-value returned.\n"
+      ]
+    },
+    {
+      "series": "log_return",
+      "scope": "full_snapshot_descriptive_only",
+      "test": "ADF",
+      "n": 4670,
+      "statistic": -18.237285079666897,
+      "p_value": 2.3595069413063102e-30,
+      "lags": 12,
+      "critical_values": {
+        "1%": -3.4317549620203964,
+        "5%": -2.862160831225082,
+        "10%": -2.56710047094224
+      },
+      "null_hypothesis": "unit root",
+      "reject_null_at_5pct": true,
+      "conclusion": "evidence against unit root",
+      "warnings": []
+    },
+    {
+      "series": "log_return",
+      "scope": "full_snapshot_descriptive_only",
+      "test": "KPSS",
+      "n": 4670,
+      "statistic": 0.49306699257085707,
+      "p_value": 0.04322815482638355,
+      "lags": 14,
+      "critical_values": {
+        "10%": 0.347,
+        "5%": 0.463,
+        "2.5%": 0.574,
+        "1%": 0.739
+      },
+      "null_hypothesis": "level stationary",
+      "reject_null_at_5pct": true,
+      "conclusion": "level stationarity rejected",
+      "warnings": []
+    }
+  ]
+}

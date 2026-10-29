@@ -17,7 +17,7 @@
       "file": "raw/supplemental/usd_vnd_source.csv",
       "url": "https://vn.investing.com/currencies/usd-vnd-historical-data",
       "date_format": "%d/%m/%Y",
-      "value_column": "Lần cuối",
+      "value_column": "Láº§n cuá»‘i",
       "unit": "VND per USD"
     },
     {
@@ -26,7 +26,7 @@
       "file": "raw/supplemental/gold_xauusd_source.csv",
       "url": "https://vn.investing.com/currencies/xau-usd-historical-data",
       "date_format": "%d/%m/%Y",
-      "value_column": "Lần cuối",
+      "value_column": "Láº§n cuá»‘i",
       "unit": "USD per troy ounce; multiply aligned gold and FX to obtain VND per troy ounce"
     },
     {
@@ -35,8 +35,8 @@
       "file": "raw/supplemental/vietnam_cpi_source.csv",
       "url": "https://vn.investing.com/economic-calendar/vietnamese-cpi-1851",
       "date_format": "%m/%d/%Y",
-      "date_column": "Ngày Phát Hành",
-      "value_column": "Thực tế",
+      "date_column": "NgÃ y PhÃ¡t HÃ nh",
+      "value_column": "Thá»±c táº¿",
       "unit": "year-over-year percent"
     },
     {
@@ -55,7 +55,8 @@
       "date_format": "%d-%m-%Y",
       "market_cap_unit": "VND; t suffix denotes 1e12",
       "pe_units": "multiples; retain source PE and Absolute PE as separate fields",
-      "limitation": "Sector proxy for ICT; sparse snapshots and historical constituents or revisions are not reconstructed"
+      "limitation": "33 sparse snapshots from 2016-02-06 to 2025-07-24; no 2007 coverage, historical constituents or revision vintages. Not used as a model feature.",
+      "modeling_status": "excluded; retained for coverage audit only"
     },
     {
       "id": "fpt_quarterly_statements",
@@ -74,6 +75,16 @@
       "unit": "shares outstanding, excluding treasury shares where separately reported",
       "availability_rule": "Each CSV row records a publication/reference date and exact official report URL; applied one calendar day later",
       "limitation": "Last-known archived observations, not a full daily register. The 2017 observation uses a conservative assumed availability date."
+    },
+    {
+      "id": "vnindex",
+      "provider": "DNSE public index chart API",
+      "url": "https://api.dnse.com.vn/chart-api/v2/ohlcs/index",
+      "file": "raw/supplemental/vnindex_source.csv",
+      "unit": "index points",
+      "usage": "log return and 20-session volatility, available after one calendar day",
+      "range": "2007-01-02 to 2025-09-30",
+      "rows": 4635
     }
   ]
 }

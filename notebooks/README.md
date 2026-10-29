@@ -50,7 +50,7 @@ Chọn nhánh `main` và notebook muốn chạy. Bạn cũng có thể mở tr�
 
 Chạy từ ô đầu tiên. Khi phát hiện đang ở Colab nhưng chưa có thư mục dự án, ô thiết lập sẽ clone repository chính thức. Cài thư viện được bật mặc định trên Colab; trên máy cá nhân, bước này mặc định tắt vì đã có lệnh cài ở trên. Nếu Colab báo cần khởi động lại phiên sau khi thay thư viện, chọn khởi động lại rồi chạy lại từ đầu. Điều này đặc biệt cần thiết khi pandas, NumPy hoặc scikit-learn đã được import trước lúc cài.
 
-Không cần bật GPU cho các mô hình hiện tại: Logistic/Linear Regression, Random Forest, XGBoost và HistGradientBoosting trong dự án đang chạy bằng CPU. Khi phiên Colab bị ngắt hoặc xóa, những tệp vừa sinh trong phiên cũng có thể mất; tải các kết quả cần giữ về máy trước khi kết thúc.
+Toàn bộ mô hình hiện tại chạy bằng CPU, bao gồm ARIMA/SARIMAX và mạng LSTM/GRU nhỏ. Huấn luyện 5-fold với nhiều cấu hình cần lâu hơn phiên bản chỉ chia một lần; chờ ô huấn luyện hoàn tất. Khi phiên Colab bị ngắt hoặc xóa, những tệp vừa sinh trong phiên cũng có thể mất; tải các kết quả cần giữ về máy trước khi kết thúc.
 
 ## 4. Thứ tự các công đoạn và tệp kết quả
 
@@ -60,12 +60,14 @@ Không cần bật GPU cho các mô hình hiện tại: Logistic/Linear Regressi
 | `02_fetch_supplemental` | Chuẩn hóa CSV nguồn; ghép dữ liệu từ ngày có thể sử dụng | Các CSV chuẩn hóa trong `data/raw/supplemental/`, `data/processed/fpt_multisource_features.csv`, `reports/supplemental_data_audit.json` |
 | `03_eda` | Kiểm toán, xem giá, khối lượng, lợi nhuận và phân bố nhãn | `reports/data_audit.json` và các biểu đồ EDA trong `figures/` |
 | `04_features` | Xem 32 biến giá/kỹ thuật, kiểm tra nhãn phiên kế tiếp | Các bảng minh họa trong notebook; dùng hàm trong `src/features.py` |
-| `05_prepare` | Ghép 12 biến bổ trợ và giữ cùng những ngày đầy đủ cho hai nhánh | `data/processed/fpt_next_session_features.csv`, `data/processed/fpt_two_branch_features.csv` |
+| `05_prepare` | Ghép 11 biến bổ trợ và giữ cùng những ngày đầy đủ cho hai nhánh | `data/processed/fpt_next_session_features.csv`, `data/processed/fpt_two_branch_features.csv` |
 | `06_train` | Xem chia thời gian 85/15, mô hình, huấn luyện và bảng điểm | Các bảng metrics, dự báo Test và metadata trong `reports/`; ảnh trong `figures/`; mô hình trong `models/` |
+| `08_time_series` | ADF/KPSS, ACF/PACF và phân rã STL | Bảng stationarity_tests và hình 12/13 |
+| `09_explain` | SHAP, permutation và đối sánh G1–G6 | Các bảng importance và hình giải thích |
 | `07_predict` | Dùng mô hình đã lưu cho phiên sau ngày cuối snapshot | `reports/latest_prediction.json` |
 | `00_RUN_ALL` | Thực hiện quy trình đầy đủ và kiểm thử ở ô cuối | Cùng các đầu ra chính thức ở trên |
 
-Khi chạy các notebook lẻ từ đầu, dùng thứ tự `01 → 02 → 03 → 04 → 05 → 06 → 07`. Mỗi notebook có ô thiết lập riêng; biến Python trong notebook trước không tự xuất hiện trong notebook sau. Các công đoạn trao đổi thông tin qua tệp dữ liệu và mô hình đã lưu.
+Khi chạy các notebook lẻ từ đầu, dùng thứ tự `01 → 02 → 03 → 04 → 05 → 08 → 06 → 09 → 07`. Mỗi notebook có ô thiết lập riêng; biến Python trong notebook trước không tự xuất hiện trong notebook sau. Các công đoạn trao đổi thông tin qua tệp dữ liệu và mô hình đã lưu.
 
 Repository đã đóng gói dữ liệu và các artefact của lần thực nghiệm trước. Vì vậy notebook dự báo có thể đọc mô hình sẵn có; nếu bạn thay dữ liệu hoặc đặc trưng, cần chạy lại notebook huấn luyện trước khi dự báo.
 
@@ -77,7 +79,7 @@ Repository đã đóng gói dữ liệu và các artefact của lần thực ngh
 
 **Run All ghi lại kết quả thực nghiệm.** Các bảng chuẩn hóa, bảng đặc trưng, ảnh, metrics và mô hình được tạo tại các đường dẫn chính thức của dự án. Nếu muốn giữ một lần thực nghiệm riêng, sao lưu các đầu ra cần so sánh trước khi đổi cấu hình.
 
-**Hai nhánh được so sánh trên cùng các ngày.** Nhánh 1 có 32 biến, Nhánh 2 có 44 biến. Dù lịch sử giá bắt đầu năm 2007, cửa sổ so sánh chung chỉ bắt đầu khi các biến bổ trợ có đủ dữ liệu. Không sửa notebook thành chia ngẫu nhiên hoặc fit bộ chuẩn hóa trên toàn bộ dữ liệu.
+**Hai nhánh được so sánh trên cùng các ngày.** Nhánh 1 có 32 biến, Nhánh 2 có 43 biến. Dù lịch sử giá bắt đầu năm 2007, cửa sổ so sánh chung chỉ bắt đầu khi các biến bổ trợ có đủ dữ liệu. Không sửa notebook thành chia ngẫu nhiên hoặc fit bộ chuẩn hóa trên toàn bộ dữ liệu.
 
 **Ảnh được hiển thị từ tệp kết quả.** Các hàm huấn luyện/EDA lưu ảnh bằng matplotlib; notebook mở lại các ảnh đó để bạn xem ngay. Có thể tải ảnh gốc trong `figures/` để đưa vào báo cáo.
 
@@ -99,11 +101,17 @@ Repository đã đóng gói dữ liệu và các artefact của lần thực ngh
 
 ## 7. Nếu muốn thay tham số mô hình
 
-Ô xem cấu hình trong notebook 06 tạo các đối tượng để bạn đọc tham số, không truyền những đối tượng đó vào bước huấn luyện. Hàm `run_training` tự tạo mô hình từ `_classifier_models()` và `_regressor_models()` trong `src/train.py`. Để đổi tham số thật, sửa hai hàm này rồi khởi động lại kernel và chạy lại notebook từ đầu. Cần phân biệt việc đọc bảng cấu hình với việc thay cấu hình được dùng trong thực nghiệm.
+Ô xem cấu hình trong notebook 06 tạo các đối tượng để bạn đọc tham số, không truyền những đối tượng đó vào bước huấn luyện. Hàm `run_training` tự tạo lưới mô hình bảng từ `candidate_models(task)` và cấu hình chuỗi thời gian/học sâu trong `run_training` trong `src/train.py`. Để đổi tham số thật, sửa cấu hình trong các hàm này rồi khởi động lại kernel và chạy lại notebook từ đầu. Cần phân biệt việc đọc bảng cấu hình với việc thay cấu hình được dùng trong thực nghiệm.
 
 
-## 8. Kiểm định lần bổ sung notebook
+## 8. Quy tắc lựa chọn trong phiên bản mới
 
-Cả 8 notebook đã được chạy từ đầu đến cuối bằng kernel Python mới trên máy Windows trong một bản sao dự án cách ly. Đã thử tìm root khi thư mục chạy là root hoặc notebooks/. Hai bảng metrics khớp pipeline Python (đối chiếu số học với dung sai 1e-10), JSON dự báo cuối giống hệt và các tệp giá/nguồn bổ trợ được giữ nguyên. Notebook tổng hợp cũng chạy đủ 34 kiểm thử pytest thành công.
+85% đầu làm Train, 15% cuối làm Test. Bên trong Train chia 5 lượt: học quá khứ, chấm đoạn tiếp theo, rồi mở rộng đoạn học. Chọn bằng Balanced Accuracy CV cho hướng và RMSE log return CV cho hồi quy. Sau khi khóa lựa chọn mới chấm Test. Mô hình đánh giá trong `models/evaluation/` khác bản minh họa `models/best_*.joblib` đã học lại toàn bộ nhãn.
 
-Các file ipynb công bố để trống output; chạy ô sẽ hiện bảng/ảnh trong môi trường của bạn. Phần clone/cài riêng cho Colab và tải API tùy chọn không thuộc lần kiểm định local này. Phiên bản thư viện khác có thể làm số học hoặc khả năng nạp joblib khác; khi đó hãy huấn luyện lại trong môi trường đang dùng.
+Cửa sổ L=10/20/30/60 luôn gồm các phiên liên tiếp. Khi notebook chuẩn bị chọn cùng một tập ngày cho hai nhánh, lịch sử bối cảnh vẫn được giữ để mạng không coi hai ngày cách nhau một khoảng thiếu dữ liệu là hai phiên liền nhau. G5 ngành bị loại vì nguồn chưa đủ lịch sử; không có kết quả ngành giả lập.
+
+Các file notebook xuất bản để trống output. Phần clone/cài riêng cho Colab và tải API tùy chọn không được coi là đã kiểm thử chỉ bằng chạy local. Nếu phiên bản thư viện khác môi trường lưu model, nên huấn luyện lại trước khi dự báo.
+
+## 9. Kiểm định thực thi ngày 30/10/2026
+
+Cả 10 notebook chạy hoàn tất bằng kernel mới trong bản sao cách ly. Hai bảng metrics khớp kết quả Python với dung sai 1e-10, JSON dự báo giống hệt và các tệp nguồn giữ nguyên hash. Ô pytest trong notebook tổng hợp đạt 46 bài. Đã thử cả thư mục chạy tại root và notebooks/. Cài/clone riêng cho Colab và các nhánh tải API tùy chọn không thuộc kiểm định local này.

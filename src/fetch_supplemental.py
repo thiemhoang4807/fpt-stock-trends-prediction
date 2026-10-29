@@ -7,6 +7,8 @@ import hashlib
 import json
 from pathlib import Path
 import sys
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
 import numpy as np
 import pandas as pd
@@ -19,19 +21,72 @@ DEFAULT_END = "2025-09-30"
 
 # Every declared field is required for the common two-branch comparison.
 MODEL_SUPPLEMENTAL_COLUMNS = [
+    "vnindex_return_1d",
+    "vnindex_volatility_20d",
     "usd_vnd_rate",
     "gold_vnd_per_ounce",
     "cpi_yoy_pct",
     "gdp_usd",
-    "ict_market_cap_vnd",
-    "ict_pe",
-    "ict_absolute_pe",
     "fpt_net_revenue_vnd",
     "fpt_gross_profit_vnd",
     "fpt_ebit_vnd",
     "fpt_parent_net_profit_vnd",
     "fpt_shares_outstanding",
 ]
+
+MARKET_MACRO_COLUMNS = MODEL_SUPPLEMENTAL_COLUMNS[:6]
+FUNDAMENTAL_COLUMNS = MODEL_SUPPLEMENTAL_COLUMNS[6:]
+INDUSTRY_COLUMNS: list[str] = []  # Sparse sector archive is audited, not modeled.
+VNINDEX_API = "https://api.dnse.com.vn/chart-api/v2/ohlcs/index"
+
+
+def normalize_vnindex_response(payload: dict, start: str, end: str) -> pd.DataFrame:
+    """Normalize DNSE index bars in index points, never divide them by 1,000."""
+    keys = ["t", "o", "h", "l", "c", "v"]
+    if any(not isinstance(payload.get(key), list) for key in keys):
+        raise ValueError("DNSE response must contain t/o/h/l/c/v arrays")
+    if len({len(payload[key]) for key in keys}) != 1 or not payload["t"]:
+        raise ValueError("DNSE response arrays must have equal, nonzero lengths")
+    frame = pd.DataFrame({key: payload[key] for key in keys})
+    frame["time"] = pd.to_datetime(frame.pop("t"), unit="s", utc=True).dt.tz_convert("Asia/Ho_Chi_Minh").dt.tz_localize(None).dt.normalize()
+    frame = frame.rename(columns={"o": "open", "h": "high", "l": "low", "c": "close", "v": "volume"})
+    frame = frame[["time", "open", "high", "low", "close", "volume"]]
+    for column in frame.columns[1:]:
+        frame[column] = pd.to_numeric(frame[column], errors="raise")
+    if not np.isfinite(frame.iloc[:, 1:].to_numpy(dtype=float)).all() or (frame[["open", "high", "low", "close"]] <= 0).any().any() or frame["volume"].lt(0).any():
+        raise ValueError("VN-Index OHLCV contains non-finite or invalid values")
+    if frame["time"].duplicated().any():
+        raise ValueError("VN-Index response contains duplicate session dates")
+    frame = frame.loc[frame["time"].between(pd.Timestamp(start), pd.Timestamp(end))].sort_values("time").reset_index(drop=True)
+    if frame.empty:
+        raise ValueError("VN-Index response has no rows in requested dates")
+    return frame
+
+
+def download_vnindex(raw_dir: Path = RAW_DIR, start: str = "2007-01-01", end: str = DEFAULT_END) -> dict:
+    """Fetch public DNSE index chart history; frozen CSV remains usable offline."""
+    params = {"symbol": "VNINDEX", "resolution": "1D", "from": int(pd.Timestamp(start, tz="UTC").timestamp()), "to": int((pd.Timestamp(end, tz="UTC") + pd.Timedelta(days=1)).timestamp())}
+    url = VNINDEX_API + "?" + urlencode(params)
+    with urlopen(Request(url, headers={"Accept": "application/json"}), timeout=30) as response:
+        content = response.read()
+    frame = normalize_vnindex_response(json.loads(content), start, end)
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    path = raw_dir / "vnindex_source.csv"
+    frame.to_csv(path, index=False, date_format="%Y-%m-%d", lineterminator="\n")
+    lineage = {"provider": "DNSE public index chart API", "url": url, "documentation": "https://developers.dnse.com.vn/docs/dnse/get-ohlc-history/", "documentation_note": "Provider documentation describes OHLC data generally; the exact public chart endpoint used is recorded in url.", "requested_start": start, "requested_end": end, "first_date": str(frame["time"].min().date()), "last_date": str(frame["time"].max().date()), "rows": len(frame), "price_unit": "index points", "volume_unit": "provider index traded volume, retained but not modeled", "response_sha256": hashlib.sha256(content).hexdigest(), "csv_sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "limitation": "Historical provider precision varies; early bars have integer-point precision. Not a release-vintage archive."}
+    (raw_dir / "vnindex_lineage.json").write_text(json.dumps(lineage, ensure_ascii=False, indent=2), encoding="utf-8")
+    return lineage
+
+
+def audit_industry_coverage(raw_dir: Path = RAW_DIR, end: str = DEFAULT_END) -> dict:
+    """Document the observed sector archive instead of extrapolating it to 2007."""
+    path = raw_dir / "ict_industry_source.csv"
+    if not path.is_file():
+        return {"modeling_status": "excluded", "reason": "No archived sector observations"}
+    source = pd.read_csv(path)
+    dates = pd.to_datetime(source["Date"], format="%d-%m-%Y", errors="raise")
+    dates = dates.loc[dates.le(pd.Timestamp(end))].sort_values()
+    return {"provider": "Simply Wall St Vietnam Tech", "url": "https://simplywall.st/markets/vn/tech", "archive_rows": len(dates), "archive_first_date": str(dates.min().date()), "archive_last_date": str(dates.max().date()), "covers_2007": bool(dates.min() <= pd.Timestamp("2007-01-02")), "largest_gap_calendar_days": int(dates.diff().dt.days.max()), "modeling_status": "excluded", "excluded_columns": ["ict_market_cap_vnd", "ict_pe", "ict_absolute_pe"], "reason": "Sparse sector valuation snapshots; no 2007 coverage and historical constituent membership/weights are not archived. No backward interpolation or fabricated sector history.", "live_page_check_date": "2026-10-29", "live_page_evidence": "Public sector page offers 1Y/3Y/5Y/10Y views and currently aggregated company financials; this does not verify a 2007 point-in-time series.", "alternative_decision": "Retain VN-Index as a broad-market control. It is NOT an ICT-sector replacement. A fixed basket of today's listed technology firms would introduce selection/survivorship bias without historical constituents; therefore no synthetic ICT proxy is claimed.", "ablation_policy": "G5 marked unavailable/excluded; if reported alongside G4, it has exactly the same features and is not an independent industry ablation."}
 
 
 def _parse_dates(values: pd.Series, fmt: str) -> pd.Series:
@@ -264,6 +319,15 @@ def prepare_multisource_features(price_data: pd.DataFrame, raw_dir: Path = RAW_D
         "fpt_shares_outstanding.csv": ("shares", ["fpt_shares_outstanding"], 1, 550),
     }
     source_audit: dict[str, dict] = {}
+    vn = pd.read_csv(raw_dir / "vnindex_source.csv", parse_dates=["time"]).sort_values("time")
+    vn = vn.loc[vn.time.le(pd.Timestamp(end))].copy()
+    vn["vnindex_return_1d"] = np.log(vn.close / vn.close.shift(1))
+    vn["vnindex_volatility_20d"] = vn.vnindex_return_1d.rolling(20).std(ddof=0)
+    cols = ["vnindex_return_1d", "vnindex_volatility_20d"]
+    aligned_market = release_aware_asof(data.date, vn[["time", *cols]], delay_days=1, value_columns=cols, max_age_days=10)
+    for col in cols:
+        data[col] = aligned_market[col].to_numpy()
+    source_audit["vnindex"] = {"provider": "DNSE", "raw_rows": len(vn), "first_date": str(vn.time.min().date()), "last_date": str(vn.time.max().date()), "availability_delay_calendar_days": 1}
     for filename, (group, columns, delay, max_age) in delays.items():
         path = raw_dir / filename
         if not path.is_file():
@@ -324,6 +388,9 @@ def run_from_cache(raw_dir: Path, output_path: Path, end: str = DEFAULT_END, tri
     aligned, audit = prepare_multisource_features(prices, raw_dir, end=end)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     aligned.to_csv(output_path, index=False, date_format="%Y-%m-%d", lineterminator="\n")
+    audit["sector_coverage"] = audit_industry_coverage(raw_dir, end)
+    (ROOT / "reports").mkdir(exist_ok=True)
+    (ROOT / "reports/sector_coverage_audit.json").write_text(json.dumps(audit["sector_coverage"], ensure_ascii=False, indent=2), encoding="utf-8")
     audit["normalized_raw_sources"] = raw_audit
     audit["input_rows_removed_by_cutoff_this_run"] = trimmed
     audit["input_snapshots"] = {
@@ -349,7 +416,10 @@ def main() -> None:
     parser.add_argument("--end", default=DEFAULT_END)
     parser.add_argument("--from-cache", action="store_true", help="Explicitly select the offline, reproducible snapshot workflow.")
     parser.add_argument("--trim-inputs", action="store_true", help="Also remove source-export observations after the cutoff and GDP forecast year.")
+    parser.add_argument("--download-market", action="store_true", help="Refresh VN-Index directly from DNSE")
     args = parser.parse_args()
+    if args.download_market:
+        download_vnindex(args.raw_dir, end=args.end)
     audit = run_from_cache(args.raw_dir, args.output, end=args.end, trim_inputs=args.trim_inputs)
     print(json.dumps(audit, ensure_ascii=False, indent=2))
 
