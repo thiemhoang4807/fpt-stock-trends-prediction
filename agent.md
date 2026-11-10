@@ -139,7 +139,7 @@ Phát hiện notebook 01 có thay đổi cục bộ từ người dùng; giữ n
 - [x] Cập nhật cẩm nang riêng với kịch bản thuyết trình 10 phút.
 - [x] Biên dịch Proposal, kiểm tra toàn bộ trang PDF và cảnh báo căn lề.
 - [x] Chạy kiểm thử, notebook và đối chiếu kết quả trước/sau.
-- [ ] Dọn bản nháp trong tmp, kiểm tra Git, commit và push main.
+- [x] Dọn bản nháp trong tmp, kiểm tra Git, commit và push main.
 
 Giữ nguyên dữ liệu và kết quả thực nghiệm. Bảng chính chọn cấu hình theo CV; hồi quy gộp Linear/Ridge thành một họ để mỗi nhánh có 9 đại diện. Nhận xét về độ dài cửa sổ và tính dừng phải khớp số liệu. Notebook 01 có output cục bộ của người dùng, cần bảo toàn.
 
@@ -150,3 +150,5 @@ README/REPORT đã có 3 phát hiện chính, bảng đại diện, bảng cửa
 Đối chiếu cuối: 16 CSV báo cáo khớp ở dung sai 1e-10; 6 JSON kiểm tra giống hệt; 113 tệp dữ liệu/kết quả/mô hình ban đầu giữ nguyên SHA-256. 10/10 notebook chạy bằng kernel mới và 49/49 kiểm thử đạt. Notebook 01 giữ nguyên từng byte của bản người dùng. Kiểm tra liên kết Markdown, số hàng bảng, schema notebook và cú pháp các ô code đạt. Đã lưu chứng cứ rút gọn trong reports/polish_validation.json trước khi dọn tmp.
 
 Đã xóa thư mục tmp sau khi kiểm tra đường dẫn tuyệt đối và xác nhận không có reparse point: 302 tệp, khoảng 43,02 MB. Đã dọn cache Python/pytest và tệp phụ biên dịch LaTeX. Cẩm nang riêng vẫn tồn tại và bị Git bỏ qua; bản notebook 01 của người dùng được giữ nguyên. Quét các định danh nguồn bị loại trừ không có kết quả. Đang chuẩn bị commit và công bố thay đổi chính thức lên main.
+
+Hoàn tất đợt rà soát: commit 20741e9 đã được push lên origin/main thành công. Toàn bộ thay đổi chính thức và chứng cứ kiểm định đã được công bố; cẩm nang vẫn ở local và notebook 01 giữ output riêng, không thuộc commit. Nhật ký xác nhận này được đồng bộ bằng commit tài liệu kế tiếp.
