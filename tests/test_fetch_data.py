@@ -46,8 +46,11 @@ def test_normalize_rejects_duplicate_dates():
     frame = pd.DataFrame(
         {
             "time": ["2024-01-02", "2024-01-02"],
-            "open": [20, 20], "high": [21, 21], "low": [19, 19],
-            "close": [20, 20], "volume": [100, 100],
+            "open": [20, 20],
+            "high": [21, 21],
+            "low": [19, 19],
+            "close": [20, 20],
+            "volume": [100, 100],
         }
     )
     with pytest.raises(DataValidationError, match="trùng"):
@@ -58,8 +61,11 @@ def test_normalize_parses_day_first_dates_from_local_exports():
     frame = pd.DataFrame(
         {
             "Date": ["03/01/2024", "02/01/2024"],
-            "open": [21, 20], "high": [22, 21], "low": [20, 19],
-            "close": [21.5, 20.5], "volume": [1200, 900],
+            "open": [21, 20],
+            "high": [22, 21],
+            "low": [20, 19],
+            "close": [21.5, 20.5],
+            "volume": [1200, 900],
         }
     )
     result = normalize_ohlcv(frame)
@@ -78,8 +84,12 @@ def test_normalize_parses_day_first_dates_from_local_exports():
 )
 def test_normalize_rejects_invalid_values(column, values, match):
     row = {
-        "time": ["2024-01-02"], "open": [20], "high": [21],
-        "low": [19], "close": [20], "volume": [100],
+        "time": ["2024-01-02"],
+        "open": [20],
+        "high": [21],
+        "low": [19],
+        "close": [20],
+        "volume": [100],
     }
     row[column] = values
     with pytest.raises(DataValidationError, match=match):
@@ -92,8 +102,10 @@ def test_verify_snapshot_checks_schema_and_requested_date_coverage():
         pd.DataFrame(
             {
                 "time": ["2007-01-02", "2025-09-30"],
-                "open": [10.0, 63.4], "high": [11.0, 64.0],
-                "low": [9.0, 63.0], "close": [10.5, 63.0],
+                "open": [10.0, 63.4],
+                "high": [11.0, 64.0],
+                "low": [9.0, 63.0],
+                "close": [10.5, 63.0],
                 "volume": [1000, 3_063_973],
             }
         ).to_csv(path, index=False)
@@ -112,8 +124,10 @@ def test_verify_snapshot_rejects_wrong_end_date():
         pd.DataFrame(
             {
                 "time": ["2007-01-02", "2025-09-29"],
-                "open": [10.0, 63.7], "high": [11.0, 64.1],
-                "low": [9.0, 63.1], "close": [10.5, 63.2],
+                "open": [10.0, 63.7],
+                "high": [11.0, 64.1],
+                "low": [9.0, 63.1],
+                "close": [10.5, 63.2],
                 "volume": [1000, 3_141_350],
             }
         ).to_csv(path, index=False)
@@ -127,7 +141,13 @@ def test_recent_window_extends_archive_on_stable_provider_rebase():
         archive_path = Path(temp_dir) / "archive.csv"
         archive = pd.DataFrame(
             {
-                "time": ["2026-09-24", "2026-09-25", "2026-09-28", "2026-09-29", "2026-09-30"],
+                "time": [
+                    "2026-09-24",
+                    "2026-09-25",
+                    "2026-09-28",
+                    "2026-09-29",
+                    "2026-09-30",
+                ],
                 "open": [100, 101, 102, 103, 104],
                 "high": [101, 102, 103, 104, 105],
                 "low": [99, 100, 101, 102, 103],
@@ -143,15 +163,21 @@ def test_recent_window_extends_archive_on_stable_provider_rebase():
                 recent,
                 pd.DataFrame(
                     {
-                        "time": ["2026-10-01"], "open": [94.5], "high": [95.4],
-                        "low": [93.6], "close": [94.8], "volume": [1500],
+                        "time": ["2026-10-01"],
+                        "open": [94.5],
+                        "high": [95.4],
+                        "low": [93.6],
+                        "close": [94.8],
+                        "volume": [1500],
                     }
                 ),
             ],
             ignore_index=True,
         )
 
-        merged, factor, overlap_rows = merge_recent_with_archive(archive_path, recent, "2026-09-24")
+        merged, factor, overlap_rows = merge_recent_with_archive(
+            archive_path, recent, "2026-09-24"
+        )
 
         assert factor == pytest.approx(0.9)
         assert overlap_rows == 3
@@ -173,8 +199,12 @@ def test_vnstock_download_uses_vci_quote_and_normalizes(monkeypatch):
             calls["history"] = kwargs
             return pd.DataFrame(
                 {
-                    "time": ["2025-10-09"], "open": [95], "high": [96],
-                    "low": [93], "close": [94.2], "volume": [5716300],
+                    "time": ["2025-10-09"],
+                    "open": [95],
+                    "high": [96],
+                    "low": [93],
+                    "close": [94.2],
+                    "volume": [5716300],
                 }
             )
 
@@ -182,7 +212,11 @@ def test_vnstock_download_uses_vci_quote_and_normalizes(monkeypatch):
     result = download_via_vnstock("2007-01-01", "2025-10-09")
 
     assert calls["constructor"] == {"symbol": "FPT", "source": "VCI", "show_log": False}
-    assert calls["history"] == {"start": "2007-01-01", "end": "2025-10-09", "interval": "1D"}
+    assert calls["history"] == {
+        "start": "2007-01-01",
+        "end": "2025-10-09",
+        "interval": "1D",
+    }
     assert result.loc[0, "close"] == 94.2
 
 
@@ -199,8 +233,10 @@ def test_no_mode_defaults_to_download_through_september_cutoff(monkeypatch):
             return pd.DataFrame(
                 {
                     "time": ["2007-01-02", "2025-09-30"],
-                    "open": [10.0, 63.4], "high": [11.0, 64.0],
-                    "low": [9.0, 63.0], "close": [10.5, 63.0],
+                    "open": [10.0, 63.4],
+                    "high": [11.0, 64.0],
+                    "low": [9.0, 63.0],
+                    "close": [10.5, 63.0],
                     "volume": [1000, 3_063_973],
                 }
             )

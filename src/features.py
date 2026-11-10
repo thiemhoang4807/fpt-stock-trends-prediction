@@ -7,7 +7,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-
 REQUIRED_COLUMNS = ("time", "open", "high", "low", "close", "volume")
 RESEARCH_END_DATE = "2025-09-30"
 
@@ -44,7 +43,13 @@ OHLC_FEATURE_COLUMNS = [
     "close_location_in_range",
 ]
 FULL_OHLCV_FEATURE_COLUMNS = FEATURE_COLUMNS + OHLC_FEATURE_COLUMNS
-RAW_PRICE_FEATURE_COLUMNS = ["current_open", "current_high", "current_low", "current_close", "current_volume"]
+RAW_PRICE_FEATURE_COLUMNS = [
+    "current_open",
+    "current_high",
+    "current_low",
+    "current_close",
+    "current_volume",
+]
 PRICE_ONLY_FEATURE_COLUMNS = FULL_OHLCV_FEATURE_COLUMNS + RAW_PRICE_FEATURE_COLUMNS
 
 
@@ -66,9 +71,15 @@ def load_price_data(path: str | Path, end: str = RESEARCH_END_DATE) -> pd.DataFr
 
     invalid = data[list(REQUIRED_COLUMNS)].isna().any(axis=1)
     if invalid.any():
-        raise ValueError(f"Input contains {int(invalid.sum())} rows with missing or invalid values")
+        raise ValueError(
+            f"Input contains {int(invalid.sum())} rows with missing or invalid values"
+        )
     if data["time"].duplicated().any():
-        duplicated = data.loc[data["time"].duplicated(keep=False), "time"].dt.strftime("%Y-%m-%d").tolist()
+        duplicated = (
+            data.loc[data["time"].duplicated(keep=False), "time"]
+            .dt.strftime("%Y-%m-%d")
+            .tolist()
+        )
         raise ValueError(f"Duplicate trading dates found: {duplicated[:10]}")
     if not np.isfinite(data[list(REQUIRED_COLUMNS)[1:]].to_numpy(dtype=float)).all():
         raise ValueError("OHLCV values must be finite")
@@ -161,7 +172,9 @@ def build_feature_table(data: pd.DataFrame) -> pd.DataFrame:
     result["log_volume_change_1d"] = log_volume.diff()
     volume_mean = log_volume.rolling(20, min_periods=20).mean()
     volume_std = log_volume.rolling(20, min_periods=20).std(ddof=0)
-    result["log_volume_zscore_20d"] = (log_volume - volume_mean) / volume_std.replace(0.0, np.nan)
+    result["log_volume_zscore_20d"] = (log_volume - volume_mean) / volume_std.replace(
+        0.0, np.nan
+    )
 
     # Warm-up NaNs arise from backward-looking indicators only. No backward fill is used.
     result = result.replace([np.inf, -np.inf], np.nan)

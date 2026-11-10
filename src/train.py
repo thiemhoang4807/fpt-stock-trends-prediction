@@ -1,6 +1,7 @@
 """Five-fold past-only model selection and frozen final holdout evaluation."""
 
-import json, re
+import json
+import re
 from pathlib import Path
 import joblib
 import matplotlib
@@ -240,6 +241,7 @@ def _regressor_models():
 
 
 def cv_splits(n):
+    """Expand the training window five times, leaving one boundary row unused."""
     return list(TimeSeriesSplit(n_splits=5, gap=1).split(np.arange(n)))
 
 
@@ -331,6 +333,53 @@ def fit_candidate(spec, task, data, cols, a, b):
     )
 
 
+def family_specs(task, branch):
+    """List candidates in a stable order; no Test scores enter this catalog."""
+    families = {
+        name: [("tabular", model) for model in models]
+        for name, models in candidate_models(task).items()
+    }
+    for kind in ("LSTM", "GRU"):
+        for lookback in (10, 20, 30, 60):
+            families[f"{kind} L={lookback}"] = [
+                ("sequence", {"kind": kind, "lookback": lookback})
+            ]
+    statistical_kind = "ARIMA" if "Price_Only" in branch else "SARIMAX"
+    families[statistical_kind] = [
+        ("statistical", {"kind": statistical_kind, "order": order})
+        for order in [(0, 0, 0), (1, 0, 0)]
+    ]
+    return families
+
+
+def evaluate_cv_candidate(spec, task, data, columns, folds):
+    """Fit afresh inside each Train fold and return scores plus diagnostics.
+
+    Both the main benchmark and ablation use this path. Scalers remain inside
+    each fitted candidate; the supplied folds never contain final Test rows.
+    """
+    selection_metric = (
+        "balanced_accuracy" if task == "classification" else "log_return_rmse"
+    )
+    rows, diagnostics, scores = [], [], []
+    for fold, (train_indices, validation_indices) in enumerate(folds, 1):
+        prediction, score, artifact = fit_candidate(
+            spec, task, data, columns, train_indices, validation_indices
+        )
+        metrics = evaluate(task, data.iloc[validation_indices], prediction, score)
+        rows.append(dict(fold=fold, **metrics))
+        scores.append(metrics[selection_metric])
+        if artifact["model_kind"] == "statistical":
+            diagnostics.append(
+                dict(
+                    fold=fold,
+                    converged=artifact["converged"],
+                    warnings=artifact["warnings"],
+                )
+            )
+    return float(np.mean(scores)), float(np.std(scores, ddof=1)), rows, diagnostics
+
+
 def run_training(
     input_path=DEFAULT_INPUT,
     figures_dir=ROOT / "figures",
@@ -368,62 +417,25 @@ def run_training(
     diagnostics = []
     for branch, cols in branches.items():
         for task in ("classification", "regression"):
-            families = {
-                name: [("tabular", m) for m in models]
-                for name, models in candidate_models(task).items()
-            }
-            for kind in ("LSTM", "GRU"):
-                for L in (10, 20, 30, 60):
-                    families[f"{kind} L={L}"] = [
-                        ("sequence", {"kind": kind, "lookback": L})
-                    ]
-            stat = "ARIMA" if "Price_Only" in branch else "SARIMAX"
-            families[stat] = [
-                ("statistical", {"kind": stat, "order": o})
-                for o in [(0, 0, 0), (1, 0, 0)]
-            ]
+            families = family_specs(task, branch)
             for name, specs in families.items():
                 print("CV", branch, task, name, flush=True)
                 means = []
                 for candidate_id, spec in enumerate(specs):
-                    scores = []
-                    for fold, (a, b) in enumerate(folds, 1):
-                        pred, score, artifact = fit_candidate(
-                            spec, task, data, cols, a, b
-                        )
-                        m = evaluate(task, data.iloc[b], pred, score)
-                        cv_rows.append(
-                            dict(
-                                feature_set=branch,
-                                task=task,
-                                model=name,
-                                candidate_id=candidate_id,
-                                fold=fold,
-                                **m,
-                            )
-                        )
-                        scores.append(
-                            m[
-                                (
-                                    "balanced_accuracy"
-                                    if task == "classification"
-                                    else "log_return_rmse"
-                                )
-                            ]
-                        )
-                        if artifact["model_kind"] == "statistical":
-                            diagnostics.append(
-                                dict(
-                                    feature_set=branch,
-                                    task=task,
-                                    model=name,
-                                    fold=fold,
-                                    candidate_id=candidate_id,
-                                    converged=artifact["converged"],
-                                    warnings=artifact["warnings"],
-                                )
-                            )
-                    means.append(float(np.mean(scores)))
+                    mean, _, fold_rows, fold_diagnostics = evaluate_cv_candidate(
+                        spec, task, data, cols, folds
+                    )
+                    identity = dict(
+                        feature_set=branch,
+                        task=task,
+                        model=name,
+                        candidate_id=candidate_id,
+                    )
+                    cv_rows.extend(dict(**identity, **row) for row in fold_rows)
+                    diagnostics.extend(
+                        dict(**identity, **row) for row in fold_diagnostics
+                    )
+                    means.append(mean)
                 best = int(
                     np.argmax(means) if task == "classification" else np.argmin(means)
                 )
@@ -627,23 +639,10 @@ def run_training(
             name = "XGBoost" if task == "classification" else "XGBoost Regressor"
             scores = []
             for candidate in candidate_models(task)[name]:
-                values = []
-                for a, b in folds:
-                    pred, score, _ = fit_candidate(
-                        ("tabular", candidate), task, data, cols, a, b
-                    )
-                    values.append(
-                        evaluate(task, data.iloc[b], pred, score)[
-                            (
-                                "balanced_accuracy"
-                                if task == "classification"
-                                else "log_return_rmse"
-                            )
-                        ]
-                    )
-                scores.append(
-                    (float(np.mean(values)), float(np.std(values, ddof=1)), candidate)
+                mean, std, _, _ = evaluate_cv_candidate(
+                    ("tabular", candidate), task, data, cols, folds
                 )
+                scores.append((mean, std, candidate))
             mean, std, candidate = sorted(
                 scores, key=lambda s: s[0], reverse=task == "classification"
             )[0]

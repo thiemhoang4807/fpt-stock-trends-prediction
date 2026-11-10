@@ -101,7 +101,7 @@ Repository đã đóng gói dữ liệu và các artefact của lần thực ngh
 
 ## 7. Nếu muốn thay tham số mô hình
 
-Ô xem cấu hình trong notebook 06 tạo các đối tượng để bạn đọc tham số, không truyền những đối tượng đó vào bước huấn luyện. Hàm `run_training` tự tạo lưới mô hình bảng từ `candidate_models(task)` và cấu hình chuỗi thời gian/học sâu trong `run_training` trong `src/train.py`. Để đổi tham số thật, sửa cấu hình trong các hàm này rồi khởi động lại kernel và chạy lại notebook từ đầu. Cần phân biệt việc đọc bảng cấu hình với việc thay cấu hình được dùng trong thực nghiệm.
+Ô xem cấu hình trong notebook 06 tạo các đối tượng để bạn đọc tham số, không truyền những đối tượng đó vào bước huấn luyện. Hàm `run_training` tự tạo lưới mô hình bảng từ `candidate_models(task)` và cấu hình chuỗi thời gian/học sâu trong `family_specs` trong `src/train.py`. Để đổi tham số thật, sửa cấu hình trong các hàm này rồi khởi động lại kernel và chạy lại notebook từ đầu. Cần phân biệt việc đọc bảng cấu hình với việc thay cấu hình được dùng trong thực nghiệm.
 
 
 ## 8. Quy tắc lựa chọn trong phiên bản mới
@@ -112,6 +112,8 @@ Cửa sổ L=10/20/30/60 luôn gồm các phiên liên tiếp. Khi notebook chu�
 
 Các file notebook xuất bản để trống output. Phần clone/cài riêng cho Colab và tải API tùy chọn không được coi là đã kiểm thử chỉ bằng chạy local. Nếu phiên bản thư viện khác môi trường lưu model, nên huấn luyện lại trước khi dự báo.
 
-## 9. Kiểm định thực thi ngày 30/10/2026
+## 9. Kiểm định thực thi ngày 10/11/2026
 
-Cả 10 notebook chạy hoàn tất bằng kernel mới trong bản sao cách ly. Hai bảng metrics khớp kết quả Python với dung sai 1e-10, JSON dự báo giống hệt và các tệp nguồn giữ nguyên hash. Ô pytest trong notebook tổng hợp đạt 46 bài. Đã thử cả thư mục chạy tại root và notebooks/. Cài/clone riêng cho Colab và các nhánh tải API tùy chọn không thuộc kiểm định local này.
+Cả 10 notebook chạy hoàn tất bằng kernel mới trong bản sao cách ly. Toàn bộ 16 CSV kết quả khớp trong dung sai 1e-10; 6 JSON kiểm tra, gồm dự báo và lựa chọn mô hình, giống hệt. Bộ pytest đạt 49 bài, không còn cảnh báo lặp từ statsmodels trong đầu ra. Đã thử thư mục chạy tại root và notebooks/. Chi tiết kiểm định lưu tại [polish_validation.json](../reports/polish_validation.json).
+
+Các bảng chính của notebook 00 và 06 chỉ hiển thị một cấu hình mỗi họ, được chọn từ CV bằng `benchmark_tables.select_representatives`; CSV đầy đủ được giữ nguyên. Nhánh cài/clone trên Colab và tải API tùy chọn không thuộc kiểm định offline này.

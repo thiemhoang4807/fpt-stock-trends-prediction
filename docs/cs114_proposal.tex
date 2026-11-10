@@ -94,15 +94,15 @@ r_{t+1}=\ln\left(\frac{C_{t+1}}{C_t}\right),\qquad
 Nhóm sử dụng Python, pandas, NumPy, scikit-learn, XGBoost, statsmodels, PyTorch và SHAP.
 \begin{itemize}
 \item Thống kê chuỗi thời gian: ARIMA cho nhánh giá, SARIMAX với biến ngoại sinh đã căn thời điểm cho nhánh đa nguồn. Khởi đầu với bậc $(0,0,0)$ và $(1,0,0)$ trên log return; SARIMAX chưa dùng thành phần mùa vụ. Dự báo một bước, cập nhật trạng thái bằng các kết quả đã quan sát; không fit lại tham số trên Test.
-\item Học máy: Majority/Last-Close Baseline, Logistic/Linear/Ridge Regression, SVC/SVR, Random Forest, XGBoost và HistGradientBoosting. Lưới tham số nhỏ được đặt trước rồi lựa chọn bằng CV.
+\item Học máy: các baseline Majority và Last-Close; hồi quy Logistic, Linear và Ridge; SVC, SVR; Random Forest, XGBoost và HistGradientBoosting. Lưới tham số nhỏ được đặt trước rồi lựa chọn bằng CV.
 \item Học sâu: LSTM và GRU một lớp, 16 nút ẩn, thử $L\in\{10,20,30,60\}$ phiên. Mỗi cấu hình học 12 epoch bằng CPU, không dừng sớm theo Test. Cửa sổ giữ đúng các phiên liên tiếp, không nén khoảng trống nguồn thành những ngày kề nhau.
 \end{itemize}
 ADF có giả thuyết gốc về nghiệm đơn vị; KPSS có giả thuyết gốc về tính dừng. Không bác bỏ giả thuyết không đồng nghĩa chứng minh nó đúng. Phân rã STL dùng chu kỳ quy ước 5 phiên để mô tả, không coi đó là bằng chứng sẵn có về mùa vụ; các thành phần phân rã không được đưa vào mô hình.
 
 \section{Cách đánh giá dự kiến}
-Giữ 85\% mẫu đầu làm Train và 15\% cuối làm Test đến 30/09/2025. Trên Train, dùng \texttt{TimeSeriesSplit(n\_splits=5, gap=1)} theo cửa sổ mở rộng; báo cáo trung bình và độ lệch chuẩn mẫu qua 5 fold. Các fold có cùng số hàng kiểm định nhưng có thể khác độ dài lịch nếu thiếu dữ liệu nguồn.
+Nhóm sắp mẫu theo thời gian: 85\% đầu dùng để học và 15\% cuối dùng để kiểm tra. Tập Test kết thúc ngày 30/09/2025. Trong Train, nhóm đánh giá 5 lượt bằng cửa sổ mở rộng, chừa 1 hàng ở mỗi ranh giới. Các lượt được tạo bằng lớp TimeSeriesSplit của scikit-learn. Nhóm báo cáo trung bình và độ lệch chuẩn mẫu; mỗi lượt có cùng số hàng kiểm định nhưng có thể khác độ dài lịch do khoảng trống nguồn.
 
-Chọn mô hình phân loại bằng Balanced Accuracy CV; chọn hồi quy bằng RMSE log return CV. Sau đó fit trên toàn bộ Train, chấm Test và lưu riêng mô hình đánh giá. Mô hình minh họa có thể được học lại toàn bộ nhãn sau khi kết quả đã cố định. Do các ngày Test đã được xem ở phiên bản đồ án trước, nhóm chỉ khẳng định Test không tham gia lựa chọn ở lần nâng cấp này, không xem đây là một holdout ngoài mẫu hoàn toàn chưa từng quan sát.
+Chọn mô hình phân loại bằng Balanced Accuracy CV; chọn hồi quy bằng RMSE log return CV. Sau đó fit trên toàn bộ Train, chấm Test và lưu riêng mô hình đánh giá. Mô hình minh họa có thể được học lại toàn bộ nhãn sau khi kết quả đã cố định.
 
 \begin{itemize}
 \item Phân loại: Accuracy, Balanced Accuracy, Precision, Recall, F1-score, ROC-AUC và confusion matrix.
@@ -111,7 +111,7 @@ Chọn mô hình phân loại bằng Balanced Accuracy CV; chọn hồi quy bằ
 \end{itemize}
 Ablation dùng cùng XGBoost, cùng cohort và cùng CV: G1 giá/khối lượng và biến trễ; G2 thêm chỉ báo kỹ thuật; G3 thêm OHLC/nến; G4 thêm thị trường/vĩ mô; G5 đánh dấu loại vì không có nguồn ngành phù hợp; G6 thêm tài chính FPT. G5 không phải một thí nghiệm độc lập có dữ liệu giả lập.
 
-SHAP và permutation importance phân tích mô hình cây chọn bằng CV trên các mẫu Test, sử dụng background SHAP từ Train. Nhóm không điều chỉnh mô hình sau khi xem giải thích Test. Các kết quả mô tả hành vi dự báo, không chứng minh quan hệ nhân quả; các biến tương quan có thể chia sẻ độ quan trọng.
+SHAP và permutation importance phân tích mô hình cây chọn bằng CV trên các mẫu Test, sử dụng background SHAP từ Train. Nhóm không điều chỉnh mô hình sau khi xem giải thích Test. Nhóm trình bày biểu đồ đóng góp đặc trưng và bảng đối sánh từng nhóm đầu vào.
 
 \section{Kết quả dự kiến}
 Sản phẩm gồm pipeline dữ liệu tái lập, notebook học theo từng bước, bảng kiểm định chuỗi thời gian, bảng CV Mean $\pm$ Std và Test cho ba họ mô hình, mô hình đã huấn luyện, dự báo phiên tiếp theo, biểu đồ giá và báo cáo SHAP/permutation/ablation. Nhóm báo cáo cả trường hợp mô hình phức tạp kém baseline, cảnh báo hội tụ thống kê và giới hạn dữ liệu. Hướng phát triển là kiểm thử trên giai đoạn chưa quan sát, bổ sung lịch công bố thực tế và lặp nhiều seed khi tài nguyên cho phép.

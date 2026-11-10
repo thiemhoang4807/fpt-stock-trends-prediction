@@ -14,7 +14,6 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = PROJECT_ROOT / "data" / "raw" / "fpt" / "fpt_historical_price.csv"
 DEFAULT_START_DATE = "2007-01-01"
@@ -23,12 +22,38 @@ EXPECTED_FIRST_SESSION = "2007-01-02"
 CANONICAL_COLUMNS = ["time", "open", "high", "low", "close", "volume"]
 
 _COLUMN_ALIASES = {
-    "time": {"time", "date", "datetime", "timestamp", "tradingdate", "ngay", "ngaygiaodich"},
+    "time": {
+        "time",
+        "date",
+        "datetime",
+        "timestamp",
+        "tradingdate",
+        "ngay",
+        "ngaygiaodich",
+    },
     "open": {"open", "openprice", "giamo", "giamocua"},
     "high": {"high", "highest", "highprice", "caonhat", "cao", "giacaonhat"},
     "low": {"low", "lowest", "lowprice", "thapnhat", "thap", "giathapnhat"},
-    "close": {"close", "closeprice", "last", "lastprice", "lancuoi", "dongcua", "giadongcua"},
-    "volume": {"volume", "vol", "matchvolume", "matchedvolume", "kl", "klgd", "klkhoplenh", "klgdkhoplenh", "khoiluong"},
+    "close": {
+        "close",
+        "closeprice",
+        "last",
+        "lastprice",
+        "lancuoi",
+        "dongcua",
+        "giadongcua",
+    },
+    "volume": {
+        "volume",
+        "vol",
+        "matchvolume",
+        "matchedvolume",
+        "kl",
+        "klgd",
+        "klkhoplenh",
+        "klgdkhoplenh",
+        "khoiluong",
+    },
 }
 
 
@@ -60,7 +85,11 @@ def normalize_ohlcv(frame: pd.DataFrame) -> pd.DataFrame:
     if not isinstance(frame, pd.DataFrame) or frame.empty:
         raise DataValidationError("Dữ liệu đầu vào phải là DataFrame không rỗng.")
 
-    aliases = {alias: canonical for canonical, names in _COLUMN_ALIASES.items() for alias in names}
+    aliases = {
+        alias: canonical
+        for canonical, names in _COLUMN_ALIASES.items()
+        for alias in names
+    }
     rename: dict[Any, str] = {}
     for column in frame.columns:
         folded = _fold_name(column)
@@ -83,23 +112,36 @@ def normalize_ohlcv(frame: pd.DataFrame) -> pd.DataFrame:
     if missing:
         raise DataValidationError(f"Thiếu cột OHLCV bắt buộc: {', '.join(missing)}")
     if any(list(data.columns).count(column) > 1 for column in CANONICAL_COLUMNS):
-        raise DataValidationError("Tệp đầu vào có nhiều cột ánh xạ về cùng một trường OHLCV.")
+        raise DataValidationError(
+            "Tệp đầu vào có nhiều cột ánh xạ về cùng một trường OHLCV."
+        )
 
     data = data[CANONICAL_COLUMNS].copy()
     raw_dates = data["time"].astype(str).str.strip()
     dates = pd.to_datetime(raw_dates, errors="coerce", format="ISO8601")
     non_iso = dates.isna()
     if non_iso.any():
-        dates.loc[non_iso] = pd.to_datetime(raw_dates.loc[non_iso], errors="coerce", dayfirst=True)
+        dates.loc[non_iso] = pd.to_datetime(
+            raw_dates.loc[non_iso], errors="coerce", dayfirst=True
+        )
     if dates.isna().any():
-        raise DataValidationError(f"Cột ngày có {int(dates.isna().sum())} giá trị không đọc được.")
+        raise DataValidationError(
+            f"Cột ngày có {int(dates.isna().sum())} giá trị không đọc được."
+        )
     data["time"] = dates.dt.strftime("%Y-%m-%d")
 
     for column in CANONICAL_COLUMNS[1:]:
         values = data[column].astype(str).str.strip().str.replace(",", "", regex=False)
         numeric = pd.to_numeric(values, errors="coerce")
-        if numeric.isna().any() or not numeric.map(lambda value: pd.notna(value) and abs(value) != float("inf")).all():
-            raise DataValidationError(f"Cột {column} chứa giá trị thiếu, vô hạn hoặc không phải số.")
+        if (
+            numeric.isna().any()
+            or not numeric.map(
+                lambda value: pd.notna(value) and abs(value) != float("inf")
+            ).all()
+        ):
+            raise DataValidationError(
+                f"Cột {column} chứa giá trị thiếu, vô hạn hoặc không phải số."
+            )
         data[column] = numeric.astype(float)
 
     if (data[["open", "high", "low", "close"]] <= 0).any().any():
@@ -205,7 +247,9 @@ def merge_recent_with_archive(
 
     ratios = np.concatenate(
         [
-            (overlap[f"{column}_current"] / overlap[f"{column}_archive"]).to_numpy(dtype=float)
+            (overlap[f"{column}_current"] / overlap[f"{column}_archive"]).to_numpy(
+                dtype=float
+            )
             for column in ("open", "high", "low", "close")
         ]
     )
@@ -242,7 +286,9 @@ def download_via_vnstock(start: str, end: str) -> pd.DataFrame:
         normalized["time"].between(start_date, end_date, inclusive="both")
     ].reset_index(drop=True)
     if normalized.empty:
-        raise DataValidationError(f"VCI không trả phiên giao dịch trong khoảng {start_date}–{end_date}.")
+        raise DataValidationError(
+            f"VCI không trả phiên giao dịch trong khoảng {start_date}–{end_date}."
+        )
     return normalized
 
 
@@ -269,12 +315,29 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     mode = parser.add_mutually_exclusive_group(required=False)
-    mode.add_argument("--verify", action="store_true", help="Kiểm tra schema, dữ liệu và khoảng ngày.")
-    mode.add_argument("--download", action="store_true", help="Lấy dữ liệu từ vnstock/VCI.")
-    mode.add_argument("--input", type=Path, help="Chuẩn hóa CSV OHLCV đã xuất từ một API.")
-    parser.add_argument("--start", default=DEFAULT_START_DATE, help="Ngày đầu cho --download (YYYY-MM-DD).")
-    parser.add_argument("--end", default=DEFAULT_END_DATE, help="Ngày cuối cho --download (YYYY-MM-DD).")
-    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT, help="CSV đích cho --download/--input.")
+    mode.add_argument(
+        "--verify", action="store_true", help="Kiểm tra schema, dữ liệu và khoảng ngày."
+    )
+    mode.add_argument(
+        "--download", action="store_true", help="Lấy dữ liệu từ vnstock/VCI."
+    )
+    mode.add_argument(
+        "--input", type=Path, help="Chuẩn hóa CSV OHLCV đã xuất từ một API."
+    )
+    parser.add_argument(
+        "--start",
+        default=DEFAULT_START_DATE,
+        help="Ngày đầu cho --download (YYYY-MM-DD).",
+    )
+    parser.add_argument(
+        "--end", default=DEFAULT_END_DATE, help="Ngày cuối cho --download (YYYY-MM-DD)."
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=DEFAULT_OUTPUT,
+        help="CSV đích cho --download/--input.",
+    )
     return parser
 
 
@@ -301,7 +364,9 @@ def main(argv: list[str] | None = None) -> int:
             "historical_archive_cumulative_price_factor",
             prior_lineage.get("price_adjustment_factor_applied_to_archive"),
         )
-        adjustment_history = list(prior_lineage.get("historical_price_adjustment_history", []))
+        adjustment_history = list(
+            prior_lineage.get("historical_price_adjustment_history", [])
+        )
         if not adjustment_history:
             prior_factor = prior_lineage.get(
                 "price_adjustment_factor_applied_this_run",
@@ -316,9 +381,14 @@ def main(argv: list[str] | None = None) -> int:
                         "api_window_start": prior_lineage.get("api_window_start"),
                         "overlap_rows": prior_lineage.get(
                             "overlap_rows_for_cumulative_price_factor",
-                            prior_lineage.get("overlap_rows_used_for_adjustment_check")
-                            if "price_adjustment_factor_applied_to_archive" in prior_lineage
-                            else None,
+                            (
+                                prior_lineage.get(
+                                    "overlap_rows_used_for_adjustment_check"
+                                )
+                                if "price_adjustment_factor_applied_to_archive"
+                                in prior_lineage
+                                else None
+                            ),
                         ),
                     }
                 )
@@ -328,13 +398,18 @@ def main(argv: list[str] | None = None) -> int:
             adjustment_factor = None
             overlap_rows = 0
             api_start = recent["time"].iloc[0]
-            if pd.Timestamp(api_start) > pd.Timestamp(args.start) + pd.Timedelta(days=7):
+            if pd.Timestamp(api_start) > pd.Timestamp(args.start) + pd.Timedelta(
+                days=7
+            ):
                 frame, adjustment_factor, overlap_rows = merge_recent_with_archive(
                     args.output, recent, args.start
                 )
             else:
                 frame = recent
-            if args.end == DEFAULT_END_DATE and frame["time"].iloc[-1] != DEFAULT_END_DATE:
+            if (
+                args.end == DEFAULT_END_DATE
+                and frame["time"].iloc[-1] != DEFAULT_END_DATE
+            ):
                 raise DataValidationError(
                     f"VCI chưa trả phiên {DEFAULT_END_DATE}; không ghi đè tệp dữ liệu hiện có."
                 )
@@ -342,7 +417,9 @@ def main(argv: list[str] | None = None) -> int:
             frame = normalize_ohlcv(_read_export(args.input))
             start_date = pd.Timestamp(args.start).strftime("%Y-%m-%d")
             end_date = pd.Timestamp(args.end).strftime("%Y-%m-%d")
-            frame = frame.loc[frame["time"].between(start_date, end_date)].reset_index(drop=True)
+            frame = frame.loc[frame["time"].between(start_date, end_date)].reset_index(
+                drop=True
+            )
             if frame.empty:
                 raise DataValidationError(
                     f"Tệp đầu vào không có phiên giao dịch trong khoảng {start_date}–{end_date}."
@@ -362,7 +439,9 @@ def main(argv: list[str] | None = None) -> int:
         summary = audit_ohlcv(frame)
         cumulative_factor = None
         if adjustment_factor is not None:
-            cumulative_factor = float(previous_cumulative_factor or 1.0) * adjustment_factor
+            cumulative_factor = (
+                float(previous_cumulative_factor or 1.0) * adjustment_factor
+            )
         elif previous_cumulative_factor is not None:
             cumulative_factor = float(previous_cumulative_factor)
         lineage = {
@@ -383,21 +462,26 @@ def main(argv: list[str] | None = None) -> int:
             "overlap_rows_used_for_adjustment_check": overlap_rows,
             "price_columns_rebased": (
                 ["open", "high", "low", "close"]
-                if adjustment_factor is not None and not np.isclose(adjustment_factor, 1.0)
+                if adjustment_factor is not None
+                and not np.isclose(adjustment_factor, 1.0)
                 else []
             ),
             "volume_rebased": False,
             "sha256": _sha256(args.output),
         }
         lineage_path.parent.mkdir(parents=True, exist_ok=True)
-        lineage_path.write_text(json.dumps(lineage, ensure_ascii=False, indent=2), encoding="utf-8")
+        lineage_path.write_text(
+            json.dumps(lineage, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
         print(f"Đã ghi {summary['rows']} dòng vào {args.output}")
         print(
             f"Khoảng ngày {summary['first_date']}–{summary['last_date']}; "
             f"OHLC anomalies được giữ nguyên: {summary['ohlc_inconsistent_rows']} dòng."
         )
         if should_download:
-            print("Nguồn: VCI qua vnstock; dữ liệu có thể được nhà cung cấp hiệu chỉnh lại theo sự kiện doanh nghiệp.")
+            print(
+                "Nguồn: VCI qua vnstock; dữ liệu có thể được nhà cung cấp hiệu chỉnh lại theo sự kiện doanh nghiệp."
+            )
             if adjustment_factor is not None:
                 print(
                     f"Đã căn chỉnh archive theo hệ số {adjustment_factor:.8f}, "

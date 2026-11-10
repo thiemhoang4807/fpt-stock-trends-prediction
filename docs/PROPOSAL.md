@@ -81,7 +81,7 @@ ADF và KPSS có giả thuyết gốc khác nhau nên cần đọc đồng thờ
 
 Giữ **85% mẫu đầu làm Train, 15% cuối làm Test**, kết thúc 30/09/2025. Trong Train, dùng `TimeSeriesSplit(n_splits=5, gap=1)` với cửa sổ mở rộng. Mỗi fold học quá khứ rồi chấm đoạn kế tiếp; báo cáo trung bình ± độ lệch chuẩn mẫu qua 5 fold. Các fold bằng số hàng nhưng có thể không bằng số ngày lịch do khoảng trống nguồn.
 
-Chọn mô hình phân loại bằng **Balanced Accuracy CV**, hồi quy bằng **RMSE log return CV**. Sau đó fit toàn bộ Train và chấm Test. Mô hình đánh giá được lưu riêng; bản dự báo minh họa có thể học lại toàn bộ nhãn sau khi cố định kết quả. Các ngày Test đã từng được xem trong phiên bản cũ, vì vậy nhóm chỉ khẳng định không dùng Test để lựa chọn trong lần nâng cấp này, chưa thể gọi đó là một giai đoạn ngoài mẫu hoàn toàn chưa từng quan sát.
+Chọn mô hình phân loại bằng **Balanced Accuracy CV**, hồi quy bằng **RMSE log return CV**. Sau đó fit toàn bộ Train và chấm Test. Mô hình đánh giá được lưu riêng; bản dự báo minh họa có thể học lại toàn bộ nhãn sau khi cố định kết quả.
 
 | Bài toán | Độ đo |
 |---|---|
@@ -93,7 +93,7 @@ Không dùng MAPE trên log return vì các giá trị bằng/gần 0 làm sai s
 
 Ablation giữ XGBoost, cùng các ngày và cùng CV: G1 giá/khối lượng và lợi nhuận trễ; G2 thêm chỉ báo kỹ thuật; G3 thêm OHLC/nến; G4 thêm thị trường/vĩ mô; G5 ghi loại vì nguồn ngành chưa phù hợp; G6 thêm tài chính doanh nghiệp. G5 không phải một thí nghiệm độc lập có dữ liệu giả lập.
 
-SHAP và permutation importance phân tích mô hình cây chọn bằng CV; background SHAP chỉ lấy Train. Không điều chỉnh mô hình sau khi xem giải thích Test. Các biến tương quan có thể chia sẻ độ quan trọng; các kết quả mô tả hành vi dự báo, không chứng minh tác động nhân quả.
+SHAP và permutation importance phân tích mô hình cây chọn bằng CV; background SHAP chỉ lấy Train. Không điều chỉnh mô hình sau khi xem giải thích Test. Kết quả được trình bày bằng biểu đồ đóng góp đặc trưng và đối sánh nhóm đầu vào.
 
 ## 7. Kết quả dự kiến
 
@@ -103,3 +103,5 @@ SHAP và permutation importance phân tích mô hình cây chọn bằng CV; bac
 4. Báo cáo ưu/nhược điểm, trường hợp thất bại và giới hạn dữ liệu; đề xuất kiểm thử trên giai đoạn mới, lịch công bố thực tế và nhiều seed.
 
 Nhóm báo cáo cả trường hợp mô hình phức tạp không vượt baseline. Kết quả đã chạy được trình bày riêng tại [REPORT.md](REPORT.md); bản PDF tương ứng là [cs114_proposal.pdf](cs114_proposal.pdf).
+
+Các giả định và phạm vi diễn giải được tập hợp tại mục [Giới hạn nghiên cứu & Hướng phát triển](REPORT.md#giới-hạn-nghiên-cứu--hướng-phát-triển) của báo cáo.

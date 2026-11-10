@@ -67,7 +67,7 @@ Last-Close Baseline tốt nhất MAE 1,1942 nghìn VND, RMSE 1,7129, MAPE 1,2342
 
 ## Giới hạn phải giữ trong tài liệu
 
-Test được dùng để đánh dấu mô hình tốt nhất sau thực nghiệm theo yêu cầu; điểm mô hình được chọn vì vậy chưa phải đánh giá độc lập. Độ trễ báo cáo quý/GDP là giả định mô phỏng, dữ liệu có thể đã điều chỉnh lại, chưa phải kho lịch sử từng phiên bản. Lịch sử cổ phiếu là các mốc đã thu thập, không phải sổ thay đổi hằng ngày đầy đủ. Không nội suy dựa vào báo cáo tương lai. Một cổ phiếu và một cửa sổ Test chưa chứng minh hiệu quả đầu tư.
+Thiết kế đánh giá tại thời điểm này dùng Test để đánh dấu mô hình tốt nhất sau thực nghiệm. Thiết kế đã được thay thế bằng lựa chọn qua CV trong đợt nâng cấp tiếp theo; phạm vi kết luận hiện tại được tập hợp ở cuối REPORT.md.
 
 ## Xác nhận hoàn tất
 
@@ -104,13 +104,13 @@ Kết quả thực thi: cả 8 notebook hoàn tất từ đầu đến cuối b�
 - [x] Kiểm toán độ phủ ngành/thị trường; quyết định giữ/loại có căn cứ.
 - [x] Tạo nhãn log return, nhóm ablation và cửa sổ đúng phiên giao dịch.
 - [x] ADF/KPSS, ACF/PACF, phân rã chuỗi.
-- [x] CV5fold chỉ trên Train; học máy, ARIMA/SARIMAX, LSTM/GRU nhiều cửa sổ.
+- [x] CV 5 fold chỉ trên Train; học máy, ARIMA/SARIMAX, LSTM/GRU nhiều cửa sổ.
 - [x] SHAP, permutation importance và ablation cùng cohort.
 - [x] Báo cáo/Proposal/LaTeX/cẩm nang riêng/notebook cập nhật kết quả thật.
 - [x] Kiểm thử và kiểm tra nguồn/cẩm nang.
 - [x] Commit và push main đợt nâng cấp chuỗi thời gian.
 
-Phát hiện notebook 01 có thay đổi cục bộ từ người dùng; giữ nguyên nội dung đó khi nâng cấp. Test cũ đã từng được xem trong các phiên bản trước, nên holdout mới chỉ độc lập với quy trình lựa chọn lần này, không phải tập chưa từng được nhóm quan sát.
+Phát hiện notebook 01 có thay đổi cục bộ từ người dùng; giữ nguyên nội dung đó khi nâng cấp.
 
 ### Kết quả thực hiện ngày 30/10/2026
 
@@ -130,3 +130,23 @@ Phát hiện notebook 01 có thay đổi cục bộ từ người dùng; giữ n
 ### Xác nhận công bố
 
 Đã push commit 62fa6f7 lên main: toàn bộ mã nguồn, kết quả thực nghiệm, 64 artefact mô hình (62 bản đánh giá và 2 bản minh họa), biểu đồ, notebook và tài liệu chính thức. Cẩm nang riêng không có trong Git index/commit. Output cục bộ của notebooks/01_fetch_data.ipynb vẫn giữ nguyên và không được stage. Đợt nâng cấp đã hoàn tất; nhật ký xác nhận này được đồng bộ bằng commit tài liệu tiếp theo.
+
+## Rà soát chất lượng và đóng gói — 10/11/2026
+
+- [x] Lưu dấu kiểm tra kết quả hiện tại, rà soát nội dung và notebook.
+- [x] Rút gọn bảng theo CV trên Train, sửa thuật ngữ và khoảng trắng.
+- [x] Tách logic CV dùng chung, kiểm thử tính bất biến và lọc cảnh báo thư viện cụ thể.
+- [x] Cập nhật cẩm nang riêng với kịch bản thuyết trình 10 phút.
+- [x] Biên dịch Proposal, kiểm tra toàn bộ trang PDF và cảnh báo căn lề.
+- [x] Chạy kiểm thử, notebook và đối chiếu kết quả trước/sau.
+- [ ] Dọn bản nháp trong tmp, kiểm tra Git, commit và push main.
+
+Giữ nguyên dữ liệu và kết quả thực nghiệm. Bảng chính chọn cấu hình theo CV; hồi quy gộp Linear/Ridge thành một họ để mỗi nhánh có 9 đại diện. Nhận xét về độ dài cửa sổ và tính dừng phải khớp số liệu. Notebook 01 có output cục bộ của người dùng, cần bảo toàn.
+
+Đã rà soát 11 module nguồn và các kiểm thử hiện có. Tách danh mục cấu hình và hàm đánh giá CV dùng chung để tránh lặp giữa benchmark và ablation; thêm bộ chọn 9 đại diện dùng duy nhất điểm CV. Các module còn lại được chuẩn hóa định dạng, không thay thuật toán. 49 kiểm thử đạt; bộ lọc pytest chỉ áp dụng cảnh báo gán shape của statsmodels với NumPy 2.5.
+
+README/REPORT đã có 3 phát hiện chính, bảng đại diện, bảng cửa sổ riêng và một mục giới hạn ở cuối REPORT. Số liệu không ủng hộ kết luận cửa sổ ngắn luôn tốt hơn; bảng giữ đúng lựa chọn CV. Cẩm nang riêng thêm kịch bản 10 phút. Proposal 5 trang đã hết cảnh báo Underfull/Overfull và đã đọc toàn bộ trang; sửa thêm chữ trong sơ đồ cho đồng nhất.
+
+Đối chiếu cuối: 16 CSV báo cáo khớp ở dung sai 1e-10; 6 JSON kiểm tra giống hệt; 113 tệp dữ liệu/kết quả/mô hình ban đầu giữ nguyên SHA-256. 10/10 notebook chạy bằng kernel mới và 49/49 kiểm thử đạt. Notebook 01 giữ nguyên từng byte của bản người dùng. Kiểm tra liên kết Markdown, số hàng bảng, schema notebook và cú pháp các ô code đạt. Đã lưu chứng cứ rút gọn trong reports/polish_validation.json trước khi dọn tmp.
+
+Đã xóa thư mục tmp sau khi kiểm tra đường dẫn tuyệt đối và xác nhận không có reparse point: 302 tệp, khoảng 43,02 MB. Đã dọn cache Python/pytest và tệp phụ biên dịch LaTeX. Cẩm nang riêng vẫn tồn tại và bị Git bỏ qua; bản notebook 01 của người dùng được giữ nguyên. Quét các định danh nguồn bị loại trừ không có kết quả. Đang chuẩn bị commit và công bố thay đổi chính thức lên main.

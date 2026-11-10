@@ -16,7 +16,6 @@ import numpy as np
 
 from features import load_price_data
 
-
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INPUT = ROOT / "data" / "raw" / "fpt" / "fpt_historical_price.csv"
 
@@ -43,20 +42,63 @@ def _draw_pipeline_overview(output_path: Path) -> None:
         (0.02, 0.55, "OHLCV FPT\n2007-01-02 to 2025-09-30", "#DCEAF7"),
         (0.24, 0.55, "Kiểm toán +\n5 OHLCV + 27 chỉ báo/nến", "#E4F1E5"),
         (0.48, 0.72, "Nhánh 1\nGiá + khối lượng FPT", "#FCE9D8"),
-        (0.48, 0.30, "Nhánh 2\nGiá + thị trường/vĩ mô/tài chính\nđã căn ngày có thể biết", "#FCE9D8"),
-        (0.74, 0.55, "Train85%: CV5fold | Test15%\nML + ARIMA/SARIMAX\nLSTM/GRU; log return", "#EEE1F3"),
-        (0.95, 0.55, "Đầu ra\nHướng tăng/giảm\nGiá close t+1\nMetrics + biểu đồ", "#FFF2CC"),
+        (
+            0.48,
+            0.30,
+            "Nhánh 2\nGiá + thị trường/vĩ mô/tài chính\nđã căn ngày có thể biết",
+            "#FCE9D8",
+        ),
+        (
+            0.74,
+            0.55,
+            "Train 85% | Test 15%\nCV 5 fold trong Train\nML + ARIMA/SARIMAX\nLSTM/GRU; log return",
+            "#EEE1F3",
+        ),
+        (
+            0.95,
+            0.55,
+            "Đầu ra\nHướng tăng/giảm\nGiá đóng cửa t + 1\nĐộ đo + biểu đồ",
+            "#FFF2CC",
+        ),
     ]
     for x, y, label, color in boxes:
         ax.text(
-            x, y, label, ha="center", va="center", fontsize=10,
-            bbox={"boxstyle": "round,pad=0.65", "facecolor": color, "edgecolor": "#46637F", "linewidth": 1.2},
+            x,
+            y,
+            label,
+            ha="center",
+            va="center",
+            fontsize=10,
+            bbox={
+                "boxstyle": "round,pad=0.65",
+                "facecolor": color,
+                "edgecolor": "#46637F",
+                "linewidth": 1.2,
+            },
             transform=ax.transAxes,
         )
-    arrows = [((0.11, 0.55), (0.18, 0.55)), ((0.31, 0.61), (0.40, 0.70)), ((0.31, 0.49), (0.40, 0.32)), ((0.58, 0.70), (0.66, 0.57)), ((0.58, 0.32), (0.66, 0.53)), ((0.83, 0.55), (0.89, 0.55))]
+    arrows = [
+        ((0.11, 0.55), (0.18, 0.55)),
+        ((0.31, 0.61), (0.40, 0.70)),
+        ((0.31, 0.49), (0.40, 0.32)),
+        ((0.58, 0.70), (0.66, 0.57)),
+        ((0.58, 0.32), (0.66, 0.53)),
+        ((0.83, 0.55), (0.89, 0.55)),
+    ]
     for start, end in arrows:
-        ax.annotate("", xy=end, xytext=start, xycoords="axes fraction", arrowprops={"arrowstyle": "->", "lw": 1.5, "color": "#46637F"})
-    fig.suptitle("Pipeline thực nghiệm: dự đoán phiên FPT kế tiếp", fontsize=15, fontweight="bold", y=0.98)
+        ax.annotate(
+            "",
+            xy=end,
+            xytext=start,
+            xycoords="axes fraction",
+            arrowprops={"arrowstyle": "->", "lw": 1.5, "color": "#46637F"},
+        )
+    fig.suptitle(
+        "Pipeline thực nghiệm: dự đoán phiên FPT kế tiếp",
+        fontsize=15,
+        fontweight="bold",
+        y=0.98,
+    )
     fig.tight_layout()
     fig.savefig(output_path, dpi=220, bbox_inches="tight")
     plt.close(fig)
@@ -125,7 +167,11 @@ def run_eda(input_path: Path, figures_dir: Path, reports_dir: Path) -> dict:
     except ValueError:
         input_label = input_path.name
     lineage_path = reports_dir / "data_lineage.json"
-    lineage = json.loads(lineage_path.read_text(encoding="utf-8")) if lineage_path.is_file() else {}
+    lineage = (
+        json.loads(lineage_path.read_text(encoding="utf-8"))
+        if lineage_path.is_file()
+        else {}
+    )
     summary = {
         "input_file": input_label,
         "data_provider": lineage.get("provider", "VCI (Vietcap) via vnstock"),
@@ -146,7 +192,9 @@ def run_eda(input_path: Path, figures_dir: Path, reports_dir: Path) -> dict:
         "close_max": float(data["close"].max()),
         "volume_min": int(data["volume"].min()),
         "volume_max": int(data["volume"].max()),
-        "missing_values_by_column": {key: int(value) for key, value in data.isna().sum().items()},
+        "missing_values_by_column": {
+            key: int(value) for key, value in data.isna().sum().items()
+        },
         "duplicate_dates": int(data["time"].duplicated().sum()),
         "is_chronologically_sorted": bool(data["time"].is_monotonic_increasing),
         "zero_volume_sessions": int(data["volume"].eq(0).sum()),
@@ -166,10 +214,16 @@ def run_eda(input_path: Path, figures_dir: Path, reports_dir: Path) -> dict:
         ],
     }
     sector_path = reports_dir / "sector_coverage_audit.json"
-    summary["sector_coverage_audit"] = json.loads(sector_path.read_text(encoding="utf-8")) if sector_path.exists() else {"status": "audit pending"}
+    summary["sector_coverage_audit"] = (
+        json.loads(sector_path.read_text(encoding="utf-8"))
+        if sector_path.exists()
+        else {"status": "audit pending"}
+    )
     summary["regression_target"] = "next_log_return = ln(next_close/current_close)"
     audit_path = reports_dir / "data_audit.json"
-    audit_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    audit_path.write_text(
+        json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     print(json.dumps(summary, ensure_ascii=False, indent=2))
     return summary
 
@@ -178,7 +232,9 @@ def main() -> None:
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8")
-    parser = argparse.ArgumentParser(description="Audit FPT OHLCV data and save EDA figures.")
+    parser = argparse.ArgumentParser(
+        description="Audit FPT OHLCV data and save EDA figures."
+    )
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
     parser.add_argument("--figures", type=Path, default=ROOT / "figures")
     parser.add_argument("--reports", type=Path, default=ROOT / "reports")

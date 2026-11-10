@@ -8,7 +8,13 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from features import FEATURE_COLUMNS, FULL_OHLCV_FEATURE_COLUMNS, PRICE_ONLY_FEATURE_COLUMNS, build_feature_table, load_price_data
+from features import (
+    FEATURE_COLUMNS,
+    FULL_OHLCV_FEATURE_COLUMNS,
+    PRICE_ONLY_FEATURE_COLUMNS,
+    build_feature_table,
+    load_price_data,
+)
 from train import _chronological_splits
 
 
@@ -46,8 +52,12 @@ def test_past_features_do_not_change_when_future_prices_change():
     original_features = build_feature_table(data)
     changed_features = build_feature_table(changed)
     date_to_check = data.loc[60, "time"]
-    original_row = original_features.loc[original_features["date"].eq(date_to_check), PRICE_ONLY_FEATURE_COLUMNS].iloc[0]
-    changed_row = changed_features.loc[changed_features["date"].eq(date_to_check), PRICE_ONLY_FEATURE_COLUMNS].iloc[0]
+    original_row = original_features.loc[
+        original_features["date"].eq(date_to_check), PRICE_ONLY_FEATURE_COLUMNS
+    ].iloc[0]
+    changed_row = changed_features.loc[
+        changed_features["date"].eq(date_to_check), PRICE_ONLY_FEATURE_COLUMNS
+    ].iloc[0]
     pd.testing.assert_series_equal(original_row, changed_row)
 
 
@@ -69,10 +79,17 @@ def test_full_ohlcv_features_are_known_at_close_of_current_session():
     row = features.loc[features["date"].eq(data.loc[60, "time"])].iloc[0]
     current = data.loc[60]
     previous = data.loc[59, "close"]
-    assert np.isclose(row["candle_range_pct"], (current["high"] - current["low"]) / current["close"])
-    assert np.isclose(row["candle_body_pct"], (current["close"] - current["open"]) / current["open"])
+    assert np.isclose(
+        row["candle_range_pct"], (current["high"] - current["low"]) / current["close"]
+    )
+    assert np.isclose(
+        row["candle_body_pct"], (current["close"] - current["open"]) / current["open"]
+    )
     assert np.isclose(row["overnight_gap_pct"], current["open"] / previous - 1.0)
-    assert np.isclose(row["close_location_in_range"], (current["close"] - current["low"]) / (current["high"] - current["low"]))
+    assert np.isclose(
+        row["close_location_in_range"],
+        (current["close"] - current["low"]) / (current["high"] - current["low"]),
+    )
     assert set(FULL_OHLCV_FEATURE_COLUMNS).issubset(features.columns)
 
 
@@ -92,7 +109,9 @@ def test_cutoff_is_applied_before_next_session_label_is_constructed(tmp_path):
     clipped = load_price_data(path)
     features = build_feature_table(clipped)
     assert clipped["time"].max() == pd.Timestamp("2025-09-30")
-    assert features.iloc[-1]["target_date"] is pd.NaT or pd.isna(features.iloc[-1]["target_date"])
+    assert features.iloc[-1]["target_date"] is pd.NaT or pd.isna(
+        features.iloc[-1]["target_date"]
+    )
     assert pd.isna(features.iloc[-1]["next_close"])
     assert features["target_date"].dropna().max() == pd.Timestamp("2025-09-30")
 
@@ -104,13 +123,17 @@ def test_price_branch_includes_current_ohlcv_and_excludes_future_outcomes():
     assert len(PRICE_ONLY_FEATURE_COLUMNS) == 32
     for raw_name in ("open", "high", "low", "close", "volume"):
         assert row[f"current_{raw_name}"] == data.loc[60, raw_name]
-    assert not {"direction", "next_close", "next_return", "target_date"}.intersection(PRICE_ONLY_FEATURE_COLUMNS)
+    assert not {"direction", "next_close", "next_return", "target_date"}.intersection(
+        PRICE_ONLY_FEATURE_COLUMNS
+    )
 
 
 def test_log_return_target_reconstructs_price_and_excludes_future_inputs():
     frame = build_feature_table(_synthetic_ohlcv())
     labeled = frame.dropna(subset=["next_log_return"])
-    np.testing.assert_allclose(labeled.current_close * np.exp(labeled.next_log_return), labeled.next_close)
+    np.testing.assert_allclose(
+        labeled.current_close * np.exp(labeled.next_log_return), labeled.next_close
+    )
     assert "next_log_return" not in PRICE_ONLY_FEATURE_COLUMNS
     assert frame.session_index.tolist() == list(range(49, 180))
 

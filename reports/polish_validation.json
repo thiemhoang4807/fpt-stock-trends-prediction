@@ -1,0 +1,129 @@
+{
+  "notebooks": [
+    {
+      "notebook": "00_RUN_ALL.ipynb",
+      "cells": 35,
+      "code_cells": 17,
+      "seconds": 295.07,
+      "cwd": "project root",
+      "status": "passed"
+    },
+    {
+      "notebook": "01_fetch_data.ipynb",
+      "cells": 14,
+      "code_cells": 6,
+      "seconds": 2.14,
+      "cwd": "notebooks/",
+      "status": "passed"
+    },
+    {
+      "notebook": "02_fetch_supplemental.ipynb",
+      "cells": 16,
+      "code_cells": 7,
+      "seconds": 2.37,
+      "cwd": "notebooks/",
+      "status": "passed"
+    },
+    {
+      "notebook": "03_eda.ipynb",
+      "cells": 17,
+      "code_cells": 8,
+      "seconds": 3.66,
+      "cwd": "notebooks/",
+      "status": "passed"
+    },
+    {
+      "notebook": "04_features.ipynb",
+      "cells": 17,
+      "code_cells": 8,
+      "seconds": 2.02,
+      "cwd": "project root",
+      "status": "passed"
+    },
+    {
+      "notebook": "05_prepare.ipynb",
+      "cells": 16,
+      "code_cells": 7,
+      "seconds": 6.18,
+      "cwd": "notebooks/",
+      "status": "passed"
+    },
+    {
+      "notebook": "06_train.ipynb",
+      "cells": 27,
+      "code_cells": 13,
+      "seconds": 282.41,
+      "cwd": "project root",
+      "status": "passed"
+    },
+    {
+      "notebook": "07_predict.ipynb",
+      "cells": 15,
+      "code_cells": 7,
+      "seconds": 5.59,
+      "cwd": "notebooks/",
+      "status": "passed"
+    },
+    {
+      "notebook": "08_time_series.ipynb",
+      "cells": 11,
+      "code_cells": 5,
+      "seconds": 5.06,
+      "cwd": "notebooks/",
+      "status": "passed"
+    },
+    {
+      "notebook": "09_explain.ipynb",
+      "cells": 13,
+      "code_cells": 6,
+      "seconds": 11.17,
+      "cwd": "notebooks/",
+      "status": "passed"
+    }
+  ],
+  "metric_parity": true,
+  "prediction_parity": true,
+  "original_raw_inputs_unchanged": true,
+  "date": "2026-11-10",
+  "pytest": {
+    "passed": 49,
+    "warnings_reported": 0
+  },
+  "csv_parity_files": [
+    "ablation_summary.csv",
+    "classification_test_metrics.csv",
+    "confusion_matrices.csv",
+    "cv_fold_metrics.csv",
+    "cv_summary.csv",
+    "lookback_comparison.csv",
+    "permutation_importance_classification.csv",
+    "permutation_importance_regression.csv",
+    "regression_test_metrics.csv",
+    "shap_importance_classification.csv",
+    "shap_importance_regression.csv",
+    "stationarity_tests.csv",
+    "test_direction_predictions.csv",
+    "test_direction_predictions_by_model.csv",
+    "test_price_predictions.csv",
+    "test_price_predictions_by_model.csv"
+  ],
+  "json_parity_files": [
+    "latest_prediction.json",
+    "training_summary.json",
+    "split_metadata.json",
+    "evaluation_manifest.json",
+    "stationarity_tests.json",
+    "explainability_summary.json"
+  ],
+  "comparison_tolerance": {
+    "rtol": 1e-10,
+    "atol": 1e-10
+  },
+  "frozen_files_unchanged": 113,
+  "pdf": {
+    "pages": 5,
+    "alignment_warnings": 0,
+    "visually_reviewed_all_pages": true
+  },
+  "user_notebook_01_preserved": true
+}

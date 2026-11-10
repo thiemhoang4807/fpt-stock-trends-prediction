@@ -1,393 +1,243 @@
-# Báo cáo CS114: dự báo FPT phiên kế tiếp
+# Báo cáo CS114: Dự báo FPT ở phiên kế tiếp
 
-Cập nhật theo phản hồi giảng viên, hoàn thiện ngày 30/10/2026. Toàn bộ số liệu dưới đây lấy từ lần chạy hiện tại.
+Biên tập ngày 10/11/2026 từ kết quả thực nghiệm đã cố định. Dữ liệu nghiên cứu kết thúc ngày **30/09/2025**. Đợt rà soát này thay cách trình bày và tổ chức code, giữ nguyên số liệu thực nghiệm.
 
-## Thiết kế thực nghiệm đã khóa
+## Tóm tắt các phát hiện chính (Key Findings)
 
-Giá FPT có **4.671 phiên, 02/01/2007–30/09/2025**. Nhánh 1 có 32 đầu vào; Nhánh 2 có 43. VN-Index bổ sung có 4.635 phiên cùng khoảng ngày. Sau warm-up chỉ báo và điều kiện 60 phiên liên tiếp đủ đầu vào đa nguồn, tập chung có **1559 nhãn**. Train: **1325 mẫu, 2019-04-03–2024-10-21**. Test: **234 mẫu, 2024-10-22–2025-09-30**. Phân loại bỏ riêng phiên đứng giá sau khi ấn định mốc chung; hồi quy giữ chúng.
+1. **Dự báo log return giúp mô hình cây làm việc trên thang biến động tương đối.** Ở Nhánh 1, MAE giá của Random Forest, XGBoost và HistGradientBoosting lần lượt là **1,2593; 1,2621; 1,3017 nghìn VND**, gần ARIMA (**1,2392**) và Ridge (**1,2455**). Giá dự báo được neo vào giá phiên hiện tại bằng công thức nhân với `exp(log return dự báo)`, thay vì buộc cây xuất trực tiếp một mức giá đã gặp trong Train.
+2. **Thêm dữ liệu đa nguồn có tác động khác nhau lên hai bài toán.** Trong ablation XGBoost, G3 → G6 đưa Balanced Accuracy Test từ **54,03% lên 54,88%** (+0,85 điểm phần trăm), nhưng RMSE log return tăng từ **0,018754 lên 0,020089**. Trên CV, Balanced Accuracy cũng tăng nhẹ từ **52,57% lên 52,83%**. Đây là kết quả phù hợp với việc cần đánh giá riêng hướng và biên độ biến động khi dùng dữ liệu có tần suất thưa.
+3. **Log return có bằng chứng mạnh chống nghiệm đơn vị nhưng chưa đáp ứng giả thuyết dừng mức của KPSS.** Trên lịch sử Train, ADF có **p ≈ 1,05 × 10⁻¹⁷**, còn KPSS có **p ≈ 0,0164**. Hai giả thuyết gốc đều bị bác bỏ ở mức 5%; cần phân biệt kiểm tra nghiệm đơn vị với kiểm tra tính dừng quanh một mức trung bình.
 
-Trên 85% Train, TimeSeriesSplit, 5 fold dùng cửa sổ mở rộng và gap 1 hàng. Chọn tham số và mô hình bằng **Balanced Accuracy CV** cho phân loại và **RMSE log return CV** cho hồi quy. StandardScaler chỉ fit trong Train của từng fold; không chuẩn hóa cả dữ liệu rồi mới chia. HGB tắt early stopping để không ngẫu nhiên lấy dữ liệu trong chuỗi; SVC dùng decision score, không gọi nội bộ probability calibration ngẫu nhiên. Sau lựa chọn, fit toàn bộ Train và chấm 15% Test. Bản `models/evaluation/` chỉ học Train; `models/best_*.joblib` refit tất cả nhãn để minh họa dự báo mới nhất.
+## 1. Bài toán, dữ liệu và đặc trưng
 
-**Giới hạn độc lập:** các ngày Test đã từng được xem trong phiên bản cũ. Lần này không dùng chúng để chọn mô hình/tham số, nhưng không thể gọi đây là một holdout ngoài mẫu hoàn toàn chưa từng thấy. CV Mean±Std mô tả 5 fold; std mẫu dùng ddof=1, không phải khoảng tin cậy độc lập. Vì nguồn có khoảng trống, các fold cùng số hàng có thể không cùng số ngày lịch. Mọi nhánh, nhóm ablation và L dùng cùng ngày đánh giá.
+Tại cuối phiên `t`, hệ thống dự báo hướng Tăng/Giảm và lợi nhuận logarit của phiên quan sát kế tiếp. Nhãn hướng là 1 nếu `C(t+1) > C(t)`, 0 nếu giảm; phiên đứng giá được bỏ riêng khi chấm phân loại. Hồi quy giữ cả phiên đứng giá:
 
-## Mục tiêu và quy đổi giá
+$$r_{t+1}=\ln(C_{t+1}/C_t),\qquad \widehat C_{t+1}=C_t\exp(\widehat r_{t+1}).$$
 
-Phân loại: direction=1 khi C(t+1)>C(t),0 khi giảm; đứng giá không có nhãn phân loại. Hồi quy: `next_log_return = ln(next_close/current_close)`. Mô hình chỉ nhận X tại cuối phiên t; giá ngày sau chỉ dùng làm nhãn. Sau dự báo: `predicted_close = current_close * exp(predicted_log_return)`.
+Giá có đơn vị **nghìn VND/cổ phiếu**; khối lượng là số cổ phiếu. Ví dụ, log return dự báo bằng 0 tương ứng giữ nguyên giá phiên hiện tại.
 
-Giá có đơn vị nghìn VND/cổ phiếu. MAE/RMSE giá dùng cùng đơn vị; MAPE, Directional Accuracy và Tolerance đã theo phần trăm. MAE/RMSE log return là đơn vị log return thập phân. **Không tính MAPE/tolerance tương đối trên log return** vì mẫu bằng 0/gần 0 hoặc âm làm sai số phần trăm không phù hợp; các độ đo đó tính trên giá dương đã khôi phục. Last-Close tương ứng dự báo log return bằng 0. Dự báo giá gần đúng không đảm bảo đúng chiều.
+### Kiểm toán và nguồn dữ liệu
 
-## Dữ liệu và tính sẵn có
+| Nội dung | Kết quả |
+|---|---|
+| Giá FPT | 4.671 phiên, 02/01/2007–30/09/2025; VCI qua vnstock |
+| Ô thiếu / ngày trùng | 0 / 0 |
+| Volume bằng 0 / OHLC bất nhất | 2 / 3; các dòng bất nhất thuộc năm 2007 và 2009 |
+| Chuyển tiếp Tăng / Giảm / Đứng giá | 2.118 / 2.074 / 478 |
+| VN-Index | 4.635 phiên cùng khoảng ngày; nguồn DNSE, đơn vị điểm |
+| USD/VND, vàng và CPI | Bản xuất Investing.com; vàng quốc tế quy đổi thành VND/ounce |
+| GDP | GDP năm danh nghĩa bằng USD, nguồn World Bank |
+| Tài chính FPT | Doanh thu thuần, lợi nhuận gộp, EBIT, lợi nhuận sau thuế cổ đông công ty mẹ, cổ phiếu lưu hành; nguồn VCI và công bố doanh nghiệp |
+| Ngành ICT | 33 snapshot từ 06/02/2016 đến 24/07/2025; loại 3 biến ngành khỏi mô hình chính |
 
-FPT: VCI/vnstock; tỷ giá/vàng/CPI: các CSV xuất Investing.com; GDP thực tế năm: World Bank; tài chính: VCI và công bố FPT. VN-Index lấy trực tiếp từ [DNSE](https://api.dnse.com.vn/chart-api/v2/ohlcs/index), lưu nguồn và hash tại data/raw/supplemental/vnindex_lineage.json. Tạo log return ngày và volatility 20 phiên từ điểm chỉ số; không chia điểm chỉ số cho 1.000. Vàng là XAU/USD nhân USD/VND, đơn vị VND/ounce, không phải vàng miếng SJC.
+Giữ bản xuất nguồn để chuẩn hóa lại offline. Dữ liệu ngày và CPI được dùng sau ngày quan sát/công bố 1 ngày lịch; báo cáo quý trễ 45 ngày, GDP năm trễ 180 ngày. Chỉ ghép lùi từ ngày có hiệu lực; dữ liệu quá hạn bị xem là thiếu. Ngưỡng tuổi dữ liệu lần lượt là 10 ngày cho chuỗi ngày, 65 ngày cho CPI, 150 ngày cho quý và 550 ngày cho GDP. Chi tiết nguồn, đơn vị và phép căn thang giá nằm trong [tài liệu dữ liệu](../data/README.md), [kiểm toán](../reports/data_audit.json) và [lineage](../reports/data_lineage.json).
 
-Giữ các bản xuất dữ liệu nguồn và chạy chuẩn hóa offline để tái lập. Mỗi quan sát ngày/giá thị trường/nguồn CPI/ngành/cổ phiếu được dùng sau 1 ngày lịch; báo cáo quý + 45 ngày, GDP năm + 180 ngày là giả định khi thiếu lịch công bố. Chỉ ghép lùi, không backfill hoặc nội suy từ mốc tương lai; quá hạn nguồn bị coi là thiếu. Cổ phiếu lưu hành là các mốc đã biết, không phải lịch thay đổi hằng ngày đầy đủ. Giá lịch sử nhà cung cấp có thể đã điều chỉnh; kho dữ liệu này chưa phục dựng đầy đủ phiên bản từng tồn tại trong quá khứ.
+Nhánh 1 có **32 biến**: 23 chỉ báo từ close/volume, 4 đặc trưng nến và 5 trường OHLCV hiện tại. Nhánh 2 có **43 biến**, thêm 11 biến thị trường, vĩ mô và tài chính. VN-Index đại diện thị trường chung. Kiểm toán ngành ở [sector_coverage_audit.json](../reports/sector_coverage_audit.json).
 
-Simply Wall St chỉ có 33 snapshot, 06/02/2016–24/07/2025 trong dữ liệu đã kiểm tra, không có từ 2007 và không có thành phần ngành theo thời điểm. **Loại 3 biến ngành khỏi mô hình chính.** Không chọn các công ty còn niêm yết hôm nay để dựng rổ lịch sử vì có thiên lệch sống sót. VN-Index chỉ là kiểm soát thị trường chung. G5 ghi excluded, không tạo kết quả ngành khi thiếu dữ liệu. Chi tiết: reports/sector_coverage_audit.json, lồng trong data_audit.json.
-## Kiểm toán OHLCV và phân tích khám phá
+![Giá đóng cửa FPT](../figures/01_fpt_close.png)
+![Phân phối lợi nhuận ngày](../figures/03_daily_return_distribution.png)
 
-Snapshot không có ô thiếu hoặc ngày trùng; có 2 phiên volume bằng 0 và 3 hàng quan hệ OHLC bất nhất (17/08/2007, 10/06/2009, 07/12/2009). Giữ nguyên và đánh dấu trong audit, không sửa bằng suy đoán. Ba ngày này nằm trước cửa sổ đối sánh chung. Có 2.118 chuyển tiếp tăng, 2.074 giảm và 478 đứng giá; tổng 4.670 vì phiên cuối chưa có nhãn. Return ngày trung bình khoảng 0,0644%, độ lệch chuẩn khoảng 1,9189% trên toàn snapshot, chỉ dùng mô tả.
+## 2. Thiết kế thực nghiệm và chống rò rỉ dữ liệu
 
-OHLC giữ thang lịch sử của nhà cung cấp; archive từng căn giá bằng hệ số 0,8875 trên đoạn chồng lấn, không áp lên volume. Đây không phải kho giá chưa điều chỉnh theo từng phiên bản quá khứ. Chi tiết tại `reports/data_lineage.json`. Vàng bắt đầu năm 2019 và các báo cáo tài chính có khoảng trống nên không được lấp ngược để tạo dữ liệu từ 2007.
+Cả hai nhánh, các nhóm ablation và các độ dài cửa sổ dùng cùng **1.559 mẫu có nhãn**. Điều kiện chọn mẫu là có đủ 60 phiên liên tiếp với các đầu vào cần thiết. Lịch sử bối cảnh vẫn giữ chỉ số phiên gốc để mạng tuần tự không nối hai ngày cách nhau bởi khoảng thiếu dữ liệu thành hai phiên liền nhau.
 
-![Giá lịch sử](../figures/01_fpt_close.png)
-![Phân phối return](../figures/03_daily_return_distribution.png)
+| Tập | Số mẫu hồi quy | Khoảng ngày mục tiêu |
+|---|---:|---|
+| Train, 85% đầu | 1.325 | 03/04/2019–21/10/2024 |
+| Test, 15% cuối | 234 | 22/10/2024–30/09/2025 |
 
-## Mô hình và siêu tham số
+Test phân loại còn **227 phiên**, gồm 112 phiên Tăng và 115 phiên Giảm. Ngày chia được xác định trước khi bỏ nhãn đứng giá. Nhãn `next_close`, `next_log_return` và `direction` được giữ ngoài danh sách đầu vào.
 
-- Phân loại bảng: Majority, Logistic(C0.1/1; balanced), SVC(C0.1/1; balanced), RF 120 cây(depth3/6,leaf15), XGB 120 cây(depth2/3,lr0.04,subsample/colsample0.85,minchild8,lambda3), HGB 120 vòng(leaves7/15,lr0.04,L2=2,early_stopping=False).
-- Hồi quy bảng: zero-log return baseline, Linear, Ridge(alpha10/100), SVR(C0.01/0.1,epsilon0.002), RF/XGB/HGB tương ứng trên log return.
-- ARIMA nhánh 1 và SARIMAX nhánh 2: order(0,0,0) hoặc(1,0,0), không có mùa vụ. SARIMAX dùng 11 biến bổ trợ, median imputer và scaler fit trên khoảng lịch Train; không có intercept riêng cùng exog. Fit cả các phiên thực tế trong khoảng Train để giữ đúng chuỗi. Khi bước sang validation/Test chỉ lọc cập nhật trạng thái sau khi kết quả đã quan sát; tham số không fit lại. Do đó đây là dự báo cuốn chiếu một phiên, không phải dự báo cả năm tại một thời điểm. Dữ liệu nội sinh trên các phiên ở khoảng trống cohort vẫn có thể cập nhật trạng thái; số mẫu dùng fit thống kê không giống số hàng đủ mọi đầu vào của ML.
-- LSTM và GRU: một lớp, 16 nút ẩn, Adam(lr0.001,weight_decay0.0001),batch 64,gradient clipping 1,12 epoch cố định, seed 42, CPU. L=10/20/30/60; không dùng Test early stopping. Regression nhân mục tiêu 100 khi tối ưu rồi chia 100 khi xuất; scaler chỉ fit các phiên thuộc cửa sổ Train. Dùng full session context để L thật sự là L phiên liên tiếp. Đây là khảo sát lưới nhỏ với một seed, chưa phải tối ưu kiến trúc rộng.
+Trong Train, `TimeSeriesSplit` tạo **5 fold**, cửa sổ học mở rộng và chừa **1 hàng** ở ranh giới (`gap=1`). Mỗi lượt học lại bộ chuẩn hóa trong Train của fold; mô hình tuyến tính đặt `StandardScaler` trong `Pipeline`. Chọn hướng theo **Balanced Accuracy CV cao nhất**, chọn hồi quy theo **RMSE log return CV thấp nhất**. Sau đó fit toàn bộ Train và chấm Test. CV Mean ± Std là trung bình và độ lệch chuẩn mẫu qua 5 fold (`ddof=1`).
 
-Mỗi mô hình bảng được chọn giữa 1–2 cấu hình bằng CV. Mỗi cấu hình học sâu/L có 5 fold. Các L được đưa vào bảng Test để mô tả, nhưng L dùng dự báo được chọn theo CV. Chi tiết từng fold và cấu hình ở cv_fold_metrics.csv,cv_summary.csv,evaluation_manifest.json; cảnh báo hội tụ thống kê nằm trong split_metadata.json.
+`models/evaluation/` giữ mô hình chỉ học Train để chấm điểm. `models/best_*.joblib` học lại toàn bộ nhãn sau khi cố định đánh giá để tạo dự báo mới nhất. Mốc thời gian và cấu hình nằm trong [split_metadata.json](../reports/split_metadata.json) và [evaluation_manifest.json](../reports/evaluation_manifest.json).
 
-## Chẩn đoán chuỗi thời gian
+### Mô hình và lưới tham số
 
-| series | scope | test | statistic | p_value | lags | conclusion |
+| Họ | Thiết lập được khảo sát trên Train |
+|---|---|
+| Baseline | Majority đoán lớp phổ biến; Last-Close dự báo log return bằng 0 |
+| Tuyến tính | Logistic: C = 0,1 hoặc 1, cân bằng lớp; Linear; Ridge: alpha = 10 hoặc 100 |
+| SVM | SVC: C = 0,1 hoặc 1; SVR: C = 0,01 hoặc 0,1, epsilon = 0,002 |
+| Random Forest | 120 cây, độ sâu 3 hoặc 6, tối thiểu 15 mẫu ở lá |
+| XGBoost | 120 cây, độ sâu 2 hoặc 3, tốc độ học 0,04; tỷ lệ lấy mẫu hàng/cột 0,85; min_child_weight = 8; reg_lambda = 3 |
+| HistGradientBoosting | 120 vòng, 7 hoặc 15 lá, tốc độ học 0,04, L2 = 2; tắt dừng sớm tự động |
+| ARIMA / SARIMAX | Bậc (0,0,0) hoặc (1,0,0) trên log return; SARIMAX dùng 11 biến ngoại sinh, không thêm thành phần mùa vụ |
+| LSTM / GRU | 1 lớp, 16 nút ẩn; L = 10, 20, 30, 60; 12 epoch; batch 64; Adam, tốc độ học 0,001; weight decay 0,0001; chặn chuẩn gradient ở 1; seed 42; CPU |
+
+Hồi quy mạng tuần tự nhân mục tiêu với 100 trong tối ưu rồi chia lại khi xuất dự báo. SVC xuất điểm biên để tính ROC-AUC. ARIMA/SARIMAX dự báo log return rồi suy ra hướng bằng dấu của dự báo; điểm này cũng dùng cho AUC. Mô hình thống kê giữ tham số đã fit, chỉ cập nhật trạng thái sau khi quan sát kết quả từng phiên; imputer và scaler ngoại sinh chỉ học từ lịch sử Train. **40/40 lượt fit thống kê trong CV hội tụ.**
+
+## 3. Phân tích chuỗi thời gian
+
+Kiểm định chính dùng lịch sử giá đến cuối Train: 4.437 mức giá và 4.436 log return. Mô tả toàn snapshot được lưu riêng trong CSV, không dùng để chọn lưới mô hình.
+
+| Chuỗi | Kiểm định | Thống kê | p-value | Kết luận ở mức 5% |
+|---|---|---:|---:|---|
+| Close | ADF | 4,8215 | 1,0000 | Không bác bỏ nghiệm đơn vị |
+| Close | KPSS | 6,7466 | < 0,01 | Bác bỏ tính dừng mức |
+| Log return | ADF | −10,1030 | 1,05 × 10⁻¹⁷ | Bác bỏ nghiệm đơn vị |
+| Log return | KPSS | 0,6688 | 0,0164 | Bác bỏ tính dừng mức |
+
+ADF có giả thuyết gốc là chuỗi có nghiệm đơn vị. KPSS với `regression="c"` có giả thuyết gốc là chuỗi dừng quanh một hằng số. Vì vậy cùng p-value nhỏ dẫn đến hai kết luận khác nhau. Với close, KPSS trả giá trị biên 0,01 và cảnh báo p-value thực còn nhỏ hơn. Tham khảo định nghĩa trong tài liệu [ADF](https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.adfuller.html) và [KPSS](https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.kpss.html).
+
+ACF/PACF vẽ 40 độ trễ với khoảng tham chiếu 95%. Phân rã STL dùng log(close) trên Train và chu kỳ quy ước 5 phiên; các thành phần xu hướng, mùa vụ và phần dư chỉ phục vụ mô tả.
+
+![ACF và PACF](../figures/12_acf_pacf.png)
+![Phân rã chuỗi](../figures/13_time_series_decomposition.png)
+
+## 4. Bảng đối sánh chính
+
+Mỗi nhánh có **9 đại diện cho mỗi bài toán**, chọn hoàn toàn bằng CV trong Train. LSTM/GRU giữ một L tốt nhất; hồi quy gộp Linear và Ridge thành một họ và CV chọn Ridge ở cả hai nhánh. Cấu hình còn lại vẫn giữ nguyên trong [30 dòng phân loại](../reports/classification_test_metrics.csv), [32 dòng hồi quy](../reports/regression_test_metrics.csv) và [CV đầy đủ](../reports/cv_summary.csv).
+
+### 4.1. Phân loại hướng
+
+Acc = Accuracy; BA = Balanced Accuracy; P/R/F1 tính cho lớp Tăng. AUC được biểu diễn theo thang phần trăm, ví dụ 55,06% tương ứng 0,5506. Các cột Test chỉ được ghép sau bước chọn đại diện. Dấu **[CV chọn]** đánh dấu mô hình được chọn cho công cụ dự báo, không phải mô hình có điểm Test cao nhất.
+
+**Nhánh 1 — Giá và kỹ thuật**
+
+| Mô hình | CV BA ± Std | Test Acc | Test BA | P | R | F1 | AUC |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Majority Baseline | 50.00% ± 0.00% | 49.34% | 50.00% | 49.34% | 100.00% | 66.08% | 50.00% |
+| Logistic Regression | 53.47% ± 2.26% | 57.27% | 57.21% | 57.28% | 52.68% | 54.88% | 56.77% |
+| SVC | 51.32% ± 3.54% | 48.90% | 49.08% | 48.61% | 62.50% | 54.69% | 49.80% |
+| Random Forest | 51.96% ± 1.75% | 52.42% | 52.29% | 52.22% | 41.96% | 46.53% | 59.01% |
+| XGBoost | 52.57% ± 3.64% | 53.74% | 54.03% | 52.15% | 75.89% | 61.82% | 52.43% |
+| HistGradientBoosting **[CV chọn]** | 55.05% ± 1.90% | 52.86% | 52.92% | 52.03% | 57.14% | 54.47% | 55.06% |
+| ARIMA | 50.06% ± 0.13% | 48.90% | 49.54% | 49.11% | 98.21% | 65.48% | 47.25% |
+| LSTM L=30 | 52.24% ± 3.44% | 54.19% | 54.34% | 52.86% | 66.07% | 58.73% | 53.18% |
+| GRU L=20 | 54.19% ± 2.66% | 58.15% | 58.24% | 56.59% | 65.18% | 60.58% | 56.29% |
+
+**Nhánh 2 — Giá, thị trường, vĩ mô và tài chính**
+
+| Mô hình | CV BA ± Std | Test Acc | Test BA | P | R | F1 | AUC |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Majority Baseline | 50.00% ± 0.00% | 49.34% | 50.00% | 49.34% | 100.00% | 66.08% | 50.00% |
+| Logistic Regression | 51.43% ± 1.16% | 50.22% | 50.72% | 49.75% | 88.39% | 63.67% | 50.09% |
+| SVC | 51.41% ± 3.32% | 50.66% | 51.05% | 50.00% | 80.36% | 61.64% | 49.34% |
+| Random Forest | 52.41% ± 2.49% | 55.51% | 55.45% | 55.34% | 50.89% | 53.02% | 59.56% |
+| XGBoost | 52.83% ± 0.96% | 54.63% | 54.88% | 52.87% | 74.11% | 61.71% | 52.20% |
+| HistGradientBoosting | 53.43% ± 2.61% | 51.98% | 52.19% | 51.01% | 67.86% | 58.24% | 52.91% |
+| SARIMAX | 49.88% ± 2.54% | 49.34% | 50.00% | 49.34% | 100.00% | 66.08% | 51.79% |
+| LSTM L=20 | 50.98% ± 1.95% | 48.90% | 49.45% | 49.04% | 91.07% | 63.75% | 51.69% |
+| GRU L=20 | 52.14% ± 2.52% | 49.34% | 49.92% | 49.30% | 93.75% | 64.62% | 51.45% |
+
+Mô hình được chọn là **HistGradientBoosting Nhánh 1**, CV BA **55,05% ± 1,90%**, Test Accuracy **52,86%**, BA **52,92%**. GRU L = 20 ở cùng nhánh có BA Test 58,24%, nhưng CV BA thấp hơn nên không thay thế lựa chọn đã khóa.
+
+Confusion matrix của mô hình được chọn, hàng là thực tế và cột là dự báo:
+
+| | Dự báo Giảm | Dự báo Tăng |
+|---|---:|---:|
+| Thực tế Giảm | 56 (TN) | 59 (FP) |
+| Thực tế Tăng | 48 (FN) | 64 (TP) |
+
+Accuracy = (56 + 64) / 227 = 52,86%. BA = (56/115 + 64/112) / 2 = 52,92%. Toàn bộ ma trận nằm trong [confusion_matrices.csv](../reports/confusion_matrices.csv).
+
+### 4.2. Hồi quy log return và quy đổi giá
+
+CV và cột RMSE log dùng đơn vị log return thập phân. MAE/RMSE giá dùng **nghìn VND/cổ phiếu**, làm tròn 4 chữ số. DA là tỷ lệ đúng hướng suy từ giá dự báo, tính trên 227 phiên không đứng giá. Ba số trong cột dung sai lần lượt ứng với **±0,5% / ±1,0% / ±2,0%** so với giá thật trên 234 phiên. MAPE và dung sai được tính trên giá dương đã khôi phục; không chia sai số cho log return gần 0.
+
+**Nhánh 1 — Giá và kỹ thuật**
+
+| Mô hình | CV RMSE log ± Std | Test RMSE log | MAE giá | RMSE giá | MAPE | DA | Dung sai 0,5 / 1 / 2% |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Last-Close Baseline | 0.017250 ± 0.003429 | 0.018398 | 1.2250 | 1.7398 | 1.27% | 0.00% | 32.91% / 54.70% / 81.62% |
+| Ridge Regression | 0.017612 ± 0.003467 | 0.018468 | 1.2455 | 1.7534 | 1.29% | 52.42% | 30.77% / 52.99% / 81.20% |
+| SVR | 0.017427 ± 0.003505 | 0.019316 | 1.3146 | 1.8323 | 1.37% | 47.14% | 26.07% / 52.56% / 80.77% |
+| Random Forest | 0.017391 ± 0.003317 | 0.018807 | 1.2593 | 1.7811 | 1.31% | 48.02% | 32.05% / 54.27% / 80.34% |
+| XGBoost | 0.017750 ± 0.002956 | 0.018754 | 1.2621 | 1.7774 | 1.31% | 51.98% | 31.62% / 52.56% / 81.20% |
+| HistGradientBoosting | 0.017941 ± 0.003198 | 0.019546 | 1.3017 | 1.8547 | 1.36% | 53.30% | 33.76% / 52.14% / 76.50% |
+| ARIMA **[CV chọn]** | 0.017192 ± 0.003481 | 0.018520 | 1.2392 | 1.7537 | 1.29% | 48.90% | 33.76% / 54.27% / 81.62% |
+| LSTM L=60 | 0.017470 ± 0.003361 | 0.018682 | 1.2537 | 1.7700 | 1.30% | 52.86% | 30.34% / 55.13% / 81.62% |
+| GRU L=60 | 0.017716 ± 0.003444 | 0.018371 | 1.2213 | 1.7384 | 1.27% | 54.19% | 33.76% / 54.27% / 82.05% |
+
+**Nhánh 2 — Giá, thị trường, vĩ mô và tài chính**
+
+| Mô hình | CV RMSE log ± Std | Test RMSE log | MAE giá | RMSE giá | MAPE | DA | Dung sai 0,5 / 1 / 2% |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Last-Close Baseline | 0.017250 ± 0.003429 | 0.018398 | 1.2250 | 1.7398 | 1.27% | 0.00% | 32.91% / 54.70% / 81.62% |
+| Ridge Regression | 0.019341 ± 0.004452 | 0.021247 | 1.4893 | 2.0011 | 1.57% | 48.90% | 26.07% / 41.45% / 73.50% |
+| SVR | 0.017348 ± 0.003440 | 0.019303 | 1.3198 | 1.8309 | 1.37% | 48.02% | 27.78% / 48.72% / 79.91% |
+| Random Forest | 0.017437 ± 0.003327 | 0.018959 | 1.2699 | 1.7943 | 1.32% | 48.90% | 30.77% / 54.70% / 80.34% |
+| XGBoost | 0.018068 ± 0.003150 | 0.020089 | 1.3671 | 1.8966 | 1.43% | 48.02% | 27.78% / 48.29% / 76.92% |
+| HistGradientBoosting | 0.018098 ± 0.003245 | 0.021395 | 1.4856 | 2.0203 | 1.56% | 48.90% | 24.79% / 45.30% / 73.08% |
+| SARIMAX | 0.018948 ± 0.004381 | 0.019311 | 1.3093 | 1.8247 | 1.37% | 49.34% | 31.20% / 51.71% / 76.50% |
+| LSTM L=10 | 0.017514 ± 0.003480 | 0.019184 | 1.3050 | 1.8186 | 1.36% | 48.46% | 29.91% / 50.85% / 80.77% |
+| GRU L=60 | 0.017273 ± 0.003338 | 0.019784 | 1.3617 | 1.8736 | 1.42% | 48.02% | 28.21% / 45.73% / 76.07% |
+
+CV chọn **ARIMA Nhánh 1** với RMSE log **0,017192 ± 0,003481**. Test có MAE **1,2392**, RMSE giá **1,7537** và dung sai ±1% **54,27%**. Last-Close có MAE thấp hơn (**1,2250**) nhưng DA bằng **0,00%**: dự báo đứng giá không thể trùng chiều của các phiên thật sự tăng hoặc giảm. Đây là lý do hai bài toán cần được chấm riêng.
+
+## 5. Khảo sát độ dài cửa sổ trượt
+
+Bảng dưới chỉ dùng **CV Mean ± Std** để so L. Dòng phân loại trình bày BA theo %, dòng hồi quy trình bày RMSE log return thập phân. Ô in đậm có trung bình CV tốt nhất trong hàng; Std được đọc riêng để đánh giá độ dao động giữa các fold.
+
+| Nhánh, mạng | Độ đo CV | L = 10 | L = 20 | L = 30 | L = 60 |
+| --- | --- | --- | --- | --- | --- |
+| N1, LSTM | Hướng, BA ↑ | 51.59% ± 3.56% | 51.94% ± 3.62% | **52.24% ± 3.44%** | 51.46% ± 3.98% |
+| N1, GRU | Hướng, BA ↑ | 52.91% ± 2.33% | **54.19% ± 2.66%** | 54.03% ± 2.59% | 53.49% ± 2.13% |
+| N2, LSTM | Hướng, BA ↑ | 50.07% ± 1.00% | **50.98% ± 1.95%** | 50.87% ± 1.90% | 50.48% ± 2.17% |
+| N2, GRU | Hướng, BA ↑ | 51.56% ± 2.16% | **52.14% ± 2.52%** | 51.83% ± 2.29% | 51.30% ± 2.14% |
+| N1, LSTM | Lợi nhuận, RMSE ↓ | 0.017494 ± 0.003384 | 0.017494 ± 0.003381 | 0.017495 ± 0.003375 | **0.017470 ± 0.003361** |
+| N1, GRU | Lợi nhuận, RMSE ↓ | 0.017790 ± 0.003465 | 0.017791 ± 0.003469 | 0.017781 ± 0.003465 | **0.017716 ± 0.003444** |
+| N2, LSTM | Lợi nhuận, RMSE ↓ | **0.017514 ± 0.003480** | 0.017545 ± 0.003476 | 0.017514 ± 0.003457 | 0.017530 ± 0.003425 |
+| N2, GRU | Lợi nhuận, RMSE ↓ | 0.017311 ± 0.003313 | 0.017291 ± 0.003306 | 0.017282 ± 0.003335 | **0.017273 ± 0.003338** |
+
+**Nhận xét trực tiếp:** với phân loại, L = 20 được chọn cho 3/4 tổ hợp nhánh–mạng; LSTM Nhánh 1 chọn L = 30. Với hồi quy, L = 60 lại tốt nhất ở 3/4 tổ hợp, còn LSTM Nhánh 2 chọn L = 10 với chênh lệch rất nhỏ so với L = 30. Cửa sổ ngắn hơn có thể giảm phần lịch sử ít liên quan đến hướng ngày kế tiếp, còn cửa sổ dài có thể giúp làm mượt ước lượng biên độ. Các khả năng này là cách diễn giải để kiểm tra tiếp, không thay thế bảng số. Không thể kết luận L = 10 hoặc 20 luôn ổn định hơn L = 60 từ thực nghiệm hiện tại.
+
+## 6. Ablation theo nhóm đầu vào
+
+Giữ XGBoost, cùng các ngày đánh giá và cùng quy tắc chọn tham số bằng CV; chỉ đổi nhóm đầu vào. G5 được ghi rõ là loại khỏi thí nghiệm. Nhánh 1 tương ứng G3, Nhánh 2 tương ứng G6.
+
+| Nhóm | Đầu vào tích lũy | Biến | CV BA ± Std | Test BA | CV RMSE log ± Std | Test RMSE log |
 | --- | --- | --- | --- | --- | --- | --- |
-| close | train_history | ADF | 4.82151 | 1 | 27 | unit root not rejected |
-| close | train_history | KPSS | 6.74657 | 0.01 | 41 | level stationarity rejected |
-| log_return | train_history | ADF | -10.103 | 1.04777e-17 | 30 | evidence against unit root |
-| log_return | train_history | KPSS | 0.668847 | 0.0163776 | 14 | level stationarity rejected |
-| close | full_snapshot_descriptive_only | ADF | 0.524316 | 0.985594 | 30 | unit root not rejected |
-| close | full_snapshot_descriptive_only | KPSS | 7.29558 | 0.01 | 41 | level stationarity rejected |
-| log_return | full_snapshot_descriptive_only | ADF | -18.2373 | 2.35951e-30 | 12 | evidence against unit root |
-| log_return | full_snapshot_descriptive_only | KPSS | 0.493067 | 0.0432282 | 14 | level stationarity rejected |
+| G1 | Giá/khối lượng và biến trễ | 9 | 53.90% ± 2.81% | 50.70% | 0.017692 ± 0.003372 | 0.018808 |
+| G2 | + chỉ báo kỹ thuật | 25 | 53.49% ± 2.69% | 54.73% | 0.017581 ± 0.003254 | 0.018784 |
+| G3 | + OHLC và nến | 32 | 52.57% ± 3.64% | 54.03% | 0.017750 ± 0.002956 | 0.018754 |
+| G4 | + thị trường và vĩ mô | 38 | 52.77% ± 1.37% | 54.47% | 0.017971 ± 0.003144 | 0.019921 |
+| G5 | Ngành ICT: excluded | — | — | — | — | — |
+| G6 | + tài chính FPT | 43 | 52.83% ± 0.96% | 54.88% | 0.018068 ± 0.003150 | 0.020089 |
 
-ADF H0: có nghiệm đơn vị; KPSS H0: dừng quanh mức trung bình (regression=c). ADF nhỏ hơn 0.05 là bằng chứng chống nghiệm đơn vị; KPSS nhỏ hơn 0.05 bác bỏ giả thuyết dừng. Không bác bỏ không phải chứng minh. KPSS ở 0.01/0.1 có thể là cận của bảng tra, xem warnings trong JSON.
+G1 → G2 tăng BA Test từ **50,70% lên 54,73%**; G2 → G3 giảm nhẹ về **54,03%**. G3 → G6 tăng **0,85 điểm phần trăm**, đồng thời RMSE log Test tăng khoảng **7,12%**. RMSE đo căn trung bình bình phương sai số, không đồng nhất với phương sai sai số; báo cáo dùng đúng tên độ đo này. Nhóm dữ liệu bổ trợ có ích cho hướng ở mức nhỏ trong so sánh này, nhưng chưa cải thiện biên độ lợi nhuận.
 
-Trên lịch sử Train, log return có ADF rất nhỏ nhưng KPSS vẫn dưới 0.05: hai kiểm định không đồng thuận về tính dừng mức. Vì vậy chuyển sang log return là cách đổi thang mục tiêu, chưa phải bảo đảm phân phối không đổi. ACF/PACF có dải 95%; quan sát nhiều lag có nguy cơ phát hiện ngẫu nhiên. STL dùng log(close) và chu kỳ 5 phiên quy ước trên Train, chỉ để mô tả, không chứng minh mùa vụ và không đưa thành phần phân rã vào đặc trưng. Phần full_snapshot trong bảng là kiểm toán mô tả sau thực nghiệm, không dùng chọn bậc/lưới.
+![Ablation phân loại](../figures/16_ablation_classification.png)
+![Ablation hồi quy](../figures/16_ablation_regression.png)
 
-![ACF/PACF](../figures/12_acf_pacf.png)
-![Phân rã](../figures/13_time_series_decomposition.png)
+## 7. Đường dự báo và giải thích mô hình
 
-## Cross-validation Mean ± Std
+Mỗi điểm trên đường là dự báo một phiên sau khi có dữ liệu phiên trước. Khung trên bao phủ Test; khung dưới phóng to 80 phiên cuối. Hình giữ LSTM/GRU L = 20 làm cấu hình minh họa cố định; đại diện chọn bằng CV nằm trong bảng chính.
 
-Các cột mean và std trình bày riêng để dễ tra cứu; ghép lại thành mean ± std.
-| feature_set | model | balanced_accuracy_mean | balanced_accuracy_std | accuracy_mean | accuracy_std | f1_up_mean | f1_up_std |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Branch_1_Price_Only | Majority baseline | 0.5 | 0 | 0.543725 | 0.0238287 | 0.704186 | 0.0200149 |
-| Branch_1_Price_Only | Logistic Regression | 0.534721 | 0.0225531 | 0.515403 | 0.0372453 | 0.393984 | 0.172245 |
-| Branch_1_Price_Only | SVC | 0.513182 | 0.035425 | 0.50124 | 0.0287256 | 0.43622 | 0.168366 |
-| Branch_1_Price_Only | Random Forest | 0.519601 | 0.0174594 | 0.496298 | 0.0211318 | 0.325161 | 0.206318 |
-| Branch_1_Price_Only | XGBoost | 0.525684 | 0.0364335 | 0.520533 | 0.0309996 | 0.515693 | 0.0438111 |
-| Branch_1_Price_Only | HistGradientBoosting | 0.550485 | 0.0189608 | 0.543699 | 0.0129491 | 0.532977 | 0.0551595 |
-| Branch_1_Price_Only | LSTM L=10 | 0.515864 | 0.0356279 | 0.517227 | 0.0353233 | 0.551659 | 0.0904153 |
-| Branch_1_Price_Only | LSTM L=20 | 0.519379 | 0.0362353 | 0.520155 | 0.0349603 | 0.552494 | 0.0893838 |
-| Branch_1_Price_Only | LSTM L=30 | 0.522381 | 0.0344292 | 0.523106 | 0.0324896 | 0.556029 | 0.0852692 |
-| Branch_1_Price_Only | LSTM L=60 | 0.514643 | 0.0397681 | 0.516301 | 0.0401866 | 0.551111 | 0.0940823 |
-| Branch_1_Price_Only | GRU L=10 | 0.529088 | 0.023259 | 0.513592 | 0.0262967 | 0.414647 | 0.118328 |
-| Branch_1_Price_Only | GRU L=20 | 0.54194 | 0.0265906 | 0.526983 | 0.0324458 | 0.442527 | 0.0812283 |
-| Branch_1_Price_Only | GRU L=30 | 0.540258 | 0.0258915 | 0.525946 | 0.0310153 | 0.45167 | 0.068161 |
-| Branch_1_Price_Only | GRU L=60 | 0.534916 | 0.0212925 | 0.524191 | 0.0227507 | 0.504134 | 0.0864988 |
-| Branch_1_Price_Only | ARIMA | 0.500589 | 0.00131805 | 0.543725 | 0.0238287 | 0.703502 | 0.0189882 |
-| Branch_2_Macro_Fundamental | Majority baseline | 0.5 | 0 | 0.543725 | 0.0238287 | 0.704186 | 0.0200149 |
-| Branch_2_Macro_Fundamental | Logistic Regression | 0.514254 | 0.0115835 | 0.52306 | 0.0455992 | 0.42367 | 0.349745 |
-| Branch_2_Macro_Fundamental | SVC | 0.514139 | 0.0331993 | 0.52795 | 0.052151 | 0.556556 | 0.252168 |
-| Branch_2_Macro_Fundamental | Random Forest | 0.52414 | 0.0249404 | 0.505054 | 0.0235992 | 0.407018 | 0.144957 |
-| Branch_2_Macro_Fundamental | XGBoost | 0.528255 | 0.00964433 | 0.527256 | 0.0119254 | 0.563871 | 0.0599239 |
-| Branch_2_Macro_Fundamental | HistGradientBoosting | 0.534305 | 0.0260568 | 0.527881 | 0.0326166 | 0.536651 | 0.0792718 |
-| Branch_2_Macro_Fundamental | LSTM L=10 | 0.500746 | 0.0100379 | 0.518655 | 0.0203926 | 0.625337 | 0.0539384 |
-| Branch_2_Macro_Fundamental | LSTM L=20 | 0.509775 | 0.0195125 | 0.525434 | 0.0153646 | 0.627059 | 0.0509275 |
-| Branch_2_Macro_Fundamental | LSTM L=30 | 0.508711 | 0.0189589 | 0.525397 | 0.0123687 | 0.62978 | 0.049526 |
-| Branch_2_Macro_Fundamental | LSTM L=60 | 0.504797 | 0.0217062 | 0.522269 | 0.00521219 | 0.627682 | 0.047603 |
-| Branch_2_Macro_Fundamental | GRU L=10 | 0.515625 | 0.0216355 | 0.531829 | 0.0236078 | 0.636746 | 0.029461 |
-| Branch_2_Macro_Fundamental | GRU L=20 | 0.521356 | 0.0251918 | 0.539798 | 0.0289499 | 0.648334 | 0.0197874 |
-| Branch_2_Macro_Fundamental | GRU L=30 | 0.518272 | 0.0229415 | 0.537864 | 0.0283893 | 0.648359 | 0.0226293 |
-| Branch_2_Macro_Fundamental | GRU L=60 | 0.513024 | 0.0213772 | 0.536759 | 0.0324844 | 0.65502 | 0.0348313 |
-| Branch_2_Macro_Fundamental | SARIMAX | 0.498833 | 0.025364 | 0.525432 | 0.0280051 | 0.567384 | 0.22847 |
-| feature_set | model | log_return_rmse_mean | log_return_rmse_std | mae_mean | mae_std | rmse_mean | rmse_std |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Branch_1_Price_Only | Last-Close Baseline | 0.0172501 | 0.00342911 | 0.56303 | 0.285039 | 0.801573 | 0.388637 |
-| Branch_1_Price_Only | Linear Regression | 0.0234798 | 0.00993973 | 0.717278 | 0.313516 | 1.01864 | 0.429988 |
-| Branch_1_Price_Only | Ridge Regression | 0.0176117 | 0.00346686 | 0.574531 | 0.276951 | 0.81494 | 0.379628 |
-| Branch_1_Price_Only | SVR | 0.0174265 | 0.00350539 | 0.57027 | 0.282374 | 0.806866 | 0.38851 |
-| Branch_1_Price_Only | Random Forest Regressor | 0.0173908 | 0.00331716 | 0.567703 | 0.274311 | 0.807136 | 0.377958 |
-| Branch_1_Price_Only | XGBoost Regressor | 0.0177495 | 0.0029563 | 0.582192 | 0.265702 | 0.826661 | 0.372532 |
-| Branch_1_Price_Only | HistGradientBoosting Regressor | 0.0179406 | 0.00319794 | 0.592598 | 0.27617 | 0.839838 | 0.394586 |
-| Branch_1_Price_Only | LSTM L=10 | 0.0174941 | 0.00338369 | 0.580379 | 0.284642 | 0.814372 | 0.391527 |
-| Branch_1_Price_Only | LSTM L=20 | 0.0174937 | 0.00338068 | 0.580895 | 0.285625 | 0.81462 | 0.391859 |
-| Branch_1_Price_Only | LSTM L=30 | 0.0174948 | 0.00337455 | 0.580784 | 0.286207 | 0.814952 | 0.392889 |
-| Branch_1_Price_Only | LSTM L=60 | 0.0174704 | 0.00336106 | 0.579176 | 0.286876 | 0.813854 | 0.393783 |
-| Branch_1_Price_Only | GRU L=10 | 0.0177897 | 0.00346456 | 0.578233 | 0.279499 | 0.825242 | 0.388068 |
-| Branch_1_Price_Only | GRU L=20 | 0.0177908 | 0.00346853 | 0.577748 | 0.279191 | 0.825376 | 0.387599 |
-| Branch_1_Price_Only | GRU L=30 | 0.017781 | 0.00346515 | 0.577346 | 0.279206 | 0.824977 | 0.387589 |
-| Branch_1_Price_Only | GRU L=60 | 0.0177163 | 0.00344398 | 0.575496 | 0.280514 | 0.822501 | 0.388702 |
-| Branch_1_Price_Only | ARIMA | 0.017192 | 0.00348057 | 0.563246 | 0.283638 | 0.798749 | 0.385612 |
-| Branch_2_Macro_Fundamental | Last-Close Baseline | 0.0172501 | 0.00342911 | 0.56303 | 0.285039 | 0.801573 | 0.388637 |
-| Branch_2_Macro_Fundamental | Linear Regression | 0.0286088 | 0.00874597 | 0.975236 | 0.35011 | 1.27193 | 0.503398 |
-| Branch_2_Macro_Fundamental | Ridge Regression | 0.0193412 | 0.00445207 | 0.661184 | 0.314891 | 0.908038 | 0.42283 |
-| Branch_2_Macro_Fundamental | SVR | 0.0173481 | 0.00344002 | 0.571043 | 0.282134 | 0.80564 | 0.38866 |
-| Branch_2_Macro_Fundamental | Random Forest Regressor | 0.0174367 | 0.0033269 | 0.569108 | 0.272381 | 0.808902 | 0.377726 |
-| Branch_2_Macro_Fundamental | XGBoost Regressor | 0.0180677 | 0.00314967 | 0.592584 | 0.258784 | 0.837665 | 0.368212 |
-| Branch_2_Macro_Fundamental | HistGradientBoosting Regressor | 0.0180979 | 0.00324465 | 0.594779 | 0.263957 | 0.842144 | 0.380178 |
-| Branch_2_Macro_Fundamental | LSTM L=10 | 0.0175142 | 0.00348033 | 0.580414 | 0.290149 | 0.817015 | 0.400001 |
-| Branch_2_Macro_Fundamental | LSTM L=20 | 0.017545 | 0.00347635 | 0.581899 | 0.290984 | 0.819009 | 0.40211 |
-| Branch_2_Macro_Fundamental | LSTM L=30 | 0.0175143 | 0.00345714 | 0.580897 | 0.290688 | 0.817382 | 0.401769 |
-| Branch_2_Macro_Fundamental | LSTM L=60 | 0.01753 | 0.00342544 | 0.581315 | 0.29052 | 0.818074 | 0.401551 |
-| Branch_2_Macro_Fundamental | GRU L=10 | 0.0173109 | 0.00331277 | 0.571871 | 0.281538 | 0.805796 | 0.387618 |
-| Branch_2_Macro_Fundamental | GRU L=20 | 0.0172908 | 0.00330561 | 0.56962 | 0.282584 | 0.804885 | 0.388144 |
-| Branch_2_Macro_Fundamental | GRU L=30 | 0.0172819 | 0.00333485 | 0.568049 | 0.282947 | 0.804173 | 0.388723 |
-| Branch_2_Macro_Fundamental | GRU L=60 | 0.0172726 | 0.00333802 | 0.566727 | 0.283392 | 0.803304 | 0.387538 |
-| Branch_2_Macro_Fundamental | SARIMAX | 0.018948 | 0.00438124 | 0.621141 | 0.246768 | 0.855295 | 0.350458 |
+![Giá thực tế và dự báo Nhánh 1](../figures/14_forecasts_Branch_1_Price_Only.png)
+![Giá thực tế và dự báo Nhánh 2](../figures/14_forecasts_Branch_2_Macro_Fundamental.png)
 
-## Test phân loại
+Giải thích dùng mô hình tốt nhất theo CV trong hai họ cây được hỗ trợ: **XGBoost Nhánh 2** cho phân loại và **Random Forest Nhánh 1** cho hồi quy. SHAP sử dụng tối đa 100 mẫu Train làm dữ liệu nền và 150 mẫu Test để giải thích. Permutation importance lặp 10 lần với seed 42, dùng BA cho hướng và điểm âm RMSE log return cho hồi quy. Sai lệch cộng tính SHAP tối đa lần lượt khoảng 2,52 × 10⁻⁷ và 1,06 × 10⁻¹⁰.
 
-Tỷ lệ trong bảng là[0,1], nhân100 để đọc phần trăm.
+Ở phân loại, ba biến đứng đầu theo trung bình trị tuyệt đối SHAP là **vị trí close trong biên độ nến**, **volume hiện tại** và **SMA 5 ratio**. Permutation cho vị trí close đứng đầu, giảm trung bình **4,53 điểm phần trăm BA** khi đảo cột này. Hai cách đo trả lời hai câu hỏi khác nhau: SHAP phân bổ đầu ra, còn permutation chấm mức giảm hiệu năng khi phá thông tin của cột.
 
-| feature_set | model | accuracy | balanced_accuracy | precision_up | recall_up | f1_up | roc_auc |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Branch_1_Price_Only | Majority baseline | 0.493392 | 0.5 | 0.493392 | 1 | 0.660767 | 0.5 |
-| Branch_1_Price_Only | Logistic Regression | 0.572687 | 0.572089 | 0.572816 | 0.526786 | 0.548837 | 0.567702 |
-| Branch_1_Price_Only | SVC | 0.488987 | 0.490761 | 0.486111 | 0.625 | 0.546875 | 0.497981 |
-| Branch_1_Price_Only | Random Forest | 0.524229 | 0.522865 | 0.522222 | 0.419643 | 0.465347 | 0.590062 |
-| Branch_1_Price_Only | XGBoost | 0.537445 | 0.540334 | 0.521472 | 0.758929 | 0.618182 | 0.524301 |
-| Branch_1_Price_Only | HistGradientBoosting | 0.528634 | 0.529193 | 0.520325 | 0.571429 | 0.544681 | 0.550621 |
-| Branch_1_Price_Only | LSTM L=10 | 0.519824 | 0.521312 | 0.510791 | 0.633929 | 0.565737 | 0.532143 |
-| Branch_1_Price_Only | LSTM L=20 | 0.537445 | 0.539286 | 0.524138 | 0.678571 | 0.59144 | 0.531677 |
-| Branch_1_Price_Only | LSTM L=30 | 0.54185 | 0.543401 | 0.528571 | 0.660714 | 0.587302 | 0.531832 |
-| Branch_1_Price_Only | LSTM L=60 | 0.53304 | 0.534472 | 0.521739 | 0.642857 | 0.576 | 0.530435 |
-| Branch_1_Price_Only | GRU L=10 | 0.572687 | 0.573486 | 0.559055 | 0.633929 | 0.594142 | 0.5625 |
-| Branch_1_Price_Only | GRU L=20 | 0.581498 | 0.582415 | 0.565891 | 0.651786 | 0.605809 | 0.562888 |
-| Branch_1_Price_Only | GRU L=30 | 0.581498 | 0.582415 | 0.565891 | 0.651786 | 0.605809 | 0.563354 |
-| Branch_1_Price_Only | GRU L=60 | 0.581498 | 0.582415 | 0.565891 | 0.651786 | 0.605809 | 0.563665 |
-| Branch_1_Price_Only | ARIMA | 0.488987 | 0.495419 | 0.491071 | 0.982143 | 0.654762 | 0.472516 |
-| Branch_2_Macro_Fundamental | Majority baseline | 0.493392 | 0.5 | 0.493392 | 1 | 0.660767 | 0.5 |
-| Branch_2_Macro_Fundamental | Logistic Regression | 0.502203 | 0.507182 | 0.497487 | 0.883929 | 0.636656 | 0.500854 |
-| Branch_2_Macro_Fundamental | SVC | 0.506608 | 0.510481 | 0.5 | 0.803571 | 0.616438 | 0.493401 |
-| Branch_2_Macro_Fundamental | Random Forest | 0.555066 | 0.554464 | 0.553398 | 0.508929 | 0.530233 | 0.595575 |
-| Branch_2_Macro_Fundamental | XGBoost | 0.546256 | 0.548797 | 0.528662 | 0.741071 | 0.6171 | 0.52205 |
-| Branch_2_Macro_Fundamental | HistGradientBoosting | 0.519824 | 0.521894 | 0.510067 | 0.678571 | 0.582375 | 0.529115 |
-| Branch_2_Macro_Fundamental | LSTM L=10 | 0.488987 | 0.494488 | 0.490385 | 0.910714 | 0.6375 | 0.54604 |
-| Branch_2_Macro_Fundamental | LSTM L=20 | 0.488987 | 0.494488 | 0.490385 | 0.910714 | 0.6375 | 0.516925 |
-| Branch_2_Macro_Fundamental | LSTM L=30 | 0.493392 | 0.498952 | 0.492823 | 0.919643 | 0.641745 | 0.523214 |
-| Branch_2_Macro_Fundamental | LSTM L=60 | 0.502203 | 0.50788 | 0.49763 | 0.9375 | 0.650155 | 0.520497 |
-| Branch_2_Macro_Fundamental | GRU L=10 | 0.493392 | 0.499068 | 0.492891 | 0.928571 | 0.643963 | 0.513975 |
-| Branch_2_Macro_Fundamental | GRU L=20 | 0.493392 | 0.499185 | 0.492958 | 0.9375 | 0.646154 | 0.514519 |
-| Branch_2_Macro_Fundamental | GRU L=30 | 0.497797 | 0.503533 | 0.495283 | 0.9375 | 0.648148 | 0.510637 |
-| Branch_2_Macro_Fundamental | GRU L=60 | 0.497797 | 0.503533 | 0.495283 | 0.9375 | 0.648148 | 0.511724 |
-| Branch_2_Macro_Fundamental | SARIMAX | 0.493392 | 0.5 | 0.493392 | 1 | 0.660767 | 0.517857 |
+![SHAP phân loại](../figures/shap_summary_classification.png)
+![Permutation phân loại](../figures/permutation_classification.png)
 
-## Test hồi quy
+Các bảng và ảnh hồi quy nằm trong `reports/` và `figures/`; cấu hình giải thích ghi tại [explainability_summary.json](../reports/explainability_summary.json).
 
-| feature_set | model | log_return_mae | log_return_rmse | mae | rmse | mape_percent | directional_accuracy_nonflat_percent | tolerance_accuracy_0_5_percent | tolerance_accuracy_1_percent | tolerance_accuracy_2_percent |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Branch_1_Price_Only | Last-Close Baseline | 0.0126887 | 0.0183976 | 1.22497 | 1.73983 | 1.27132 | 0 | 32.906 | 54.7009 | 81.6239 |
-| Branch_1_Price_Only | Linear Regression | 0.0131685 | 0.0184721 | 1.27346 | 1.76013 | 1.32063 | 51.5419 | 28.2051 | 48.7179 | 81.6239 |
-| Branch_1_Price_Only | Ridge Regression | 0.0128808 | 0.0184679 | 1.2455 | 1.75336 | 1.2925 | 52.4229 | 30.7692 | 52.9915 | 81.1966 |
-| Branch_1_Price_Only | SVR | 0.0135863 | 0.0193159 | 1.31457 | 1.83233 | 1.36506 | 47.1366 | 26.0684 | 52.5641 | 80.7692 |
-| Branch_1_Price_Only | Random Forest Regressor | 0.0130408 | 0.0188068 | 1.25931 | 1.78113 | 1.30905 | 48.0176 | 32.0513 | 54.2735 | 80.3419 |
-| Branch_1_Price_Only | XGBoost Regressor | 0.0130695 | 0.0187539 | 1.26208 | 1.77745 | 1.31231 | 51.9824 | 31.6239 | 52.5641 | 81.1966 |
-| Branch_1_Price_Only | HistGradientBoosting Regressor | 0.0135193 | 0.0195456 | 1.30171 | 1.85474 | 1.35652 | 53.304 | 33.7607 | 52.1368 | 76.4957 |
-| Branch_1_Price_Only | LSTM L=10 | 0.0130446 | 0.0187292 | 1.25932 | 1.77399 | 1.30918 | 50.6608 | 31.6239 | 54.7009 | 81.6239 |
-| Branch_1_Price_Only | LSTM L=20 | 0.0130052 | 0.0186993 | 1.25566 | 1.77154 | 1.30494 | 51.1013 | 30.3419 | 55.1282 | 81.6239 |
-| Branch_1_Price_Only | LSTM L=30 | 0.0129861 | 0.0186853 | 1.25377 | 1.77013 | 1.30293 | 51.5419 | 30.3419 | 55.1282 | 81.6239 |
-| Branch_1_Price_Only | LSTM L=60 | 0.012984 | 0.0186816 | 1.25366 | 1.76999 | 1.30269 | 52.8634 | 30.3419 | 55.1282 | 81.6239 |
-| Branch_1_Price_Only | GRU L=10 | 0.0126604 | 0.0183533 | 1.22257 | 1.73734 | 1.26947 | 52.4229 | 34.188 | 53.8462 | 82.0513 |
-| Branch_1_Price_Only | GRU L=20 | 0.0126419 | 0.0183584 | 1.22057 | 1.73725 | 1.26738 | 53.7445 | 33.7607 | 54.2735 | 82.0513 |
-| Branch_1_Price_Only | GRU L=30 | 0.0126434 | 0.0183628 | 1.2207 | 1.73759 | 1.26751 | 53.304 | 33.7607 | 54.2735 | 82.0513 |
-| Branch_1_Price_Only | GRU L=60 | 0.0126496 | 0.0183709 | 1.22131 | 1.73836 | 1.26821 | 54.185 | 33.7607 | 54.2735 | 82.0513 |
-| Branch_1_Price_Only | ARIMA | 0.0128294 | 0.0185196 | 1.2392 | 1.75371 | 1.28721 | 48.8987 | 33.7607 | 54.2735 | 81.6239 |
-| Branch_2_Macro_Fundamental | Last-Close Baseline | 0.0126887 | 0.0183976 | 1.22497 | 1.73983 | 1.27132 | 0 | 32.906 | 54.7009 | 81.6239 |
-| Branch_2_Macro_Fundamental | Linear Regression | 0.0173003 | 0.0232817 | 1.65712 | 2.18453 | 1.75179 | 48.0176 | 20.9402 | 36.7521 | 69.6581 |
-| Branch_2_Macro_Fundamental | Ridge Regression | 0.0155038 | 0.0212471 | 1.48929 | 2.00106 | 1.56632 | 48.8987 | 26.0684 | 41.453 | 73.5043 |
-| Branch_2_Macro_Fundamental | SVR | 0.0136461 | 0.0193035 | 1.31982 | 1.83091 | 1.37219 | 48.0176 | 27.7778 | 48.7179 | 79.9145 |
-| Branch_2_Macro_Fundamental | Random Forest Regressor | 0.013157 | 0.0189591 | 1.2699 | 1.79432 | 1.3218 | 48.8987 | 30.7692 | 54.7009 | 80.3419 |
-| Branch_2_Macro_Fundamental | XGBoost Regressor | 0.0141876 | 0.0200886 | 1.36713 | 1.89664 | 1.43026 | 48.0176 | 27.7778 | 48.2906 | 76.9231 |
-| Branch_2_Macro_Fundamental | HistGradientBoosting Regressor | 0.0154359 | 0.0213953 | 1.4856 | 2.02028 | 1.5584 | 48.8987 | 24.7863 | 45.2991 | 73.0769 |
-| Branch_2_Macro_Fundamental | LSTM L=10 | 0.0135008 | 0.0191839 | 1.30503 | 1.81862 | 1.35872 | 48.4581 | 29.9145 | 50.8547 | 80.7692 |
-| Branch_2_Macro_Fundamental | LSTM L=20 | 0.0136964 | 0.0193562 | 1.32391 | 1.83524 | 1.37898 | 48.8987 | 30.3419 | 50 | 79.0598 |
-| Branch_2_Macro_Fundamental | LSTM L=30 | 0.0137098 | 0.019362 | 1.32519 | 1.83587 | 1.3804 | 48.8987 | 29.9145 | 50.4274 | 79.0598 |
-| Branch_2_Macro_Fundamental | LSTM L=60 | 0.0136946 | 0.019352 | 1.32387 | 1.83518 | 1.37889 | 48.4581 | 29.9145 | 50.8547 | 79.4872 |
-| Branch_2_Macro_Fundamental | GRU L=10 | 0.0139571 | 0.0196701 | 1.34661 | 1.86233 | 1.4062 | 48.0176 | 28.2051 | 47.0085 | 76.9231 |
-| Branch_2_Macro_Fundamental | GRU L=20 | 0.0141425 | 0.0198396 | 1.36452 | 1.87938 | 1.42532 | 48.8987 | 27.3504 | 46.5812 | 76.0684 |
-| Branch_2_Macro_Fundamental | GRU L=30 | 0.0141054 | 0.0197953 | 1.36042 | 1.87433 | 1.42139 | 48.4581 | 28.6325 | 45.7265 | 76.0684 |
-| Branch_2_Macro_Fundamental | GRU L=60 | 0.0141174 | 0.0197842 | 1.3617 | 1.87357 | 1.42252 | 48.0176 | 28.2051 | 45.7265 | 76.0684 |
-| Branch_2_Macro_Fundamental | SARIMAX | 0.0135918 | 0.0193112 | 1.30928 | 1.82473 | 1.36877 | 49.3392 | 31.1966 | 51.7094 | 76.4957 |
+## 8. Tái lập và cấu trúc chương trình
 
-Mô hình được chọn bằng CV cho hướng: **HistGradientBoosting / Branch_1_Price_Only**, Test BA=0.5292. Mô hình giá: **ARIMA / Branch_1_Price_Only**, Test MAE=1.2392, RMSE=1.7537, log return RMSE=0.018520. Đây không nhất thiết là mô hình đứng đầu Test.
+| Thành phần | Trách nhiệm |
+|---|---|
+| `fetch_data.py`, `fetch_supplemental.py` | Kiểm định/chuẩn hóa nguồn và ghép theo ngày có hiệu lực |
+| `features.py`, `prepare.py` | Tạo biến quá khứ, nhãn phiên sau và tập ngày chung |
+| `eda.py`, `time_series_analysis.py` | Kiểm toán dữ liệu và phân tích chuỗi thời gian |
+| `train.py`, `sequence_models.py` | Danh mục mô hình, CV, Test, mạng tuần tự và mô hình thống kê |
+| `benchmark_tables.py` | Chọn 9 đại diện mỗi nhánh bằng CV rồi ghép điểm Test để trình bày |
+| `explain.py`, `predict.py` | Giải thích mô hình và dự báo từ artefact đã lưu |
+| `tests/`, `notebooks/` | Kiểm thử logic và 10 notebook có giải thích từng bước |
 
-## Ablation cùng cohort
+Lệnh tái lập nằm trong [README](../README.md). Kết quả dự báo cuối từ snapshot 30/09/2025: close đầu vào **82,54**; xác suất lớp Tăng **52,78%**; log return dự báo **0,00033714**; giá quy đổi **82,5678 nghìn VND**. Đây là đầu ra của hai mô hình được chọn riêng. Phiên mục tiêu là phiên giao dịch kế tiếp sau ngày snapshot, không tự cộng một ngày lịch.
 
-G1 gồm close/volume hiện tại, returns 1/2/5/10/20 và biến đổi khối lượng; G2 thêm SMA/EMA/RSI/MACD/Bollinger/volatility; G3 thêm trường OHLC và cấu trúc nến; G4 thêm thị trường/vĩ mô; G5 excluded; G6 thêm 5 biến tài chính. Không điền số cho G5 hoặc gọi G4=G5 là cải thiện ngành.
+Kiểm định sau refactor: **49/49 kiểm thử đạt**, **10/10 notebook chạy trọn vẹn**; 16 CSV kết quả khớp trong dung sai 1e-10 và 6 JSON kiểm tra giống hệt. Dữ liệu và mô hình chính thức giữ nguyên. Biên dịch Proposal không có cảnh báo căn lề; chi tiết tại [polish_validation.json](../reports/polish_validation.json).
 
-**Phân loại:**
+## Giới hạn nghiên cứu & Hướng phát triển
 
-| group | feature_count | cv_mean | cv_std | accuracy | balanced_accuracy | f1_up | roc_auc |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| G1 | 9 | 0.538965 | 0.0280571 | 0.506608 | 0.506988 | 0.517241 | 0.51545 |
-| G2 | 25 | 0.534905 | 0.0268813 | 0.546256 | 0.547283 | 0.576132 | 0.54014 |
-| G3 | 32 | 0.525684 | 0.0364335 | 0.537445 | 0.540334 | 0.618182 | 0.524301 |
-| G4 | 38 | 0.527727 | 0.013695 | 0.54185 | 0.544682 | 0.620438 | 0.531444 |
-| G6 | 43 | 0.528255 | 0.00964433 | 0.546256 | 0.548797 | 0.6171 | 0.52205 |
-
-**Hồi quy:**
-
-| group | feature_count | cv_mean | cv_std | log_return_rmse | mae | rmse | mape_percent |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| G1 | 9 | 0.0176919 | 0.00337238 | 0.0188083 | 1.25062 | 1.77851 | 1.30012 |
-| G2 | 25 | 0.0175809 | 0.0032544 | 0.018784 | 1.26435 | 1.77921 | 1.31554 |
-| G3 | 32 | 0.0177495 | 0.0029563 | 0.0187539 | 1.26208 | 1.77745 | 1.31231 |
-| G4 | 38 | 0.0179711 | 0.00314394 | 0.019921 | 1.35452 | 1.88089 | 1.41687 |
-| G6 | 43 | 0.0180677 | 0.00314967 | 0.0200886 | 1.36713 | 1.89664 | 1.43026 |
-
-G5: excluded; không có dữ liệu ngành đủ tin cậy để đánh giá riêng. Đầy đủ các metric còn lại nằm trong `reports/ablation_summary.csv`.
-
-Với classification, G1: balanced_accuracy=0.50699, G2: balanced_accuracy=0.54728, G3: balanced_accuracy=0.54033, G4: balanced_accuracy=0.54468, G6: balanced_accuracy=0.54880. So sánh này chỉ phản ánh XGBoost và cửa sổ hiện tại; không chứng minh nhân quả của vĩ mô.
-
-Với regression, G1: log_return_rmse=0.01881, G2: log_return_rmse=0.01878, G3: log_return_rmse=0.01875, G4: log_return_rmse=0.01992, G6: log_return_rmse=0.02009. So sánh này chỉ phản ánh XGBoost và cửa sổ hiện tại; không chứng minh nhân quả của vĩ mô.
-
-![Ablation hướng](../figures/16_ablation_classification.png)
-![Ablation giá](../figures/16_ablation_regression.png)
-
-## LSTM/GRU và độ dài cửa sổ
-
-| feature_set | task | model | cv_score | balanced_accuracy | log_return_rmse | mae | rmse |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Branch_1_Price_Only | classification | LSTM L=10 | 0.515864 | 0.521312 | — | — | — |
-| Branch_1_Price_Only | classification | LSTM L=20 | 0.519379 | 0.539286 | — | — | — |
-| Branch_1_Price_Only | classification | LSTM L=30 | 0.522381 | 0.543401 | — | — | — |
-| Branch_1_Price_Only | classification | LSTM L=60 | 0.514643 | 0.534472 | — | — | — |
-| Branch_1_Price_Only | classification | GRU L=10 | 0.529088 | 0.573486 | — | — | — |
-| Branch_1_Price_Only | classification | GRU L=20 | 0.54194 | 0.582415 | — | — | — |
-| Branch_1_Price_Only | classification | GRU L=30 | 0.540258 | 0.582415 | — | — | — |
-| Branch_1_Price_Only | classification | GRU L=60 | 0.534916 | 0.582415 | — | — | — |
-| Branch_1_Price_Only | regression | LSTM L=10 | 0.0174941 | — | 0.0187292 | 1.25932 | 1.77399 |
-| Branch_1_Price_Only | regression | LSTM L=20 | 0.0174937 | — | 0.0186993 | 1.25566 | 1.77154 |
-| Branch_1_Price_Only | regression | LSTM L=30 | 0.0174948 | — | 0.0186853 | 1.25377 | 1.77013 |
-| Branch_1_Price_Only | regression | LSTM L=60 | 0.0174704 | — | 0.0186816 | 1.25366 | 1.76999 |
-| Branch_1_Price_Only | regression | GRU L=10 | 0.0177897 | — | 0.0183533 | 1.22257 | 1.73734 |
-| Branch_1_Price_Only | regression | GRU L=20 | 0.0177908 | — | 0.0183584 | 1.22057 | 1.73725 |
-| Branch_1_Price_Only | regression | GRU L=30 | 0.017781 | — | 0.0183628 | 1.2207 | 1.73759 |
-| Branch_1_Price_Only | regression | GRU L=60 | 0.0177163 | — | 0.0183709 | 1.22131 | 1.73836 |
-| Branch_2_Macro_Fundamental | classification | LSTM L=10 | 0.500746 | 0.494488 | — | — | — |
-| Branch_2_Macro_Fundamental | classification | LSTM L=20 | 0.509775 | 0.494488 | — | — | — |
-| Branch_2_Macro_Fundamental | classification | LSTM L=30 | 0.508711 | 0.498952 | — | — | — |
-| Branch_2_Macro_Fundamental | classification | LSTM L=60 | 0.504797 | 0.50788 | — | — | — |
-| Branch_2_Macro_Fundamental | classification | GRU L=10 | 0.515625 | 0.499068 | — | — | — |
-| Branch_2_Macro_Fundamental | classification | GRU L=20 | 0.521356 | 0.499185 | — | — | — |
-| Branch_2_Macro_Fundamental | classification | GRU L=30 | 0.518272 | 0.503533 | — | — | — |
-| Branch_2_Macro_Fundamental | classification | GRU L=60 | 0.513024 | 0.503533 | — | — | — |
-| Branch_2_Macro_Fundamental | regression | LSTM L=10 | 0.0175142 | — | 0.0191839 | 1.30503 | 1.81862 |
-| Branch_2_Macro_Fundamental | regression | LSTM L=20 | 0.017545 | — | 0.0193562 | 1.32391 | 1.83524 |
-| Branch_2_Macro_Fundamental | regression | LSTM L=30 | 0.0175143 | — | 0.019362 | 1.32519 | 1.83587 |
-| Branch_2_Macro_Fundamental | regression | LSTM L=60 | 0.01753 | — | 0.019352 | 1.32387 | 1.83518 |
-| Branch_2_Macro_Fundamental | regression | GRU L=10 | 0.0173109 | — | 0.0196701 | 1.34661 | 1.86233 |
-| Branch_2_Macro_Fundamental | regression | GRU L=20 | 0.0172908 | — | 0.0198396 | 1.36452 | 1.87938 |
-| Branch_2_Macro_Fundamental | regression | GRU L=30 | 0.0172819 | — | 0.0197953 | 1.36042 | 1.87433 |
-| Branch_2_Macro_Fundamental | regression | GRU L=60 | 0.0172726 | — | 0.0197842 | 1.3617 | 1.87357 |
-
-Cấu hình tuần tự tốt nhất theo CV cho classification: **GRU L=20 / Branch_1_Price_Only**, CV=0.541940. Mộtseed và12 epoch là giới hạn cần kiểm tra thêm.
-
-Cấu hình tuần tự tốt nhất theo CV cho regression: **GRU L=60 / Branch_2_Macro_Fundamental**, CV=0.017273. Mộtseed và12 epoch là giới hạn cần kiểm tra thêm.
-
-## Đường dự báo và giải thích mô hình
-
-![Nhánh 1](../figures/14_forecasts_Branch_1_Price_Only.png)
-![Nhánh 2](../figures/14_forecasts_Branch_2_Macro_Fundamental.png)
-
-Các đường là dự báo1bước trên cùngTest; panel dưới phóng80phiên. Hai mô hình LSTM/GRU L20 trong hình chỉ là cấu hình minh họa cố định, không mặc định là tốt nhất.
-
-SHAP (classification) top 10:
-
-| feature | mean_abs_shap |
-| --- | --- |
-| close_location_in_range | 0.10319 |
-| current_volume | 0.102918 |
-| sma_5_ratio | 0.0793668 |
-| gold_vnd_per_ounce | 0.0791369 |
-| candle_body_pct | 0.0573422 |
-| candle_range_pct | 0.0569288 |
-| macd_signal_ratio | 0.054167 |
-| log_volume_zscore_20d | 0.0522581 |
-| return_10d | 0.0469727 |
-| return_5d | 0.0432218 |
-
-Permutation (classification) top 10:
-
-| feature | importance_mean | importance_std |
-| --- | --- | --- |
-| close_location_in_range | 0.04533 | 0.0178146 |
-| sma_5_ratio | 0.025132 | 0.0128218 |
-| macd_signal_ratio | 0.0250854 | 0.00996033 |
-| candle_body_pct | 0.0191498 | 0.00836188 |
-| return_2d | 0.0180474 | 0.0102726 |
-| sma_10_ratio | 0.0173447 | 0.00882486 |
-| candle_range_pct | 0.0146856 | 0.020675 |
-| return_5d | 0.0125388 | 0.0103937 |
-| ema_5_ratio | 0.0101281 | 0.00927339 |
-| log_volume_change_1d | 0.00968168 | 0.0183253 |
-
-![SHAP classification](../figures/shap_summary_classification.png)
-![Permutation classification](../figures/permutation_classification.png)
-
-SHAP (regression) top 10:
-
-| feature | mean_abs_shap |
-| --- | --- |
-| sma_5_ratio | 0.000872541 |
-| return_1d | 0.000285753 |
-| candle_body_pct | 0.000279361 |
-| volatility_20d | 0.000225244 |
-| ema_5_ratio | 0.000185987 |
-| return_20d | 0.000145575 |
-| ema_10_ratio | 0.000124471 |
-| return_5d | 0.000119439 |
-| macd_ratio | 0.000116644 |
-| return_2d | 0.00010257 |
-
-Permutation (regression) top 10:
-
-| feature | importance_mean | importance_std |
-| --- | --- | --- |
-| sma_5_ratio | 8.13383e-05 | 9.08887e-05 |
-| close_location_in_range | 2.12087e-05 | 8.64121e-06 |
-| macd_signal_ratio | 1.47728e-05 | 1.20773e-05 |
-| return_5d | 1.13276e-05 | 1.30568e-05 |
-| volatility_20d | 5.37589e-06 | 3.17005e-05 |
-| log_volume_change_1d | 1.66058e-06 | 4.02936e-06 |
-| ema_50_ratio | 1.47199e-06 | 5.78917e-06 |
-| current_high | 0 | 0 |
-| current_low | 0 | 0 |
-| current_open | -1.54328e-07 | 2.86622e-06 |
-
-![SHAP regression](../figures/shap_summary_regression.png)
-![Permutation regression](../figures/permutation_regression.png)
-
-Cây được chọn theo CV trước khi xem Test. SHAP dùng tối đa 100 mẫu Train làm background, giải thích 150 mẫu Test theo vị trí cố định. SHAP nằm trên đầu ra raw của mô hình, không tự diễn giải là điểm phần trăm xác suất. Permutation lặp 10 lần, seed 42; phân loại đo mức giảm BA, hồi quy đo mức tăng RMSE log return. Giá trị âm có thể do nhiễu/đặc trưng hại trong tập này. Biến tương quan chia sẻ tín hiệu; hoán vị phá vỡ quan hệ giữa biến và phụ thuộc thời gian. Các hình mô tả mô hình, không chứng minh nguyên nhân biến động chứng khoán. Không loại đặc trưng hay chỉnh lại mô hình dựa trên Test sau khi giải thích.
-
-## Giới hạn và hướng phát triển
-
-Không khẳng định mô hình phức tạp chắc chắn vượt baseline. Return nhỏ làm dự báo giá hôm nay đã khá mạnh. Điểm hướng gần 0.5 đòi hỏi đánh giá độ bất định, nhiều giai đoạn và chi phí giao dịch; đồ án hiện không backtest lợi nhuận. Một mã, một seed, lưới nhỏ, dữ liệu điều chỉnh sau sự kiện và độ trễ công bố giả định còn hạn chế. Kiểm tra convergence của SARIMAX trước khi coi tham số đáng tin cậy. Theo dõi một giai đoạn chưa quan sát sẽ có giá trị hơn việc tiếp tục tối ưu trên cùng Test.
-
-## Tái lập và tài liệu phương pháp
-
-```bash
-python -m pip install -r requirements.txt
-python src/fetch_data.py --verify
-python src/fetch_supplemental.py --from-cache
-python src/eda.py
-python src/prepare.py
-python src/time_series_analysis.py
-python src/train.py
-python src/explain.py
-python src/predict.py
-python -m pytest -q
-```
-
-Có thể làm mới chỉ số bằng `python src/fetch_supplemental.py --download-market`; khi thay nguồn phải huấn luyện lại. Notebook 00 chạy trọn quy trình; 08 phân tích chuỗi; 09 giải thích. File joblib đánh giá và triển khai có phạm vi fit khác nhau, không thay lẫn khi chấm Test.
-
-Nguồn phương pháp: [statsmodels ADF/KPSS](https://www.statsmodels.org/stable/examples/notebooks/generated/stationarity_detrending_adf_kpss.html), [TimeSeriesSplit](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html), [TreeExplainer](https://shap.readthedocs.io/en/latest/generated/shap.TreeExplainer.html), [PyTorch LSTM](https://docs.pytorch.org/docs/stable/generated/torch.nn.LSTM.html).
-
-### Kiểm định thực thi
-
-Toàn bộ 46 bài kiểm thử đạt, bao gồm căn nhãn, không thay đổi đặc trưng quá khứ khi sửa tương lai, fit scaler trong Train, chống bỏ qua phiên trong cửa sổ và kiểm tra cập nhật trạng thái thống kê. Cả 40 lần fit thống kê trong CV đều có cờ hội tụ; các cảnh báo thư viện được giữ trong metadata. Đây là kiểm tra tối ưu số, không phải bằng chứng mô hình thống kê phù hợp hoàn toàn với dữ liệu.
-
-Các hình ma trận nhầm lẫn theo từng nhánh:
-
-![Confusion Nhánh 1](../figures/17_confusion_Branch_1_Price_Only.png)
-![Confusion Nhánh 2](../figures/17_confusion_Branch_2_Macro_Fundamental.png)
-
-Môi trường thực thi cụ thể được ghi trong `reports/environment_versions.json`. Thư viện có phiên bản khác có thể làm sai số số học thay đổi; nên chạy lại pipeline thay vì nạp tùy ý mô hình joblib từ một môi trường khác.
-
-Đã chạy cả 10 notebook bằng kernel mới trong bản sao cách ly; hai bảng metrics khớp trong dung sai 1e-10, dự báo JSON giống hệt và hash dữ liệu gốc không đổi. Tổng đóng góp SHAP cộng với giá trị nền đã được kiểm tra khớp đầu ra mô hình; sai lệch số học tối đa được lưu trong `explainability_summary.json`.
+1. **Phạm vi kiểm chứng:** một mã cổ phiếu, một mốc Test và một seed cho mạng học sâu. Các ngày Test đã từng được xem ở phiên bản cũ; lần chạy này loại Test khỏi lựa chọn mô hình, nhưng chưa phải một giai đoạn hoàn toàn chưa từng quan sát. Cần khóa mô hình và kiểm chứng ở giai đoạn mới, lặp nhiều seed, mở rộng nhiều mã và báo cáo độ bất định.
+2. **Xuất xứ theo thời điểm:** độ trễ quý 45 ngày và GDP 180 ngày là giả định khi thiếu lịch công bố; giá/GDP có thể đã được điều chỉnh lại. Cần bổ sung ngày công bố thực và phiên bản dữ liệu lịch sử. Loại nguồn ICT thiếu độ phủ; không suy diễn kết quả cho ngành chưa có dữ liệu.
+3. **Khả năng so sánh:** mô hình thống kê sử dụng các phiên bối cảnh bên trong khoảng Train để giữ chuỗi liên tục, trong khi mô hình bảng học các hàng đủ đầu vào. Cùng ngày chấm không có nghĩa số quan sát fit bằng nhau. CV có các fold phụ thuộc thời gian; Std không phải khoảng tin cậy độc lập.
+4. **Diễn giải thực nghiệm:** chưa có thử nghiệm ghép cặp giữ nguyên mọi điều kiện để định lượng riêng mức giảm MAE do đổi từ giá sang log return. Cách đổi mục tiêu khắc phục ràng buộc thang giá đầu ra của cây, không bảo đảm giải quyết mọi dạng ngoại suy. Chênh lệch ablation và SHAP/permutation mô tả hành vi dự báo, **không chứng minh quan hệ nhân quả**. Biến tương quan chia sẻ tín hiệu; đảo cột cũng phá cấu trúc thời gian. Cần lặp trên nhiều giai đoạn và bổ sung permutation theo khối.
+5. **Chẩn đoán chuỗi:** KPSS ở đây kiểm tra tính dừng mức, không phải tính dừng chặt và không trực tiếp xác nhận cụm biến động. Muốn kết luận volatility clustering cần thêm ACF của lợi nhuận bình phương/trị tuyệt đối hoặc kiểm định ARCH. STL với chu kỳ 5 chỉ là mô tả, chưa xác lập mùa vụ kinh tế.
+6. **Ứng dụng:** dự án chưa tính phí giao dịch, trượt giá hoặc kiểm định chiến lược. Xác suất lớp Tăng chưa được đánh giá hiệu chỉnh xác suất. Sản phẩm phục vụ học tập và phân tích, **không phải khuyến nghị đầu tư**. Hướng phát triển là đánh giá hiệu chỉnh, chi phí thực tế và dữ liệu ngoài mẫu trước khi xem xét ứng dụng.

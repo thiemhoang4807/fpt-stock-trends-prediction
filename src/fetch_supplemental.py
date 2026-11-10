@@ -48,33 +48,74 @@ def normalize_vnindex_response(payload: dict, start: str, end: str) -> pd.DataFr
     if len({len(payload[key]) for key in keys}) != 1 or not payload["t"]:
         raise ValueError("DNSE response arrays must have equal, nonzero lengths")
     frame = pd.DataFrame({key: payload[key] for key in keys})
-    frame["time"] = pd.to_datetime(frame.pop("t"), unit="s", utc=True).dt.tz_convert("Asia/Ho_Chi_Minh").dt.tz_localize(None).dt.normalize()
-    frame = frame.rename(columns={"o": "open", "h": "high", "l": "low", "c": "close", "v": "volume"})
+    frame["time"] = (
+        pd.to_datetime(frame.pop("t"), unit="s", utc=True)
+        .dt.tz_convert("Asia/Ho_Chi_Minh")
+        .dt.tz_localize(None)
+        .dt.normalize()
+    )
+    frame = frame.rename(
+        columns={"o": "open", "h": "high", "l": "low", "c": "close", "v": "volume"}
+    )
     frame = frame[["time", "open", "high", "low", "close", "volume"]]
     for column in frame.columns[1:]:
         frame[column] = pd.to_numeric(frame[column], errors="raise")
-    if not np.isfinite(frame.iloc[:, 1:].to_numpy(dtype=float)).all() or (frame[["open", "high", "low", "close"]] <= 0).any().any() or frame["volume"].lt(0).any():
+    if (
+        not np.isfinite(frame.iloc[:, 1:].to_numpy(dtype=float)).all()
+        or (frame[["open", "high", "low", "close"]] <= 0).any().any()
+        or frame["volume"].lt(0).any()
+    ):
         raise ValueError("VN-Index OHLCV contains non-finite or invalid values")
     if frame["time"].duplicated().any():
         raise ValueError("VN-Index response contains duplicate session dates")
-    frame = frame.loc[frame["time"].between(pd.Timestamp(start), pd.Timestamp(end))].sort_values("time").reset_index(drop=True)
+    frame = (
+        frame.loc[frame["time"].between(pd.Timestamp(start), pd.Timestamp(end))]
+        .sort_values("time")
+        .reset_index(drop=True)
+    )
     if frame.empty:
         raise ValueError("VN-Index response has no rows in requested dates")
     return frame
 
 
-def download_vnindex(raw_dir: Path = RAW_DIR, start: str = "2007-01-01", end: str = DEFAULT_END) -> dict:
+def download_vnindex(
+    raw_dir: Path = RAW_DIR, start: str = "2007-01-01", end: str = DEFAULT_END
+) -> dict:
     """Fetch public DNSE index chart history; frozen CSV remains usable offline."""
-    params = {"symbol": "VNINDEX", "resolution": "1D", "from": int(pd.Timestamp(start, tz="UTC").timestamp()), "to": int((pd.Timestamp(end, tz="UTC") + pd.Timedelta(days=1)).timestamp())}
+    params = {
+        "symbol": "VNINDEX",
+        "resolution": "1D",
+        "from": int(pd.Timestamp(start, tz="UTC").timestamp()),
+        "to": int((pd.Timestamp(end, tz="UTC") + pd.Timedelta(days=1)).timestamp()),
+    }
     url = VNINDEX_API + "?" + urlencode(params)
-    with urlopen(Request(url, headers={"Accept": "application/json"}), timeout=30) as response:
+    with urlopen(
+        Request(url, headers={"Accept": "application/json"}), timeout=30
+    ) as response:
         content = response.read()
     frame = normalize_vnindex_response(json.loads(content), start, end)
     raw_dir.mkdir(parents=True, exist_ok=True)
     path = raw_dir / "vnindex_source.csv"
     frame.to_csv(path, index=False, date_format="%Y-%m-%d", lineterminator="\n")
-    lineage = {"provider": "DNSE public index chart API", "url": url, "documentation": "https://developers.dnse.com.vn/docs/dnse/get-ohlc-history/", "documentation_note": "Provider documentation describes OHLC data generally; the exact public chart endpoint used is recorded in url.", "requested_start": start, "requested_end": end, "first_date": str(frame["time"].min().date()), "last_date": str(frame["time"].max().date()), "rows": len(frame), "price_unit": "index points", "volume_unit": "provider index traded volume, retained but not modeled", "response_sha256": hashlib.sha256(content).hexdigest(), "csv_sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "limitation": "Historical provider precision varies; early bars have integer-point precision. Not a release-vintage archive."}
-    (raw_dir / "vnindex_lineage.json").write_text(json.dumps(lineage, ensure_ascii=False, indent=2), encoding="utf-8")
+    lineage = {
+        "provider": "DNSE public index chart API",
+        "url": url,
+        "documentation": "https://developers.dnse.com.vn/docs/dnse/get-ohlc-history/",
+        "documentation_note": "Provider documentation describes OHLC data generally; the exact public chart endpoint used is recorded in url.",
+        "requested_start": start,
+        "requested_end": end,
+        "first_date": str(frame["time"].min().date()),
+        "last_date": str(frame["time"].max().date()),
+        "rows": len(frame),
+        "price_unit": "index points",
+        "volume_unit": "provider index traded volume, retained but not modeled",
+        "response_sha256": hashlib.sha256(content).hexdigest(),
+        "csv_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "limitation": "Historical provider precision varies; early bars have integer-point precision. Not a release-vintage archive.",
+    }
+    (raw_dir / "vnindex_lineage.json").write_text(
+        json.dumps(lineage, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     return lineage
 
 
@@ -82,11 +123,29 @@ def audit_industry_coverage(raw_dir: Path = RAW_DIR, end: str = DEFAULT_END) -> 
     """Document the observed sector archive instead of extrapolating it to 2007."""
     path = raw_dir / "ict_industry_source.csv"
     if not path.is_file():
-        return {"modeling_status": "excluded", "reason": "No archived sector observations"}
+        return {
+            "modeling_status": "excluded",
+            "reason": "No archived sector observations",
+        }
     source = pd.read_csv(path)
     dates = pd.to_datetime(source["Date"], format="%d-%m-%Y", errors="raise")
     dates = dates.loc[dates.le(pd.Timestamp(end))].sort_values()
-    return {"provider": "Simply Wall St Vietnam Tech", "url": "https://simplywall.st/markets/vn/tech", "archive_rows": len(dates), "archive_first_date": str(dates.min().date()), "archive_last_date": str(dates.max().date()), "covers_2007": bool(dates.min() <= pd.Timestamp("2007-01-02")), "largest_gap_calendar_days": int(dates.diff().dt.days.max()), "modeling_status": "excluded", "excluded_columns": ["ict_market_cap_vnd", "ict_pe", "ict_absolute_pe"], "reason": "Sparse sector valuation snapshots; no 2007 coverage and historical constituent membership/weights are not archived. No backward interpolation or fabricated sector history.", "live_page_check_date": "2026-10-29", "live_page_evidence": "Public sector page offers 1Y/3Y/5Y/10Y views and currently aggregated company financials; this does not verify a 2007 point-in-time series.", "alternative_decision": "Retain VN-Index as a broad-market control. It is NOT an ICT-sector replacement. A fixed basket of today's listed technology firms would introduce selection/survivorship bias without historical constituents; therefore no synthetic ICT proxy is claimed.", "ablation_policy": "G5 marked unavailable/excluded; if reported alongside G4, it has exactly the same features and is not an independent industry ablation."}
+    return {
+        "provider": "Simply Wall St Vietnam Tech",
+        "url": "https://simplywall.st/markets/vn/tech",
+        "archive_rows": len(dates),
+        "archive_first_date": str(dates.min().date()),
+        "archive_last_date": str(dates.max().date()),
+        "covers_2007": bool(dates.min() <= pd.Timestamp("2007-01-02")),
+        "largest_gap_calendar_days": int(dates.diff().dt.days.max()),
+        "modeling_status": "excluded",
+        "excluded_columns": ["ict_market_cap_vnd", "ict_pe", "ict_absolute_pe"],
+        "reason": "Sparse sector valuation snapshots; no 2007 coverage and historical constituent membership/weights are not archived. No backward interpolation or fabricated sector history.",
+        "live_page_check_date": "2026-10-29",
+        "live_page_evidence": "Public sector page offers 1Y/3Y/5Y/10Y views and currently aggregated company financials; this does not verify a 2007 point-in-time series.",
+        "alternative_decision": "Retain VN-Index as a broad-market control. It is NOT an ICT-sector replacement. A fixed basket of today's listed technology firms would introduce selection/survivorship bias without historical constituents; therefore no synthetic ICT proxy is claimed.",
+        "ablation_policy": "G5 marked unavailable/excluded; if reported alongside G4, it has exactly the same features and is not an independent industry ablation.",
+    }
 
 
 def _parse_dates(values: pd.Series, fmt: str) -> pd.Series:
@@ -104,12 +163,18 @@ def _numeric(values: pd.Series, *, percent: bool = False) -> pd.Series:
 def _market_cap_vnd(values: pd.Series) -> pd.Series:
     text = values.astype("string").str.strip().str.replace(",", "", regex=False)
     trillion = text.str.contains("t", case=False, na=False)
-    number = pd.to_numeric(text.str.replace(r"[^0-9.\\-]", "", regex=True), errors="coerce")
+    number = pd.to_numeric(
+        text.str.replace(r"[^0-9.\\-]", "", regex=True), errors="coerce"
+    )
     return number * np.where(trillion, 1_000_000_000_000.0, 1.0)
 
 
 def _multiple(values: pd.Series) -> pd.Series:
-    text = values.astype("string").str.strip().str.replace("x", "", case=False, regex=False)
+    text = (
+        values.astype("string")
+        .str.strip()
+        .str.replace("x", "", case=False, regex=False)
+    )
     return pd.to_numeric(text, errors="coerce")
 
 
@@ -118,7 +183,10 @@ def _quarter_end(year: pd.Series, quarter: pd.Series) -> pd.Series:
     quarter_number = pd.to_numeric(quarter, errors="coerce")
     month = quarter_number * 3
     return pd.to_datetime(
-        year_number.astype("Int64").astype("string") + "-" + month.astype("Int64").astype("string") + "-01",
+        year_number.astype("Int64").astype("string")
+        + "-"
+        + month.astype("Int64").astype("string")
+        + "-01",
         errors="coerce",
     ) + pd.offsets.MonthEnd(0)
 
@@ -142,7 +210,9 @@ def _quarterly_fundamentals(frame: pd.DataFrame) -> pd.DataFrame:
     data = frame.copy()
     if {"period", "id", "value"}.issubset(data.columns):
         data["value"] = pd.to_numeric(data["value"], errors="coerce")
-        data = data.pivot_table(index="period", columns="id", values="value", aggfunc="last").reset_index()
+        data = data.pivot_table(
+            index="period", columns="id", values="value", aggfunc="last"
+        ).reset_index()
         data["time"] = data["period"].map(_period_end)
     if "time" not in data.columns:
         raise ValueError("Báo cáo tài chính phải có period hoặc time")
@@ -153,7 +223,12 @@ def _quarterly_fundamentals(frame: pd.DataFrame) -> pd.DataFrame:
         "IS_NET_PROFIT_AFTER_TAX_PARENT": "fpt_parent_net_profit_vnd",
     }
     selected = [column for column in mapping if column in data.columns]
-    return data[["time", *selected]].rename(columns=mapping).sort_values("time").reset_index(drop=True)
+    return (
+        data[["time", *selected]]
+        .rename(columns=mapping)
+        .sort_values("time")
+        .reset_index(drop=True)
+    )
 
 
 def trim_source_exports(raw_dir: Path, end: str) -> dict[str, int]:
@@ -187,7 +262,9 @@ def trim_source_exports(raw_dir: Path, end: str) -> dict[str, int]:
     return removed
 
 
-def normalize_source_snapshots(raw_dir: Path = RAW_DIR, end: str = DEFAULT_END) -> dict[str, dict]:
+def normalize_source_snapshots(
+    raw_dir: Path = RAW_DIR, end: str = DEFAULT_END
+) -> dict[str, dict]:
     """Convert vendor-export CSVs into stable, documented machine-readable tables."""
     end_date = pd.Timestamp(end).normalize()
     outputs: dict[str, pd.DataFrame] = {}
@@ -204,51 +281,72 @@ def normalize_source_snapshots(raw_dir: Path = RAW_DIR, end: str = DEFAULT_END) 
         raise FileNotFoundError(f"Thiếu snapshot nguồn: {missing_files}")
 
     fx = pd.read_csv(raw_dir / "usd_vnd_source.csv")
-    outputs["usd_vnd_daily.csv"] = pd.DataFrame({
-        "time": _parse_dates(fx["Ngày"], "%d/%m/%Y"),
-        "usd_vnd_rate": _numeric(fx["Lần cuối"]),
-    })
+    outputs["usd_vnd_daily.csv"] = pd.DataFrame(
+        {
+            "time": _parse_dates(fx["Ngày"], "%d/%m/%Y"),
+            "usd_vnd_rate": _numeric(fx["Lần cuối"]),
+        }
+    )
 
     gold = pd.read_csv(raw_dir / "gold_xauusd_source.csv")
-    outputs["gold_xauusd_daily.csv"] = pd.DataFrame({
-        "time": _parse_dates(gold["Ngày"], "%d/%m/%Y"),
-        "gold_usd_per_ounce": _numeric(gold["Lần cuối"]),
-    })
+    outputs["gold_xauusd_daily.csv"] = pd.DataFrame(
+        {
+            "time": _parse_dates(gold["Ngày"], "%d/%m/%Y"),
+            "gold_usd_per_ounce": _numeric(gold["Lần cuối"]),
+        }
+    )
 
     cpi = pd.read_csv(raw_dir / "vietnam_cpi_source.csv")
-    outputs["vietnam_cpi.csv"] = pd.DataFrame({
-        "time": _parse_dates(cpi["Ngày Phát Hành"], "%m/%d/%Y"),
-        "cpi_yoy_pct": _numeric(cpi["Thực tế"], percent=True),
-    })
+    outputs["vietnam_cpi.csv"] = pd.DataFrame(
+        {
+            "time": _parse_dates(cpi["Ngày Phát Hành"], "%m/%d/%Y"),
+            "cpi_yoy_pct": _numeric(cpi["Thực tế"], percent=True),
+        }
+    )
 
     gdp = pd.read_csv(raw_dir / "vietnam_gdp_source.csv")
     gdp_year = pd.to_numeric(gdp["Year"], errors="coerce")
     gdp = gdp.loc[gdp_year.le(end_date.year - 1)].copy()
     # Annual GDP is considered observable only after a conservative six-month lag.
-    outputs["vietnam_gdp.csv"] = pd.DataFrame({
-        "time": pd.to_datetime(pd.to_numeric(gdp["Year"], errors="coerce").astype("Int64").astype("string") + "-12-31", errors="coerce"),
-        "gdp_usd": pd.to_numeric(gdp["GDP_in_USD"], errors="coerce"),
-    })
+    outputs["vietnam_gdp.csv"] = pd.DataFrame(
+        {
+            "time": pd.to_datetime(
+                pd.to_numeric(gdp["Year"], errors="coerce")
+                .astype("Int64")
+                .astype("string")
+                + "-12-31",
+                errors="coerce",
+            ),
+            "gdp_usd": pd.to_numeric(gdp["GDP_in_USD"], errors="coerce"),
+        }
+    )
 
     industry = pd.read_csv(raw_dir / "ict_industry_source.csv")
-    outputs["ict_industry.csv"] = pd.DataFrame({
-        "time": _parse_dates(industry["Date"], "%d-%m-%Y"),
-        "ict_market_cap_vnd": _market_cap_vnd(industry["Market Cap"]),
-        "ict_pe": _multiple(industry["PE"]),
-        "ict_absolute_pe": _multiple(industry["Absolute PE"]),
-    })
+    outputs["ict_industry.csv"] = pd.DataFrame(
+        {
+            "time": _parse_dates(industry["Date"], "%d-%m-%Y"),
+            "ict_market_cap_vnd": _market_cap_vnd(industry["Market Cap"]),
+            "ict_pe": _multiple(industry["PE"]),
+            "ict_absolute_pe": _multiple(industry["Absolute PE"]),
+        }
+    )
 
     financial = pd.read_csv(raw_dir / "fpt_income_statement_source.csv")
     report_date = _quarter_end(financial["Năm"], financial["Kỳ"])
-    outputs["fpt_fundamentals_quarterly.csv"] = pd.DataFrame({
-        "time": report_date,
-        "fpt_net_revenue_vnd": _numeric(financial["Doanh thu thuần"]),
-        "fpt_gross_profit_vnd": _numeric(financial["Lãi gộp"]),
-        # Source interest expenses are signed negative: EBT - signed interest
-        # expense = earnings before interest and tax under this definition.
-        "fpt_ebit_vnd": _numeric(financial["LN trước thuế"]) + _numeric(financial["Chi phí tiền lãi vay"]).abs(),
-        "fpt_parent_net_profit_vnd": _numeric(financial["Lợi nhuận sau thuế của Cổ đông công ty mẹ (đồng)"]),
-    })
+    outputs["fpt_fundamentals_quarterly.csv"] = pd.DataFrame(
+        {
+            "time": report_date,
+            "fpt_net_revenue_vnd": _numeric(financial["Doanh thu thuần"]),
+            "fpt_gross_profit_vnd": _numeric(financial["Lãi gộp"]),
+            # Source interest expenses are signed negative: EBT - signed interest
+            # expense = earnings before interest and tax under this definition.
+            "fpt_ebit_vnd": _numeric(financial["LN trước thuế"])
+            + _numeric(financial["Chi phí tiền lãi vay"]).abs(),
+            "fpt_parent_net_profit_vnd": _numeric(
+                financial["Lợi nhuận sau thuế của Cổ đông công ty mẹ (đồng)"]
+            ),
+        }
+    )
 
     audit: dict[str, dict] = {}
     for filename, frame in outputs.items():
@@ -256,15 +354,25 @@ def normalize_source_snapshots(raw_dir: Path = RAW_DIR, end: str = DEFAULT_END) 
         frame = frame.loc[frame["time"].le(end_date)]
         value_columns = [column for column in frame.columns if column != "time"]
         frame = frame.dropna(subset=value_columns, how="all")
-        frame = frame.sort_values("time").drop_duplicates("time", keep="last").reset_index(drop=True)
-        frame.to_csv(raw_dir / filename, index=False, date_format="%Y-%m-%d", lineterminator="\n")
+        frame = (
+            frame.sort_values("time")
+            .drop_duplicates("time", keep="last")
+            .reset_index(drop=True)
+        )
+        frame.to_csv(
+            raw_dir / filename, index=False, date_format="%Y-%m-%d", lineterminator="\n"
+        )
         audit[filename] = {
             "rows": int(len(frame)),
             "first_date": str(frame["time"].min().date()) if len(frame) else None,
             "last_date": str(frame["time"].max().date()) if len(frame) else None,
             "columns": list(frame.columns),
-            "missing_values": {column: int(frame[column].isna().sum()) for column in frame.columns},
-            "sha256": hashlib.sha256((raw_dir / filename).read_bytes().replace(b"\r\n", b"\n")).hexdigest(),
+            "missing_values": {
+                column: int(frame[column].isna().sum()) for column in frame.columns
+            },
+            "sha256": hashlib.sha256(
+                (raw_dir / filename).read_bytes().replace(b"\r\n", b"\n")
+            ).hexdigest(),
         }
     return audit
 
@@ -281,11 +389,15 @@ def release_aware_asof(
     """Join only values whose conservative availability date is not in the future."""
     if date_column not in observations:
         raise ValueError(f"Thiếu cột ngày {date_column}")
-    values = value_columns or [column for column in observations.columns if column != date_column]
+    values = value_columns or [
+        column for column in observations.columns if column != date_column
+    ]
     left_dates = pd.Series(pd.to_datetime(trading_dates, errors="coerce"))
     left = pd.DataFrame({"date": left_dates.dt.normalize()})
     right = observations[[date_column, *values]].copy()
-    right[date_column] = pd.to_datetime(right[date_column], errors="coerce").dt.normalize()
+    right[date_column] = pd.to_datetime(
+        right[date_column], errors="coerce"
+    ).dt.normalize()
     right = right.dropna(subset=[date_column]).sort_values(date_column)
     right["available_date"] = right[date_column] + pd.to_timedelta(delay_days, unit="D")
     right = right.drop(columns=[date_column]).sort_values("available_date")
@@ -293,41 +405,74 @@ def release_aware_asof(
     if delay_days < 0 or (max_age_days is not None and max_age_days < 0):
         raise ValueError("Availability delay and maximum age cannot be negative")
     return pd.merge_asof(
-        left.sort_values("date"), right, left_on="date", right_on="available_date",
-        direction="backward", allow_exact_matches=True,
+        left.sort_values("date"),
+        right,
+        left_on="date",
+        right_on="available_date",
+        direction="backward",
+        allow_exact_matches=True,
         tolerance=pd.Timedelta(days=max_age_days) if max_age_days is not None else None,
     ).drop(columns=["available_date"])
 
 
-def prepare_multisource_features(price_data: pd.DataFrame, raw_dir: Path = RAW_DIR, end: str = DEFAULT_END) -> tuple[pd.DataFrame, dict]:
+def prepare_multisource_features(
+    price_data: pd.DataFrame, raw_dir: Path = RAW_DIR, end: str = DEFAULT_END
+) -> tuple[pd.DataFrame, dict]:
     """Create one point-in-time feature row per FPT session; never backfill."""
     data = price_data.copy()
     data["date"] = pd.to_datetime(data["time"], errors="coerce").dt.normalize()
     end_date = pd.Timestamp(end)
-    data = data.loc[data["date"].le(end_date)].sort_values("date").reset_index(drop=True)
+    data = (
+        data.loc[data["date"].le(end_date)].sort_values("date").reset_index(drop=True)
+    )
     delays = {
         "usd_vnd_daily.csv": ("usd_vnd", ["usd_vnd_rate"], 1, 10),
         "gold_xauusd_daily.csv": ("gold", ["gold_usd_per_ounce"], 1, 10),
         "vietnam_cpi.csv": ("cpi", ["cpi_yoy_pct"], 1, 65),
         "vietnam_gdp.csv": ("gdp", ["gdp_usd"], 180, 550),
-        "ict_industry.csv": ("industry", ["ict_market_cap_vnd", "ict_pe", "ict_absolute_pe"], 1, 180),
+        "ict_industry.csv": (
+            "industry",
+            ["ict_market_cap_vnd", "ict_pe", "ict_absolute_pe"],
+            1,
+            180,
+        ),
         "fpt_fundamentals_quarterly.csv": (
             "fundamentals",
-            ["fpt_net_revenue_vnd", "fpt_gross_profit_vnd", "fpt_ebit_vnd", "fpt_parent_net_profit_vnd"],
-            45, 150,
+            [
+                "fpt_net_revenue_vnd",
+                "fpt_gross_profit_vnd",
+                "fpt_ebit_vnd",
+                "fpt_parent_net_profit_vnd",
+            ],
+            45,
+            150,
         ),
         "fpt_shares_outstanding.csv": ("shares", ["fpt_shares_outstanding"], 1, 550),
     }
     source_audit: dict[str, dict] = {}
-    vn = pd.read_csv(raw_dir / "vnindex_source.csv", parse_dates=["time"]).sort_values("time")
+    vn = pd.read_csv(raw_dir / "vnindex_source.csv", parse_dates=["time"]).sort_values(
+        "time"
+    )
     vn = vn.loc[vn.time.le(pd.Timestamp(end))].copy()
     vn["vnindex_return_1d"] = np.log(vn.close / vn.close.shift(1))
     vn["vnindex_volatility_20d"] = vn.vnindex_return_1d.rolling(20).std(ddof=0)
     cols = ["vnindex_return_1d", "vnindex_volatility_20d"]
-    aligned_market = release_aware_asof(data.date, vn[["time", *cols]], delay_days=1, value_columns=cols, max_age_days=10)
+    aligned_market = release_aware_asof(
+        data.date,
+        vn[["time", *cols]],
+        delay_days=1,
+        value_columns=cols,
+        max_age_days=10,
+    )
     for col in cols:
         data[col] = aligned_market[col].to_numpy()
-    source_audit["vnindex"] = {"provider": "DNSE", "raw_rows": len(vn), "first_date": str(vn.time.min().date()), "last_date": str(vn.time.max().date()), "availability_delay_calendar_days": 1}
+    source_audit["vnindex"] = {
+        "provider": "DNSE",
+        "raw_rows": len(vn),
+        "first_date": str(vn.time.min().date()),
+        "last_date": str(vn.time.max().date()),
+        "availability_delay_calendar_days": 1,
+    }
     for filename, (group, columns, delay, max_age) in delays.items():
         path = raw_dir / filename
         if not path.is_file():
@@ -336,11 +481,21 @@ def prepare_multisource_features(price_data: pd.DataFrame, raw_dir: Path = RAW_D
         raw = pd.read_csv(path)
         selected = [column for column in columns if column in raw.columns]
         if raw.empty or "time" not in raw.columns or not selected:
-            source_audit[group] = {"status": "empty_or_invalid", "file": filename, "rows": int(len(raw))}
+            source_audit[group] = {
+                "status": "empty_or_invalid",
+                "file": filename,
+                "rows": int(len(raw)),
+            }
             continue
         for column in selected:
             raw[column] = pd.to_numeric(raw[column], errors="coerce")
-        aligned = release_aware_asof(data["date"], raw, delay_days=delay, value_columns=selected, max_age_days=max_age)
+        aligned = release_aware_asof(
+            data["date"],
+            raw,
+            delay_days=delay,
+            value_columns=selected,
+            max_age_days=max_age,
+        )
         for column in selected:
             data[column] = aligned[column].to_numpy()
         valid = data[selected].notna().any(axis=1)
@@ -351,9 +506,15 @@ def prepare_multisource_features(price_data: pd.DataFrame, raw_dir: Path = RAW_D
             "selected_columns": selected,
             "availability_delay_calendar_days": int(delay),
             "maximum_age_after_availability_calendar_days": int(max_age),
-            "first_available_session": str(data.loc[valid, "date"].min().date()) if valid.any() else None,
-            "last_available_session": str(data.loc[valid, "date"].max().date()) if valid.any() else None,
-            "missing_session_values": {column: int(data[column].isna().sum()) for column in selected},
+            "first_available_session": (
+                str(data.loc[valid, "date"].min().date()) if valid.any() else None
+            ),
+            "last_available_session": (
+                str(data.loc[valid, "date"].max().date()) if valid.any() else None
+            ),
+            "missing_session_values": {
+                column: int(data[column].isna().sum()) for column in selected
+            },
         }
     if {"gold_usd_per_ounce", "usd_vnd_rate"}.issubset(data.columns):
         data["gold_vnd_per_ounce"] = data["gold_usd_per_ounce"] * data["usd_vnd_rate"]
@@ -378,7 +539,9 @@ def prepare_multisource_features(price_data: pd.DataFrame, raw_dir: Path = RAW_D
     return data, audit
 
 
-def run_from_cache(raw_dir: Path, output_path: Path, end: str = DEFAULT_END, trim_inputs: bool = False) -> dict:
+def run_from_cache(
+    raw_dir: Path, output_path: Path, end: str = DEFAULT_END, trim_inputs: bool = False
+) -> dict:
     end = pd.Timestamp(end).strftime("%Y-%m-%d")
     trimmed = trim_source_exports(raw_dir, end) if trim_inputs else {}
     raw_audit = normalize_source_snapshots(raw_dir, end=end)
@@ -387,22 +550,43 @@ def run_from_cache(raw_dir: Path, output_path: Path, end: str = DEFAULT_END, tri
     prices = prices.loc[prices["time"].le(pd.Timestamp(end))]
     aligned, audit = prepare_multisource_features(prices, raw_dir, end=end)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    aligned.to_csv(output_path, index=False, date_format="%Y-%m-%d", lineterminator="\n")
+    aligned.to_csv(
+        output_path, index=False, date_format="%Y-%m-%d", lineterminator="\n"
+    )
     audit["sector_coverage"] = audit_industry_coverage(raw_dir, end)
     (ROOT / "reports").mkdir(exist_ok=True)
-    (ROOT / "reports/sector_coverage_audit.json").write_text(json.dumps(audit["sector_coverage"], ensure_ascii=False, indent=2), encoding="utf-8")
+    (ROOT / "reports/sector_coverage_audit.json").write_text(
+        json.dumps(audit["sector_coverage"], ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
     audit["normalized_raw_sources"] = raw_audit
     audit["input_rows_removed_by_cutoff_this_run"] = trimmed
     audit["input_snapshots"] = {
-        path.name: {"sha256": hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest(), "bytes": path.stat().st_size}
+        path.name: {
+            "sha256": hashlib.sha256(
+                path.read_bytes().replace(b"\r\n", b"\n")
+            ).hexdigest(),
+            "bytes": path.stat().st_size,
+        }
         for path in sorted(raw_dir.glob("*_source.csv"))
     }
     shares_path = raw_dir / "fpt_shares_outstanding.csv"
-    audit["input_snapshots"][shares_path.name] = {"sha256": hashlib.sha256(shares_path.read_bytes().replace(b"\r\n", b"\n")).hexdigest(), "bytes": shares_path.stat().st_size}
-    audit["output_file"] = output_path.relative_to(ROOT).as_posix() if output_path.is_relative_to(ROOT) else str(output_path)
+    audit["input_snapshots"][shares_path.name] = {
+        "sha256": hashlib.sha256(
+            shares_path.read_bytes().replace(b"\r\n", b"\n")
+        ).hexdigest(),
+        "bytes": shares_path.stat().st_size,
+    }
+    audit["output_file"] = (
+        output_path.relative_to(ROOT).as_posix()
+        if output_path.is_relative_to(ROOT)
+        else str(output_path)
+    )
     audit_path = ROOT / "reports" / "supplemental_data_audit.json"
     audit_path.parent.mkdir(parents=True, exist_ok=True)
-    audit_path.write_text(json.dumps(audit, ensure_ascii=False, indent=2), encoding="utf-8")
+    audit_path.write_text(
+        json.dumps(audit, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     return audit
 
 
@@ -410,17 +594,33 @@ def main() -> None:
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8")
-    parser = argparse.ArgumentParser(description="Normalize archived macro, industry, and FPT financial CSVs; align them without look-ahead.")
+    parser = argparse.ArgumentParser(
+        description="Normalize archived macro, industry, and FPT financial CSVs; align them without look-ahead."
+    )
     parser.add_argument("--raw-dir", type=Path, default=RAW_DIR)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--end", default=DEFAULT_END)
-    parser.add_argument("--from-cache", action="store_true", help="Explicitly select the offline, reproducible snapshot workflow.")
-    parser.add_argument("--trim-inputs", action="store_true", help="Also remove source-export observations after the cutoff and GDP forecast year.")
-    parser.add_argument("--download-market", action="store_true", help="Refresh VN-Index directly from DNSE")
+    parser.add_argument(
+        "--from-cache",
+        action="store_true",
+        help="Explicitly select the offline, reproducible snapshot workflow.",
+    )
+    parser.add_argument(
+        "--trim-inputs",
+        action="store_true",
+        help="Also remove source-export observations after the cutoff and GDP forecast year.",
+    )
+    parser.add_argument(
+        "--download-market",
+        action="store_true",
+        help="Refresh VN-Index directly from DNSE",
+    )
     args = parser.parse_args()
     if args.download_market:
         download_vnindex(args.raw_dir, end=args.end)
-    audit = run_from_cache(args.raw_dir, args.output, end=args.end, trim_inputs=args.trim_inputs)
+    audit = run_from_cache(
+        args.raw_dir, args.output, end=args.end, trim_inputs=args.trim_inputs
+    )
     print(json.dumps(audit, ensure_ascii=False, indent=2))
 
 
