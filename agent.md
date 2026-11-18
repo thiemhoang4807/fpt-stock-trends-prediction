@@ -162,7 +162,7 @@ Hoàn tất đợt rà soát: commit 20741e9 đã được push lên origin/main
 - [x] Chạy lại EDA, chuỗi thời gian, CV/Test, dự báo và giải thích; trích 3 ca lỗi có bằng chứng.
 - [x] Viết lại tài liệu theo 7 bước, cẩm nang riêng và Proposal PDF.
 - [x] Cập nhật/chạy 10 notebook và kiểm thử; kiểm tra artefact và chống rò rỉ.
-- [ ] Dọn kết quả cũ và tmp, commit/push main, xác minh cẩm nang không công bố.
+- [x] Dọn kết quả cũ và tmp, commit/push main, xác minh cẩm nang không công bố.
 
 Thiết kế: giữ nguyên snapshot đến 30/09/2025 và cohort 1.559 nhãn để đối chiếu. Chọn mô hình bằng RMSE log return CV, không dùng Test. XGBoost chọn tham số trên 32 biến rồi giữ cùng tham số ở 38/43 biến để cô lập ảnh hưởng dữ liệu. GRU giữ hai cửa sổ. Baseline bằng 0 được ghi Đứng giá. Báo cáo quý trễ 45 ngày; cổ phiếu lưu hành dùng mốc hiệu lực đã có cộng 1 ngày (không giả định mọi số cổ phiếu đều là báo cáo quý). ADF/KPSS hỗ trợ lý do đổi thang mục tiêu, không chứng minh việc đổi thang bảo đảm dự báo tốt.
 
@@ -175,3 +175,5 @@ Kiểm định cuối: 10/10 notebook chạy bằng kernel mới trong bản sao
 Đã hoàn thiện cẩm nang riêng: kịch bản 10 phút/3 người/7 bước, ví dụ 5 ngày và công thức, 5 phương pháp, 3 bảng thực nghiệm, dòng dữ liệu thật 29/09→30/09/2025, permutation/SHAP, 3 ca lỗi và 10 câu vấn đáp. Tệp vẫn bị Git bỏ qua. Đang kiểm tra đóng gói cuối và công bố main.
 
 Cẩm nang đã kiểm tra đầy đủ 10 phần và 10 câu vấn đáp, không tracked; quy ước giữ nguyên Proposal trong các đợt sau đã ghi ở đầu nhật ký. Mọi kiểm thử/notebook đã hoàn tất; bắt đầu dọn tmp/cache và chuẩn bị commit chính thức.
+
+Hoàn tất: commit 6d2f11a đã push thành công lên origin/main; SHA local và remote khớp. Working tree sạch sau push, tmp/cache và tệp phụ LaTeX đã dọn; cẩm nang không tracked. Nhật ký xác nhận này được đồng bộ bằng commit tài liệu cuối. Tất cả 6 hạng mục của thiết kế rút gọn đã hoàn thành.
