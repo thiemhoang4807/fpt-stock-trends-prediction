@@ -10,8 +10,6 @@ import pandas as pd
 
 from features import (
     PRICE_ONLY_FEATURE_COLUMNS,
-    FEATURE_COLUMNS,
-    OHLC_FEATURE_COLUMNS,
     build_feature_table,
     load_price_data,
 )
@@ -53,7 +51,7 @@ def merge_supplemental(
 def build_experiment_table(
     input_path: Path, supplemental_path: Path = DEFAULT_SUPPLEMENTAL
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, list[str]]]:
-    """Return all price features, the common two-branch cohort, and input lists."""
+    """Return all price features, the common experiment cohort, and input lists."""
     raw = load_price_data(input_path)
     base = build_feature_table(raw)
     joined, supplemental_columns = merge_supplemental(base, supplemental_path)
@@ -68,29 +66,19 @@ def build_experiment_table(
     common = joined.loc[eligible].copy().reset_index(drop=True)
     common.attrs["sequence_context"] = joined
     if common.empty:
-        raise ValueError("No common observations with complete two-branch inputs")
+        raise ValueError("No common observations with complete experiment inputs")
     return base, common, branches
 
 
 def feature_groups() -> dict[str, list[str]]:
-    """Cumulative ablation inputs; the unavailable sector block is explicit."""
-    g1 = ["current_close", "current_volume"] + [
-        c
-        for c in FEATURE_COLUMNS
-        if c.startswith("return_") or c.startswith("log_volume_")
-    ]
-    g2 = list(dict.fromkeys(g1 + FEATURE_COLUMNS))
-    g3 = list(PRICE_ONLY_FEATURE_COLUMNS)
+    """Three cumulative input levels, with no unavailable sector block."""
+    price = list(PRICE_ONLY_FEATURE_COLUMNS)
     financial = [c for c in MODEL_SUPPLEMENTAL_COLUMNS if c.startswith("fpt_")]
-    sector = [c for c in MODEL_SUPPLEMENTAL_COLUMNS if c.startswith("ict_")]
-    macro = [c for c in MODEL_SUPPLEMENTAL_COLUMNS if c not in financial + sector]
+    macro = [c for c in MODEL_SUPPLEMENTAL_COLUMNS if c not in financial]
     return {
-        "G1": g1,
-        "G2": g2,
-        "G3": g3,
-        "G4": g3 + macro,
-        "G5": g3 + macro + sector,
-        "G6": g3 + macro + sector + financial,
+        "price_32": price,
+        "macro_38": price + macro,
+        "financial_43": price + macro + financial,
     }
 
 
@@ -101,14 +89,14 @@ def prepare(
     table, common, branches = build_experiment_table(input_path, supplemental_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     table.to_csv(output_path, index=False)
-    common.to_csv(output_path.parent / "fpt_two_branch_features.csv", index=False)
+    common.to_csv(output_path.parent / "fpt_experiment_features.csv", index=False)
     usable_outcomes = int(table["target_date"].notna().sum())
     print(f"Raw rows: {len(raw)}")
     print(f"Rows with complete backward-looking features: {len(table)}")
     print(f"Labeled next-session rows: {usable_outcomes}")
     print(f"Branch 1 input columns: {len(branches[BRANCH_PRICE])}")
     print(f"Branch 2 input columns: {len(branches[BRANCH_MACRO])}")
-    print(f"Common two-branch rows (including latest unlabeled row): {len(common)}")
+    print(f"Common experiment rows (including latest unlabeled row): {len(common)}")
     print(f"Saved: {output_path}")
     return len(table), usable_outcomes
 

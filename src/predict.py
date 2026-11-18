@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 import joblib
-import numpy as np
+from metrics import direction_from_return, restore_price
 from sequence_models import predict_sequence_artifact, predict_statistical_artifact
 from features import build_feature_table, load_price_data
 from prepare import merge_supplemental
@@ -25,11 +25,8 @@ def predict_latest(
 ) -> dict:
     data = load_price_data(input_path)
     table = build_feature_table(data)
-    classifier = joblib.load(models_dir / "best_classifier.joblib")
     regressor = joblib.load(models_dir / "best_regressor.joblib")
-    required_columns = set(classifier["feature_columns"]) | set(
-        regressor["feature_columns"]
-    )
+    required_columns = set(regressor["feature_columns"])
     if not required_columns.issubset(table.columns):
         table, _ = merge_supplemental(table, supplemental_path)
     if not required_columns.issubset(table.columns):
@@ -54,49 +51,23 @@ def predict_latest(
             return float(predict_statistical_artifact(artifact, table)[0])
         return float(artifact["model"].predict(latest[artifact["feature_columns"]])[0])
 
-    kind = classifier.get("model_kind", "tabular")
-    direction_prob_up = None
-    class_score_value = forecast(classifier)
-    if kind == "sequence":
-        direction_prob_up = class_score_value
-        direction_value = int(class_score_value >= 0.5)
-    elif kind == "statistical":
-        direction_value = int(class_score_value > 0)
-    else:
-        direction_value = int(class_score_value)
-        if hasattr(classifier["model"], "predict_proba"):
-            direction_prob_up = float(
-                classifier["model"].predict_proba(
-                    latest[classifier["feature_columns"]]
-                )[0, 1]
-            )
-        else:
-            class_score_value = float(
-                classifier["model"].decision_function(
-                    latest[classifier["feature_columns"]]
-                )[0]
-            )
     predicted_log_return = forecast(regressor)
-    predicted_close = float(latest.current_close.iloc[0] * np.exp(predicted_log_return))
     current_close = float(latest["current_close"].iloc[0])
+    predicted_close = float(restore_price([current_close], [predicted_log_return])[0])
+    sign = int(direction_from_return([predicted_log_return])[0])
     result = {
         "as_of_session": latest["date"].iloc[0].strftime("%Y-%m-%d"),
         "prediction_target": "next observed trading session",
         "price_unit": "thousand VND per share",
+        "model": regressor["model_name"],
+        "feature_level": regressor.get("feature_level", "price_32"),
         "current_close": current_close,
-        "classifier_model": classifier["model_name"],
-        "classifier_feature_set": classifier.get("feature_set", "Branch_1_Price_Only"),
-        "predicted_direction": "up" if direction_value == 1 else "down",
-        "probability_up_conditional_on_nonflat_direction": direction_prob_up,
-        "regression_model": regressor["model_name"],
-        "regression_feature_set": regressor.get("feature_set", "Branch_1_Price_Only"),
         "predicted_next_log_return": predicted_log_return,
-        "direction_score": class_score_value,
-        "direction_score_note": "Probability is null for SVC margins or statistical return forecasts; do not interpret these scores as probabilities.",
         "predicted_next_close": predicted_close,
-        "predicted_change_percent_from_current": (predicted_close / current_close - 1.0)
-        * 100.0,
-        "note": "Educational model output based on source history through the as-of session; not an investment recommendation.",
+        "predicted_direction_sign": sign,
+        "predicted_direction": {-1: "down", 0: "unchanged", 1: "up"}[sign],
+        "predicted_change_percent_from_current": (predicted_close / current_close - 1)
+        * 100,
     }
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(

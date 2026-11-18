@@ -24,8 +24,9 @@ class RecurrentForecaster(nn.Module):
 
     def __init__(self, input_size: int, hidden_size: int, kind: str):
         super().__init__()
-        layer = nn.LSTM if kind.upper() == "LSTM" else nn.GRU
-        self.recurrent = layer(input_size, hidden_size, batch_first=True)
+        if kind.upper() != "GRU":
+            raise ValueError("The reduced experiment uses GRU only")
+        self.recurrent = nn.GRU(input_size, hidden_size, batch_first=True)
         self.head = nn.Linear(hidden_size, 1)
 
     def forward(self, values):
@@ -118,19 +119,19 @@ def fit_predict_sequence(
     seed: int = 42,
     learning_rate: float = 0.001,
 ) -> tuple[np.ndarray, dict[str, Any]]:
-    """Fit on past windows and return probabilities or next-session log returns.
+    """Fit GRU on past windows and predict next-session log returns.
 
     Regression targets are multiplied by 100 during neural optimization, then
     divided by 100 on output. No validation/test outcomes control epochs.
     """
     kind = kind.upper()
-    if kind not in {"LSTM", "GRU"} or task not in {"classification", "regression"}:
-        raise ValueError("Use LSTM/GRU and classification/regression")
+    if kind != "GRU" or task != "regression":
+        raise ValueError("Use GRU with the regression log-return target")
     if epochs < 1 or hidden_size < 1:
         raise ValueError("epochs and hidden_size must be positive")
     train_indices, eval_indices = _validate_indices(table, train_indices, eval_indices)
     context, indexer = _context(table)
-    target_column = "direction" if task == "classification" else "next_log_return"
+    target_column = "next_log_return"
     target_values = context[target_column].to_numpy(dtype=float)
     train_positions = indexer[train_indices]
     train_positions = train_positions[np.isfinite(target_values[train_positions])]
@@ -148,7 +149,7 @@ def fit_predict_sequence(
         pd.DataFrame(train_windows.reshape(-1, n_features), columns=feature_columns)
     ).reshape(train_windows.shape)
     y_train = target_values[train_positions].astype(np.float32)
-    target_scale = 100.0 if task == "regression" else 1.0
+    target_scale = 100.0
     y_train = y_train * target_scale
     torch.set_num_threads(1)
     torch.manual_seed(seed)
@@ -158,7 +159,7 @@ def fit_predict_sequence(
     optimizer = torch.optim.Adam(
         model.parameters(), lr=learning_rate, weight_decay=1e-4
     )
-    loss_function = nn.BCEWithLogitsLoss() if task == "classification" else nn.MSELoss()
+    loss_function = nn.MSELoss()
     train_x = torch.as_tensor(X_train, dtype=torch.float32)
     train_y = torch.as_tensor(y_train, dtype=torch.float32)
     epoch_losses = []
@@ -220,8 +221,6 @@ def _sequence_predictions(artifact: dict, windows: np.ndarray) -> np.ndarray:
     model.eval()
     with torch.no_grad():
         output = model(torch.as_tensor(values, dtype=torch.float32))
-        if artifact["task"] == "classification":
-            output = torch.sigmoid(output)
         return output.numpy().astype(float) / artifact["target_scale"]
 
 
@@ -278,6 +277,9 @@ def fit_predict_statistical(
         imputer = SimpleImputer(strategy="median")
         scaler = StandardScaler()
         train_exog = scaler.fit_transform(imputer.fit_transform(raw_exog))
+        # An explicit intercept avoids statsmodels treating every one-row exog
+        # update as a duplicate constant trend during state extension.
+        train_exog = np.column_stack([np.ones(len(train_exog)), train_exog])
     with warnings.catch_warnings(record=True) as captured:
         warnings.simplefilter("always")
         model = SARIMAX(
@@ -297,6 +299,8 @@ def fit_predict_statistical(
         "feature_columns": columns,
         "order": tuple(order),
         "seasonal_order": (0, 0, 0, 0),
+        "trend": "n" if columns else "c",
+        "exog_intercept": bool(columns),
         "model": fitted,
         "imputer": imputer,
         "scaler": scaler,
@@ -339,6 +343,8 @@ def _statistical_roll(
         if columns:
             values = row[columns].to_numpy(dtype=float).reshape(1, -1)
             exog = artifact["scaler"].transform(artifact["imputer"].transform(values))
+            if artifact.get("exog_intercept", False):
+                exog = np.column_stack([np.ones(len(exog)), exog])
         if position in selected:
             forecast = model.get_forecast(steps=1, exog=exog).predicted_mean
             prediction[selected[position]] = (

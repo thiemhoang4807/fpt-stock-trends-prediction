@@ -1,0 +1,122 @@
+{
+  "notebooks": [
+    {
+      "notebook": "00_RUN_ALL.ipynb",
+      "status": "passed",
+      "seconds": 64.38,
+      "working_directory": "root"
+    },
+    {
+      "notebook": "01_fetch_data.ipynb",
+      "status": "passed",
+      "seconds": 2.33,
+      "working_directory": "notebooks"
+    },
+    {
+      "notebook": "02_fetch_supplemental.ipynb",
+      "status": "passed",
+      "seconds": 2.34,
+      "working_directory": "root"
+    },
+    {
+      "notebook": "03_eda.ipynb",
+      "status": "passed",
+      "seconds": 3.75,
+      "working_directory": "notebooks"
+    },
+    {
+      "notebook": "04_features.ipynb",
+      "status": "passed",
+      "seconds": 3.44,
+      "working_directory": "root"
+    },
+    {
+      "notebook": "05_prepare.ipynb",
+      "status": "passed",
+      "seconds": 6.24,
+      "working_directory": "notebooks"
+    },
+    {
+      "notebook": "06_train.ipynb",
+      "status": "passed",
+      "seconds": 46.94,
+      "working_directory": "root"
+    },
+    {
+      "notebook": "07_predict.ipynb",
+      "status": "passed",
+      "seconds": 5.61,
+      "working_directory": "notebooks"
+    },
+    {
+      "notebook": "08_time_series_analysis.ipynb",
+      "status": "passed",
+      "seconds": 5.3,
+      "working_directory": "root"
+    },
+    {
+      "notebook": "09_explain.ipynb",
+      "status": "passed",
+      "seconds": 6.74,
+      "working_directory": "notebooks"
+    }
+  ],
+  "report_csv_parity": [
+    "ablation.csv",
+    "all_test_metrics.csv",
+    "cv_candidate_summary.csv",
+    "cv_fold_metrics.csv",
+    "cv_summary.csv",
+    "error_cases.csv",
+    "lookback.csv",
+    "main_benchmark.csv",
+    "permutation_importance.csv",
+    "shap_importance.csv",
+    "stationarity_tests.csv",
+    "statistical_extension.csv",
+    "test_predictions.csv"
+  ],
+  "comparison_tolerance": "rtol=1e-10; atol=1e-12",
+  "prediction_json_equal": true,
+  "validation_date": "2026-11-19",
+  "target": "next_log_return",
+  "main_methods": 5,
+  "unique_test_configurations": 9,
+  "evaluation_artifacts": 9,
+  "total_model_artifacts": 10,
+  "unit_tests_passed": 47,
+  "raw_csv_hashes_unchanged": {
+    "data/raw/fpt/fpt_historical_price.csv": "3839e982af4f088da5d8a5e08878124838583d7b65e5bf9eac280c1bddcdc1a6",
+    "data/raw/supplemental/fpt_fundamentals_quarterly.csv": "fed368fa1c6369184a74f84ac36cfb3cade9c63794a349b17b176621ae056f76",
+    "data/raw/supplemental/fpt_income_statement_source.csv": "06f3062ebe1e094b4c6ad8f83b24df2abee89b5185a7c490e35ee61526b5870b",
+    "data/raw/supplemental/fpt_shares_outstanding.csv": "a4382c6287993e9fe55cd005c86bbef840ecc2e755ddf3b09093927351ac2f70",
+    "data/raw/supplemental/gold_xauusd_daily.csv": "b9691e60840064477841ab14e3f2903ad3b833f4c3150825668f7627f002783a",
+    "data/raw/supplemental/gold_xauusd_source.csv": "5c2940dddd0eb963545c8e62ac3216be49cde56c91fa8cebdea27f7d3a817136",
+    "data/raw/supplemental/ict_industry.csv": "8a8f29305b135e3639395a8a5040a567b449da1f028b9f1e7983f4b9f2ff0e48",
+    "data/raw/supplemental/ict_industry_source.csv": "a8182c097d91e99cfb937014c5a6ff8a03a287d4e932274d8e381bb3e01f0014",
+    "data/raw/supplemental/usd_vnd_daily.csv": "d82290ae103bcb25c1590f89ce7ccf6e52b312a206585317c2a957062a2b14ca",
+    "data/raw/supplemental/usd_vnd_source.csv": "f0407e27f5933c388cab27fff8031a31e5a2dd011774faa39dd72a5686478d11",
+    "data/raw/supplemental/vietnam_cpi.csv": "91b5cdb3ebd20e7927b705ca693f7176918001db7d62c5ed8c213e71e830ef04",
+    "data/raw/supplemental/vietnam_cpi_source.csv": "9aa3b33a8138a3635425d8b81d5db7110ecda5a23868341331a62affc26bc6fb",
+    "data/raw/supplemental/vietnam_gdp.csv": "35cf181db9ccf415e80f592cec47d36d61e35c9e80fcef8062d990a6fd17a1cd",
+    "data/raw/supplemental/vietnam_gdp_source.csv": "dd3b1a7866584c712c7c1b8adab5ff6512e1e3a0583dc44dfc98a0b2a3a8e1df",
+    "data/raw/supplemental/vnindex_source.csv": "cc348bdcf888c947cf9929c14a58c719553662ff6ae875fc7a0ec9127e1e8d18"
+  },
+  "pdf": {
+    "pages": 6,
+    "overfull_underfull_warnings": 0,
+    "visually_inspected_pages": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
+  },
+  "private_handbook": {
+    "path": "docs/CAM_NANG_HIEU_DU_AN.md",
+    "git_ignored": true
+  },
+  "snapshot_end": "2025-09-30"
+}

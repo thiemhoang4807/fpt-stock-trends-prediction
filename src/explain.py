@@ -1,4 +1,4 @@
-"""Post-hoc held-out explanations of trees selected using training CV only."""
+"""Permutation explanations, supplemental SHAP, and observed error contexts."""
 
 import json
 from pathlib import Path
@@ -7,6 +7,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator, FormatStrFormatter
 import numpy as np
 import pandas as pd
 import shap
@@ -16,139 +17,120 @@ from prepare import build_experiment_table, DEFAULT_INPUT, DEFAULT_SUPPLEMENTAL
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def explain(reports_dir=ROOT / "reports", figures_dir=ROOT / "figures"):
+def error_cases(reports_dir, table):
+    """Select three largest absolute price errors without inventing causes."""
+    summary = json.loads((reports_dir / "training_summary.json").read_text())
+    selected = summary["selected_model"]["config_id"]
+    predictions = pd.read_csv(
+        reports_dir / "test_predictions.csv", parse_dates=["date", "target_date"]
+    )
+    cases = predictions.loc[predictions.config_id.eq(selected)].copy()
+    cases["absolute_price_error"] = abs(cases.actual_close - cases.predicted_close)
+    cases = cases.nlargest(3, "absolute_price_error").copy()
+    for key in ["volatility_20d", "rsi_14"]:
+        if key in table:
+            cases[key] = cases.date.map(table.set_index("date")[key])
+    cases["actual_change_percent"] = np.expm1(cases.actual_log_return) * 100
+    cases["predicted_change_percent"] = np.expm1(cases.predicted_log_return) * 100
+    # Same-session market returns describe errors AFTER evaluation; they are not inputs.
+    candidates = list((ROOT / "data/raw").rglob("*vnindex*.csv"))
+    if len(candidates) != 1:
+        raise ValueError(f"Expected one raw VN-Index snapshot, found {len(candidates)}")
+    index = pd.read_csv(candidates[0])
+    date_column = "time" if "time" in index else "date"
+    index[date_column] = pd.to_datetime(index[date_column])
+    index = index.sort_values(date_column)
+    returns = pd.Series(index.close.pct_change().to_numpy() * 100, index[date_column])
+    cases["vnindex_same_session_change_percent"] = cases.target_date.map(returns)
+    cases["interpretation"] = (
+        "Observed next-session move is much larger than the model forecast. "
+        "Market co-movement is descriptive; the data alone do not identify a news cause."
+    )
+    cases.to_csv(reports_dir / "error_cases.csv", index=False)
+    return cases
+
+
+def explain(
+    reports_dir=ROOT / "reports",
+    figures_dir=ROOT / "figures",
+    models_dir=ROOT / "models",
+):
     _, table, _ = build_experiment_table(DEFAULT_INPUT, DEFAULT_SUPPLEMENTAL)
     table.attrs = {}
     table = table.dropna(subset=["next_log_return"]).reset_index(drop=True)
     cut = int(len(table) * 0.85)
-    manifest = json.loads(
-        (reports_dir / "evaluation_manifest.json").read_text(encoding="utf-8")
+    artifact = joblib.load(models_dir / "evaluation/xgboost_price.joblib")
+    estimator, columns = artifact["model"], artifact["feature_columns"]
+    X, y = table.iloc[cut:][columns], table.iloc[cut:].next_log_return
+    perm = permutation_importance(
+        estimator,
+        X,
+        y,
+        scoring="neg_root_mean_squared_error",
+        n_repeats=10,
+        random_state=42,
+        n_jobs=1,
     )
-    if isinstance(manifest, dict):
-        manifest = manifest["models"]
-    records = []
-    for task in ("classification", "regression"):
-        candidates = [
-            m
-            for m in manifest
-            if m["task"] == task
-            and ("XGBoost" in m["model"] or "Random Forest" in m["model"])
-        ]
-        selected = sorted(
-            candidates, key=lambda m: m["cv_score"], reverse=task == "classification"
-        )[0]
-        artifact_path = Path(selected["path"])
-        if not artifact_path.is_absolute():
-            artifact_path = ROOT / artifact_path
-        artifact = joblib.load(artifact_path)
-        estimator = artifact["model"] if isinstance(artifact, dict) else artifact
-        cols = selected["feature_columns"]
-        test = table.iloc[cut:].copy()
-        if task == "classification":
-            test = test.dropna(subset=["direction"])
-        X = test[cols]
-        y = (
-            test.direction.astype(int)
-            if task == "classification"
-            else test.next_log_return
+    permutation = pd.DataFrame(
+        dict(
+            feature=columns,
+            importance_mean=perm.importances_mean,
+            importance_std=perm.importances_std,
         )
-        scoring = (
-            "balanced_accuracy"
-            if task == "classification"
-            else "neg_root_mean_squared_error"
-        )
-        perm = permutation_importance(
-            estimator, X, y, scoring=scoring, n_repeats=10, random_state=42, n_jobs=1
-        )
-        permutation = pd.DataFrame(
-            {
-                "feature": cols,
-                "importance_mean": perm.importances_mean,
-                "importance_std": perm.importances_std,
-            }
-        ).sort_values("importance_mean", ascending=False)
-        permutation.to_csv(
-            reports_dir / f"permutation_importance_{task}.csv", index=False
-        )
-        fig, ax = plt.subplots(figsize=(10, 7))
-        top = permutation.head(20).iloc[::-1]
-        ax.barh(
-            top.feature, top.importance_mean, xerr=top.importance_std, color="#4178a5"
-        )
-        ax.set_title(
-            f"Permutation on Test: {selected['feature_set']} / {selected['model']}"
-        )
-        ax.set_xlabel(
-            "Drop in balanced accuracy"
-            if task == "classification"
-            else "Increase in log-return RMSE"
-        )
-        fig.tight_layout()
-        fig.savefig(figures_dir / f"permutation_{task}.png", dpi=180)
-        plt.close(fig)
-        # Background contains training inputs only; explanation sample is fixed, not chosen by errors.
-        background = table.iloc[:cut][cols].sample(min(100, cut), random_state=42)
-        sample = X.iloc[np.linspace(0, len(X) - 1, min(150, len(X))).astype(int)]
-        explainer = shap.TreeExplainer(
-            estimator, data=background, feature_perturbation="interventional"
-        )
-        values = explainer(sample, check_additivity=False)
-        if values.values.ndim == 3:
-            values = values[:, :, 1]
-        # Check the explanation against the actual output scale, including XGB margins.
-        if "XGBoost" in selected["model"]:
-            raw_output = estimator.predict(sample, output_margin=True)
-        elif task == "classification":
-            raw_output = estimator.predict_proba(sample)[:, 1]
-        else:
-            raw_output = estimator.predict(sample)
-        reconstructed = np.asarray(values.base_values) + values.values.sum(axis=1)
-        if not np.isfinite(values.values).all() or not np.allclose(
-            reconstructed, raw_output, rtol=1e-4, atol=1e-6
-        ):
-            raise RuntimeError("SHAP contributions do not reconstruct the model output")
-        max_additivity_error = float(np.max(np.abs(reconstructed - raw_output)))
-        shap.summary_plot(values.values, sample, show=False, max_display=20)
-        plt.title(f"SHAP: {task} / {selected['model']}")
-        plt.tight_layout()
-        plt.savefig(
-            figures_dir / f"shap_summary_{task}.png", dpi=180, bbox_inches="tight"
-        )
-        plt.close()
-        importance = pd.DataFrame(
-            {"feature": cols, "mean_abs_shap": np.abs(values.values).mean(axis=0)}
-        ).sort_values("mean_abs_shap", ascending=False)
-        importance.to_csv(reports_dir / f"shap_importance_{task}.csv", index=False)
-        fig, ax = plt.subplots(figsize=(10, 7))
-        top = importance.head(20).iloc[::-1]
-        ax.barh(top.feature, top.mean_abs_shap, color="#559878")
-        ax.set_title(f"Mean absolute SHAP: {task}")
-        fig.tight_layout()
-        fig.savefig(figures_dir / f"shap_bar_{task}.png", dpi=180)
-        plt.close(fig)
-        records.append(
-            {
-                "task": task,
-                "model": selected["model"],
-                "feature_set": selected["feature_set"],
-                "selection": "training CV only",
-                "permutation_scoring": scoring,
-                "test_rows": len(test),
-                "shap_rows": len(sample),
-                "background": "100 training rows at most, random seed42",
-                "shap_output": "raw model output; class1 for multiclass-shaped classifier output",
-                "max_additivity_error": max_additivity_error,
-            }
-        )
-    report = {
-        "models": records,
-        "limitations": "Post-hoc Test analysis only; no feature removal or retuning afterward. Correlated inputs share credit; permutation breaks temporal dependence and is descriptive, not causal. SHAP background only from Train.",
-    }
+    ).sort_values("importance_mean", ascending=False)
+    permutation.to_csv(reports_dir / "permutation_importance.csv", index=False)
+    fig, ax = plt.subplots(figsize=(10, 6))
+    top = permutation.head(15).iloc[::-1]
+    ax.barh(top.feature, top.importance_mean, xerr=top.importance_std, color="#4178a5")
+    ax.axvline(0, color="black", lw=0.8)
+    ax.set(
+        title="XGBoost / price_32: permutation importance on Test",
+        xlabel="Increase in log-return RMSE (mean +/- std, 10 repeats)",
+    )
+    fig.tight_layout()
+    fig.savefig(figures_dir / "permutation_importance.png", dpi=180)
+    plt.close(fig)
+    background = table.iloc[:cut][columns].sample(min(100, cut), random_state=42)
+    sample = X.iloc[np.linspace(0, len(X) - 1, min(150, len(X))).astype(int)]
+    explainer = shap.TreeExplainer(
+        estimator, data=background, feature_perturbation="interventional"
+    )
+    values = explainer(sample, check_additivity=True)
+    pd.DataFrame(
+        dict(feature=columns, mean_absolute_shap=np.abs(values.values).mean(axis=0))
+    ).sort_values("mean_absolute_shap", ascending=False).to_csv(
+        reports_dir / "shap_importance.csv", index=False
+    )
+    shap.summary_plot(values.values, sample, show=False, max_display=15)
+    figure = plt.gcf()
+    figure.set_size_inches(11, 7.5)
+    axis = figure.axes[0]
+    axis.xaxis.set_major_locator(MaxNLocator(nbins=5))
+    axis.xaxis.set_major_formatter(FormatStrFormatter("%.3f"))
+    axis.set_xlabel("SHAP contribution to predicted log return")
+    plt.tight_layout()
+    plt.savefig(figures_dir / "appendix_shap.png", dpi=180, bbox_inches="tight")
+    plt.close()
+    cases = error_cases(reports_dir, table)
+    result = dict(
+        explained_model="xgboost_price",
+        fit_scope=artifact["fit_scope"],
+        permutation_metric="increase in Test log-return RMSE",
+        repeats=10,
+        shap_background="100 Train rows",
+        shap_sample_rows=len(sample),
+        error_model=json.loads((reports_dir / "training_summary.json").read_text())[
+            "selected_model"
+        ]["config_id"],
+        error_selection="three largest absolute price errors on final Test",
+        error_dates=cases.target_date.dt.strftime("%Y-%m-%d").tolist(),
+        interpretation="Post-hoc explanation only; do not use these Test importances to tune the current model.",
+    )
     (reports_dir / "explainability_summary.json").write_text(
-        json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+        json.dumps(result, indent=2), encoding="utf-8"
     )
-    return report
+    return result
 
 
 if __name__ == "__main__":
-    print(json.dumps(explain(), ensure_ascii=False, indent=2))
+    print(json.dumps(explain(), indent=2))

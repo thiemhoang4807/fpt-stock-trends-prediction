@@ -2,7 +2,7 @@
 
 ## 1. Nguồn và phạm vi
 
-Dự án dùng snapshot (bản chụp dữ liệu đã cố định) để tái lập thí nghiệm. Giai đoạn của chuỗi giá là 02/01/2007–30/09/2025. Giai đoạn so sánh hai nhánh ngắn hơn vì các nguồn bổ trợ không cùng bắt đầu năm 2007.
+Dự án dùng snapshot (bản chụp dữ liệu đã cố định) để tái lập thí nghiệm. Giai đoạn của chuỗi giá là 02/01/2007–30/09/2025. Giai đoạn so sánh các thí nghiệm ngắn hơn vì các nguồn bổ trợ không cùng bắt đầu năm 2007.
 
 | Dữ liệu | Nguồn tài chính | Cách lấy và tệp nguồn | Phạm vi snapshot sau cắt |
 |---|---|---|---|
@@ -39,8 +39,8 @@ VCI / các tệp xuất Investing / World Bank / DNSE / công bố FPT
                     fpt_multisource_features.csv
                           |
 OHLCV -> features.py -> prepare.py -> cohort chung đủ 43 biến
-                                      | Nhánh 1: 32 biến OHLCV/kỹ thuật
-                                      | Nhánh 2: 43 biến gồm 11 biến bổ trợ
+                                      | Cấp 1: 32 biến OHLCV/kỹ thuật
+                                      | Cấp 2: 38 biến; cấp 3: 43 biến gồm 11 biến bổ trợ
                                       v
                                 Train 85% (CV 5 fold) / Test 15%
 ```
@@ -109,14 +109,14 @@ OHLCV có 0 ô thiếu, 0 ngày trùng, 2 phiên volume bằng 0, 3 hàng quan h
 
 Vàng có 2.988 phiên FPT trước khi đủ dữ liệu; CPI có 2.987; GDP có 1.110; ngành có 2.262; tài chính có 1.407 phiên thiếu sau áp dụng hạn dùng; cổ phiếu lưu hành có 2.859. Những ô thiếu đầu chuỗi không được backfill. Bảng ghép vẫn lưu chúng để kiểm toán.
 
-Sau bước tạo chỉ báo, cần thêm 60 phiên giao dịch liên tiếp đủ 43 biến để mọi cửa sổ LSTM/GRU dùng cùng các ngày. Còn 1.560 hàng, trong đó 1.559 hàng có nhãn và một hàng cuối dành cho dự báo. Chỉ số phiên gốc được giữ khi một chỉ báo không xác định để không nén lỗ hổng thành các phiên liền nhau.
+Sau bước tạo chỉ báo, cần thêm 60 phiên giao dịch liên tiếp đủ 43 biến để mọi cửa sổ GRU dùng cùng các ngày. Còn 1.560 hàng, trong đó 1.559 hàng có nhãn và một hàng cuối dành cho dự báo. Chỉ số phiên gốc được giữ khi một chỉ báo không xác định để không nén lỗ hổng thành các phiên liền nhau.
 
-| Tập | Ngày mục tiêu | Hồi quy | Phân loại |
+| Tập | Ngày mục tiêu | Mẫu học/chấm log return | Phiên dùng chấm đúng hướng |
 |---|---|---:|---:|
-| Train 85% | 03/04/2019–21/10/2024 | 1.325 | Bỏ riêng nhãn đứng giá khi fit |
-| Test 15% | 22/10/2024–30/09/2025 | 234 | 227 |
+| Train 85% | 03/04/2019–21/10/2024 | 1.325 | Không dùng để công bố điểm Test |
+| Test 15% | 22/10/2024–30/09/2025 | 234 | 227 phiên đổi giá |
 
-Phân loại bỏ nhãn đứng giá sau khi xác định ranh giới chung. Trên Train, 5-fold TimeSeriesSplit có gap=1 dùng để chọn tham số/mô hình; mọi scaler chỉ fit ở phần Train của từng fold. Không sử dụng Test để chọn. Mục tiêu hồi quy là log return, sau dự báo mới quy đổi về giá. Các bảng kiểm toán chi tiết: `reports/data_audit.json`, `supplemental_data_audit.json`, `split_metadata.json`.
+Một mục tiêu log return sinh cả giá và hướng, không có mô hình phân loại riêng. Hướng có dấu −1/0/+1; dự báo 0 tính sai trên phiên thực tế đổi giá. Năm phương pháp chính và ba thí nghiệm dùng cùng ngày; 5-fold TimeSeriesSplit, gap=1, chỉ nằm trong Train. XGBoost giữ cùng tham số ở cấp 32/38/43 biến. Chọn mô hình bằng CV RMSE log return. Ranh giới và kế hoạch tại `reports/training_summary.json`, `reports/experiment_plan.json`.
 
 ## 7. Tái lập và cập nhật
 

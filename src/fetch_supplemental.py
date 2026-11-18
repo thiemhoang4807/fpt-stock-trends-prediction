@@ -144,7 +144,7 @@ def audit_industry_coverage(raw_dir: Path = RAW_DIR, end: str = DEFAULT_END) -> 
         "live_page_check_date": "2026-10-29",
         "live_page_evidence": "Public sector page offers 1Y/3Y/5Y/10Y views and currently aggregated company financials; this does not verify a 2007 point-in-time series.",
         "alternative_decision": "Retain VN-Index as a broad-market control. It is NOT an ICT-sector replacement. A fixed basket of today's listed technology firms would introduce selection/survivorship bias without historical constituents; therefore no synthetic ICT proxy is claimed.",
-        "ablation_policy": "G5 marked unavailable/excluded; if reported alongside G4, it has exactly the same features and is not an independent industry ablation.",
+        "ablation_policy": "Industry is excluded from all experiments; report only the 32/38/43 input levels without an empty sector row.",
     }
 
 

@@ -126,11 +126,7 @@ def build_feature_table(data: pd.DataFrame) -> pd.DataFrame:
     result["next_return"] = result["next_close"] / result["current_close"] - 1.0
     result["next_log_return"] = np.log(result["next_close"] / result["current_close"])
     result["log_return"] = np.log(close / close.shift(1))
-    result["direction"] = np.select(
-        [result["next_return"].gt(0.0), result["next_return"].lt(0.0)],
-        [1.0, 0.0],
-        default=np.nan,
-    )
+    result["direction"] = np.sign(result["next_log_return"])
 
     previous_close = close.shift(1)
     intraday_range = high - low

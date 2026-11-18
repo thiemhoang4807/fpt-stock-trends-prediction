@@ -35,29 +35,35 @@ def _sha256(path: Path) -> str:
 
 
 def _draw_pipeline_overview(output_path: Path) -> None:
-    """Draw the two-branch experiment flow used in the proposal and report."""
-    fig, ax = plt.subplots(figsize=(14, 5.6))
+    """One target, three experiments, two readable outputs."""
+    fig, ax = plt.subplots(figsize=(13, 6))
     ax.set_axis_off()
     boxes = [
-        (0.02, 0.55, "OHLCV FPT\n2007-01-02 to 2025-09-30", "#DCEAF7"),
-        (0.24, 0.55, "Kiểm toán +\n5 OHLCV + 27 chỉ báo/nến", "#E4F1E5"),
-        (0.48, 0.72, "Nhánh 1\nGiá + khối lượng FPT", "#FCE9D8"),
+        (0.15, 0.80, "Dữ liệu đến 30/09/2025\nOHLCV + nguồn bổ trợ", "#DCEAF7"),
+        (0.50, 0.80, "Căn ngày có thể biết\n32 / 38 / 43 đặc trưng", "#E4F1E5"),
+        (0.85, 0.80, "Train 85%: CV 5 fold\nTest 15%: chấm sau lựa chọn", "#EEE1F3"),
         (
-            0.48,
-            0.30,
-            "Nhánh 2\nGiá + thị trường/vĩ mô/tài chính\nđã căn ngày có thể biết",
+            0.15,
+            0.43,
+            "TN1: 5 phương pháp\nBaseline, Ridge, XGBoost\nARIMA, GRU",
             "#FCE9D8",
         ),
         (
-            0.74,
-            0.55,
-            "Train 85% | Test 15%\nCV 5 fold trong Train\nML + ARIMA/SARIMAX\nLSTM/GRU; log return",
-            "#EEE1F3",
+            0.50,
+            0.43,
+            "TN2: thêm dữ liệu\nXGBoost 32 → 38 → 43\nARIMA so với SARIMAX",
+            "#FCE9D8",
         ),
         (
-            0.95,
-            0.55,
-            "Đầu ra\nHướng tăng/giảm\nGiá đóng cửa t + 1\nĐộ đo + biểu đồ",
+            0.85,
+            0.43,
+            "TN3: bộ nhớ GRU\n20 so với 60 phiên\nChọn bằng CV trong Train",
+            "#FCE9D8",
+        ),
+        (
+            0.50,
+            0.09,
+            "Một dự báo log return → Giá đóng cửa + Hướng tăng / giảm / đứng giá\nĐộ đo, Permutation Importance và 3 ca lỗi",
             "#FFF2CC",
         ),
     ]
@@ -68,39 +74,29 @@ def _draw_pipeline_overview(output_path: Path) -> None:
             label,
             ha="center",
             va="center",
-            fontsize=10,
-            bbox={
-                "boxstyle": "round,pad=0.65",
-                "facecolor": color,
-                "edgecolor": "#46637F",
-                "linewidth": 1.2,
-            },
+            fontsize=11,
+            bbox=dict(boxstyle="round,pad=0.7", facecolor=color, edgecolor="#46637F"),
             transform=ax.transAxes,
         )
-    arrows = [
-        ((0.11, 0.55), (0.18, 0.55)),
-        ((0.31, 0.61), (0.40, 0.70)),
-        ((0.31, 0.49), (0.40, 0.32)),
-        ((0.58, 0.70), (0.66, 0.57)),
-        ((0.58, 0.32), (0.66, 0.53)),
-        ((0.83, 0.55), (0.89, 0.55)),
-    ]
-    for start, end in arrows:
+    for start, end in [
+        ((0.28, 0.80), (0.36, 0.80)),
+        ((0.64, 0.80), (0.71, 0.80)),
+        ((0.85, 0.69), (0.85, 0.56)),
+        ((0.50, 0.69), (0.50, 0.56)),
+        ((0.15, 0.69), (0.15, 0.56)),
+        ((0.15, 0.31), (0.33, 0.16)),
+        ((0.50, 0.31), (0.50, 0.17)),
+        ((0.85, 0.31), (0.67, 0.16)),
+    ]:
         ax.annotate(
             "",
             xy=end,
             xytext=start,
             xycoords="axes fraction",
-            arrowprops={"arrowstyle": "->", "lw": 1.5, "color": "#46637F"},
+            arrowprops=dict(arrowstyle="->", lw=1.5, color="#46637F"),
         )
-    fig.suptitle(
-        "Pipeline thực nghiệm: dự đoán phiên FPT kế tiếp",
-        fontsize=15,
-        fontweight="bold",
-        y=0.98,
-    )
     fig.tight_layout()
-    fig.savefig(output_path, dpi=220, bbox_inches="tight")
+    fig.savefig(output_path, dpi=200, bbox_inches="tight")
     plt.close(fig)
 
 

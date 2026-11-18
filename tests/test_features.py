@@ -39,7 +39,7 @@ def test_next_session_target_is_aligned_to_following_close():
     row = features.loc[features["date"].eq(data.loc[60, "time"])].iloc[0]
     assert row["next_close"] == data.loc[61, "close"]
     assert row["target_date"] == data.loc[61, "time"]
-    expected_direction = 1.0 if data.loc[61, "close"] > data.loc[60, "close"] else 0.0
+    expected_direction = 1.0 if data.loc[61, "close"] > data.loc[60, "close"] else -1.0
     assert row["direction"] == expected_direction
 
 

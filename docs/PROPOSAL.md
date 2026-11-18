@@ -2,7 +2,7 @@
 
 **ĐẠI HỌC QUỐC GIA THÀNH PHỐ HỒ CHÍ MINH — TRƯỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN**
 
-**Đề tài: ỨNG DỤNG HỌC MÁY DỰ ĐOÁN XU HƯỚNG VÀ GIÁ ĐÓNG CỬA CỔ PHIẾU FPT Ở PHIÊN KẾ TIẾP**
+**Đề tài: Dự báo biến động cổ phiếu FPT ở phiên kế tiếp bằng học máy và mô hình chuỗi thời gian**
 
 | STT | Họ và tên | MSSV |
 |---|---|---|
@@ -12,96 +12,67 @@
 
 THÀNH PHỐ HỒ CHÍ MINH, NĂM 2026
 
-## 1. Đặt vấn đề
+## 1. Bài toán và mục tiêu
 
-Giá cổ phiếu thay đổi theo cung cầu, thông tin doanh nghiệp và điều kiện thị trường. Nhóm đặt câu hỏi: sau khi phiên giao dịch FPT hôm nay kết thúc, các mô hình có thể dự đoán hướng tăng/giảm và mức giá đóng cửa phiên kế tiếp với độ chính xác nào? Việc bổ sung dữ liệu thị trường, vĩ mô và báo cáo tài chính có cải thiện so với chỉ sử dụng giá và khối lượng hay không?
-
-Theo góp ý của giảng viên, đề tài mở rộng từ học máy trên dữ liệu bảng sang phân tích chuỗi thời gian, mô hình thống kê và học sâu tuần tự. Nhóm chú trọng cách đánh giá theo thời gian và giải thích kết quả. Hệ thống là thực nghiệm học thuật hỗ trợ phân tích định lượng, không thay thế quyết định của nhà đầu tư.
-
-## 2. Mục tiêu của đề tài
-
-Mục tiêu chung là xây dựng quy trình dự báo một phiên kế tiếp có thể tái lập và đánh giá đóng góp của dữ liệu cũng như phương pháp học.
-
-1. Kiểm toán nguồn, đơn vị, độ phủ và thời điểm có thể sử dụng của dữ liệu đến **30/09/2025**.
-2. Phân tích tính dừng bằng ADF/KPSS, tương quan theo độ trễ bằng ACF/PACF và phân rã chuỗi bằng STL.
-3. So sánh ba họ mô hình trên cùng các ngày, dùng kiểm định chéo thời gian trong Train để lựa chọn trước khi chấm Test.
-4. Giải thích mô hình bằng SHAP và permutation importance; kiểm tra đóng góp từng nhóm đầu vào bằng nghiên cứu loại trừ (ablation study).
-
-## 3. Phạm vi và đối tượng nghiên cứu
-
-Đối tượng là FPT trên HOSE. Chuỗi giá gồm 4.671 phiên từ 02/01/2007 đến 30/09/2025. Mốc kết thúc được cố định để đồng bộ các nguồn đã kiểm tra. Mỗi hàng ở cuối phiên `t` dự báo phiên giao dịch quan sát được kế tiếp `t+1`, không phải mặc nhiên ngày lịch tiếp theo.
-
-Cửa sổ so sánh chung ngắn hơn chuỗi giá vì nguồn bổ trợ bắt đầu muộn và mạng tuần tự cần đủ tối đa 60 phiên liên tiếp. Hai nhánh dùng cùng ngày, nhãn và ranh giới chia tập. Không dùng toàn bộ lịch sử cho một nhánh rồi so với nhánh khác trên một giai đoạn khác.
-
-Dữ liệu ngành Simply Wall St đã kiểm tra chỉ có 33 mốc từ 06/02/2016 đến 24/07/2025, không có lịch sử từ 2007 và thiếu thành phần ngành theo thời điểm. Nhóm **loại ba biến ngành khỏi mô hình chính**, ghi nhận G5 là nhóm chưa thực hiện được. VN-Index được bổ sung làm biến kiểm soát thị trường chung; đây không phải chỉ số thay thế riêng cho ngành ICT. Nhóm chưa dựng rổ từ doanh nghiệp hiện còn niêm yết vì có thể tạo thiên lệch sống sót.
-
-## 4. Đầu vào và đầu ra dự kiến
-
-### 4.1. Đầu vào
-
-| Nhánh | Các nhóm dữ liệu | Số biến |
-|---|---|---:|
-| Nhánh 1 — Giá và khối lượng | 5 trường OHLCV hiện tại, 23 chỉ báo kỹ thuật, 4 đặc trưng nến | 32 |
-| Nhánh 2 — Đa nguồn | Toàn bộ Nhánh 1; lợi nhuận và biến động VN-Index; USD/VND, vàng quy đổi VND, CPI, GDP; 5 chỉ tiêu tài chính FPT | 43 |
-
-Năm chỉ tiêu tài chính gồm doanh thu thuần, lợi nhuận gộp, EBIT, lợi nhuận sau thuế cổ đông công ty mẹ và số cổ phiếu lưu hành. Nguồn gồm VCI/vnstock, công bố FPT, DNSE, Investing.com và World Bank. Vàng quy đổi là giá quốc tế USD/ounce nhân tỷ giá VND/USD, không phải giá vàng miếng trong nước.
-
-Dữ liệu tần suất thấp chỉ ghép từ ngày có thể biết, không điền ngược. Khi thiếu lịch công bố thực tế, báo cáo quý giả định trễ 45 ngày sau cuối quý, GDP năm trễ 180 ngày sau cuối năm. Giả định này giúp kiểm soát thời điểm sử dụng nhưng chưa khôi phục được đầy đủ các phiên bản dữ liệu lịch sử. Bộ chuẩn hóa chỉ học từ phần Train tương ứng.
-
-### 4.2. Đầu ra và biến mục tiêu
-
-Phân loại dùng nhãn `1` khi giá phiên sau tăng, `0` khi giảm; phiên đứng giá bị loại khỏi chấm phân loại. Hồi quy giữ cả phiên đứng giá và học lợi nhuận logarit:
+Nhóm dự báo biến động FPT của phiên kế tiếp ngay sau khi phiên hiện tại đóng cửa. Đề tài thống nhất một mục tiêu lợi nhuận logarit, rồi suy ra giá đóng cửa và hướng biến động. Cách này giúp so sánh các tư duy mô hình hóa trong cùng một quy trình, phù hợp phạm vi đồ án ba sinh viên.
 
 $$r_{t+1}=\ln(C_{t+1}/C_t),\qquad \widehat C_{t+1}=C_t\exp(\widehat r_{t+1}).$$
 
-| Trường | Ý nghĩa |
+| Đầu ra | Ý nghĩa |
 |---|---|
-| Target session | Phiên giao dịch quan sát được kế tiếp |
-| Predicted direction | Tăng hoặc Giảm |
-| Direction score / probability | Điểm dự báo; chỉ gọi là xác suất nếu mô hình hỗ trợ |
-| Predicted log return | Lợi nhuận logarit dự báo phiên kế tiếp |
-| Predicted close price | Giá đóng cửa suy ra, nghìn VND/cổ phiếu |
-| Model / feature set | Mô hình và nhánh dữ liệu tạo dự báo |
+| Phiên mục tiêu | Phiên giao dịch quan sát được kế tiếp |
+| Log return dự báo | Biên độ biến động tương đối, không phải xác suất |
+| Giá đóng cửa dự báo | Giá suy ra, nghìn VND/cổ phiếu |
+| Hướng dự báo | Tăng nếu dương, Giảm nếu âm, Đứng giá nếu bằng 0 |
+| Mô hình / cấp dữ liệu | Phương pháp và đầu vào đã tạo dự báo |
 
-Điểm biên SVC hoặc lợi nhuận dự báo ARIMA không được gọi là xác suất. Hai bài toán có thể chọn hai mô hình khác nhau.
+## 2. Dữ liệu và phương pháp thu thập
 
-![Sơ đồ đầu vào, xử lý và đầu ra](../figures/00_pipeline_overview.png)
+OHLCV FPT từ VCI/vnstock có 4.671 phiên, 02/01/2007–30/09/2025. Mốc cuối cố định giúp đồng bộ nguồn và phiên bản thí nghiệm. Nhóm chuẩn hóa snapshot bổ trợ từ DNSE (VN-Index), Investing.com (USD/VND, XAU/USD, lịch CPI), World Bank (GDP danh nghĩa USD), VCI và công bố FPT (báo cáo quý, số cổ phiếu). Vàng quy đổi là VND/ounce vàng quốc tế.
 
-## 5. Hướng tiếp cận và công nghệ dự kiến
+Ba cấp dữ liệu gồm 32 biến giá/kỹ thuật; 38 biến khi thêm thị trường/vĩ mô; 43 biến khi thêm tài chính FPT. Dữ liệu chỉ có hiệu lực từ thời điểm có thể biết: ngày + 1; CPI từ lịch công bố + 1; quý giả định trễ 45 ngày; GDP năm trễ 180 ngày. Số cổ phiếu dùng lịch công bố/tham chiếu riêng + 1 ngày. Không điền ngược hoặc nội suy qua kỳ tương lai.
 
-Nhóm dùng Python, pandas, NumPy, scikit-learn, XGBoost, statsmodels, PyTorch, SHAP và Jupyter Notebook.
+Nguồn ngành Simply Wall St chỉ có 33 mốc từ 2016, thiếu độ phủ và thành phần lịch sử. Nhóm loại nhóm ngành, không tạo dòng thí nghiệm rỗng. Cohort chung yêu cầu 60 phiên liên tiếp đủ dữ liệu, còn 1.559 mẫu có nhãn.
 
-- **Thống kê chuỗi thời gian:** ARIMA cho nhánh giá; SARIMAX cho nhánh đa nguồn với các biến ngoại sinh đã căn thời điểm. Khởi đầu bằng bậc `(0,0,0)` và `(1,0,0)` trên log return, chưa dùng mùa vụ. Dự báo từng phiên; chỉ cập nhật trạng thái bằng kết quả đã quan sát và giữ nguyên tham số trong phần đánh giá.
-- **Học máy và boosting:** Majority/Last-Close Baseline, Logistic/Linear/Ridge Regression, SVC/SVR, Random Forest, XGBoost và HistGradientBoosting. Lưới nhỏ được đặt trước và lựa chọn bằng CV.
-- **Học sâu tuần tự:** LSTM và GRU cho cả hai bài toán, một lớp 16 nút ẩn, thử `L ∈ {10, 20, 30, 60}` phiên. Cấu hình đầu tiên dùng 12 lượt học cố định trên CPU, không dừng theo kết quả Test. Cửa sổ phải giữ đúng phiên liên tiếp.
+![Sơ đồ tổng quan](../figures/00_pipeline_overview.png)
 
-ADF và KPSS có giả thuyết gốc khác nhau nên cần đọc đồng thời, không coi một p-value là chứng minh chắc chắn tính dừng. ACF/PACF giúp mô tả liên hệ với quá khứ. Phân rã STL dùng chu kỳ quy ước 5 phiên để khảo sát, không mặc định có mùa vụ tuần và không đưa thành phần phân rã vào đầu vào dự báo.
+## 3. Đặc điểm chuỗi thời gian
 
-## 6. Cách đánh giá dự kiến
+Nhóm dùng ADF/KPSS và ACF/PACF trên lịch sử đến cuối Train để khảo sát xu thế và phụ thuộc theo độ trễ. Kết quả hiện có: ADF của log return p ≈ 1,05 × 10⁻¹⁷, KPSS p ≈ 0,0164. Hai kiểm định đặt giả thuyết gốc khác nhau; không kết luận log return dừng hoàn toàn.
 
-Giữ **85% mẫu đầu làm Train, 15% cuối làm Test**, kết thúc 30/09/2025. Trong Train, dùng `TimeSeriesSplit(n_splits=5, gap=1)` với cửa sổ mở rộng. Mỗi fold học quá khứ rồi chấm đoạn kế tiếp; báo cáo trung bình ± độ lệch chuẩn mẫu qua 5 fold. Các fold bằng số hàng nhưng có thể không bằng số ngày lịch do khoảng trống nguồn.
+Mục tiêu tương đối giúp mô hình dự báo biến động thay vì ngoại suy mức giá. Nhóm kiểm chứng hiệu quả bằng sai số thực nghiệm, không coi kiểm định tính dừng là chứng minh mô hình sẽ dự báo tốt. Phân rã STL quy ước 5 phiên được đặt ở phụ lục mô tả.
 
-Chọn mô hình phân loại bằng **Balanced Accuracy CV**, hồi quy bằng **RMSE log return CV**. Sau đó fit toàn bộ Train và chấm Test. Mô hình đánh giá được lưu riêng; bản dự báo minh họa có thể học lại toàn bộ nhãn sau khi cố định kết quả.
+## 4. Năm phương pháp đại diện
 
-| Bài toán | Độ đo |
-|---|---|
-| Hướng | Accuracy, Balanced Accuracy, Precision, Recall, F1-score, ROC-AUC, confusion matrix |
-| Log return | MAE, RMSE |
-| Giá khôi phục | MAE, RMSE, MAPE, Directional Accuracy; Tolerance Accuracy ±0.5%, ±1.0%, ±2.0% |
+| Phương pháp | Câu hỏi nghiên cứu | Cấu hình khảo sát |
+|---|---|---|
+| Last-Close Baseline | Giữ giá hôm nay đã đủ tốt chưa? | Log return luôn bằng 0 |
+| Ridge Regression | Quan hệ tuyến tính có kiểm soát trọng số có hữu ích không? | StandardScaler + Ridge, alpha 10 hoặc 100 |
+| XGBoost Regressor | Quy tắc phi tuyến có cải thiện không? | 120 cây, sâu 2 hoặc 3, learning rate 0,04 |
+| ARIMA | Lịch sử lợi nhuận tự nó dự báo được gì? | Bậc (0,0,0) hoặc (1,0,0), có hằng số |
+| GRU | Học bộ nhớ nhiều phiên có hữu ích không? | 1 lớp, 16 nút ẩn, L=20 hoặc 60, 12 epoch |
 
-Không dùng MAPE trên log return vì các giá trị bằng/gần 0 làm sai số phần trăm không phù hợp. Nhóm vẽ giá thực tế và dự báo của các họ mô hình trên toàn Test và phóng to 80 phiên, cùng biểu đồ so sánh nhánh và độ dài cửa sổ.
 
-Ablation giữ XGBoost, cùng các ngày và cùng CV: G1 giá/khối lượng và lợi nhuận trễ; G2 thêm chỉ báo kỹ thuật; G3 thêm OHLC/nến; G4 thêm thị trường/vĩ mô; G5 ghi loại vì nguồn ngành chưa phù hợp; G6 thêm tài chính doanh nghiệp. G5 không phải một thí nghiệm độc lập có dữ liệu giả lập.
+Công nghệ gồm Python, pandas, scikit-learn, XGBoost, statsmodels, PyTorch và Jupyter. Cấu hình khảo sát nhỏ để nhóm có thể giải thích và tái lập. SARIMAX được dùng riêng trong đối sánh ngoại sinh, không làm tăng số dòng của bảng năm phương pháp chính.
 
-SHAP và permutation importance phân tích mô hình cây chọn bằng CV; background SHAP chỉ lấy Train. Không điều chỉnh mô hình sau khi xem giải thích Test. Kết quả được trình bày bằng biểu đồ đóng góp đặc trưng và đối sánh nhóm đầu vào.
+## 5. Thiết kế đánh giá
 
-## 7. Kết quả dự kiến
+85% mẫu đầu là Train, 15% cuối là Test (kết thúc 30/09/2025). Trong Train dùng 5-fold TimeSeriesSplit, gap 1 hàng. Chọn bằng RMSE log return CV trung bình nhỏ nhất, báo cáo thêm độ lệch chuẩn; sau đó fit Train và chấm Test. Mọi bộ chuẩn hóa chỉ học dữ liệu Train của từng lượt.
 
-1. Pipeline dữ liệu, bảng đặc trưng, kiểm toán và notebook có hướng dẫn từng bước.
-2. Mô hình của ba họ cùng công cụ dự báo hướng, log return và giá phiên kế tiếp.
-3. Bảng CV/Test, đối sánh độ dài cửa sổ, ablation, SHAP và permutation importance.
-4. Báo cáo ưu/nhược điểm, trường hợp thất bại và giới hạn dữ liệu; đề xuất kiểm thử trên giai đoạn mới, lịch công bố thực tế và nhiều seed.
+Bảng chính gồm tên phương pháp và năm độ đo: CV RMSE log return, Test MAE giá, Test RMSE giá, đúng hướng, dung sai ±1%. CSV bổ sung MAPE giá và dung sai ±0,5%/±2%. Đúng hướng chấm các phiên thực tế tăng/giảm; dự báo 0 tính sai. Các metric giá giữ cả phiên đứng giá.
 
-Nhóm báo cáo cả trường hợp mô hình phức tạp không vượt baseline. Kết quả đã chạy được trình bày riêng tại [REPORT.md](REPORT.md); bản PDF tương ứng là [cs114_proposal.pdf](cs114_proposal.pdf).
+Mô hình dự báo mới nhất được học lại sau khi lưu kết quả; artefact Test được giữ riêng. ARIMA/SARIMAX dự báo từng bước với tham số cố định và chỉ cập nhật trạng thái sau khi quan sát kết quả phiên.
 
-Các giả định và phạm vi diễn giải được tập hợp tại mục [Giới hạn nghiên cứu & Hướng phát triển](REPORT.md#giới-hạn-nghiên-cứu--hướng-phát-triển) của báo cáo.
+## 6. Ba thí nghiệm và sản phẩm dự kiến
+
+1. So sánh Last-Close, Ridge, XGBoost, ARIMA và GRU trên cùng các ngày; mô hình bảng/GRU dùng 32 biến, ARIMA chỉ dùng lịch sử log return.
+2. Giữ XGBoost và cấu hình chọn trên 32 biến, lần lượt thêm dữ liệu thành 38/43 biến. Đặt đối sánh ARIMA/SARIMAX ngay trong phần này.
+3. Giữ kiến trúc GRU, so sánh bộ nhớ 20 và 60 phiên; lựa chọn bằng CV trước khi xem Test.
+
+Sản phẩm gồm pipeline có kiểm thử, notebook từng bước, bảng CV/Test và biểu đồ giá thực tế so với dự báo trên toàn Test và 80 phiên cuối. Nhóm báo cáo cả trường hợp phương pháp phức tạp chưa vượt baseline giữ nguyên giá. Chi tiết kết quả được cập nhật trong [REPORT.md](REPORT.md).
+
+## 7. Giải thích mô hình và phân tích ca lỗi
+
+Permutation Importance trên XGBoost là nội dung giải thích chính: tráo một cột rồi đo sai số tăng bao nhiêu. SHAP dùng nền Train được đưa vào phụ lục. Nhóm trích ba phiên có sai số giá tuyệt đối lớn nhất của mô hình chọn bằng CV, so với biến động FPT và VN-Index để mô tả bối cảnh. Không chỉnh lại mô hình theo giải thích Test.
+
+Định hướng tiếp theo là kiểm tra giai đoạn mới, ngày công bố thực tế và nhiều seed. Phạm vi diễn giải và các giới hạn chung tập hợp tại [cuối báo cáo](REPORT.md#giới-hạn-nghiên-cứu--hướng-phát-triển).

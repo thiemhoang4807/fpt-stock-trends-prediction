@@ -2,7 +2,9 @@
 
 ## Mục tiêu và trạng thái hiện tại
 
-Cắt nghiên cứu về 30/09/2025; dựng hai nhánh giá và đa nguồn, so sánh 5 mô hình phân loại và 5 mô hình hồi quy trên cùng Train 85% / Test 15%; hoàn thiện tài liệu, proposal LaTeX và giữ riêng cẩm nang.
+Thiết kế hiện hành: cutoff 30/09/2025; một mục tiêu next_log_return suy ra giá và hướng; năm phương pháp chính và ba thí nghiệm, CV 5 fold trong Train 85%, Test 15%. Nhật ký các thiết kế cũ bên dưới được giữ như lịch sử, không phải luồng chạy hiện tại.
+
+**Quy ước từ người dùng ngày 19/11/2026:** Từ các đợt cập nhật sau, không chỉnh docs/PROPOSAL.md, docs/cs114_proposal.tex hoặc docs/cs114_proposal.pdf vì đã nộp giảng viên; chỉ chỉnh các file khác. Bản Proposal của đợt rút gọn này đã hoàn tất trước chỉ dẫn mới và được giữ nguyên.
 
 ## Checklist theo giai đoạn
 
@@ -152,3 +154,24 @@ README/REPORT đã có 3 phát hiện chính, bảng đại diện, bảng cửa
 Đã xóa thư mục tmp sau khi kiểm tra đường dẫn tuyệt đối và xác nhận không có reparse point: 302 tệp, khoảng 43,02 MB. Đã dọn cache Python/pytest và tệp phụ biên dịch LaTeX. Cẩm nang riêng vẫn tồn tại và bị Git bỏ qua; bản notebook 01 của người dùng được giữ nguyên. Quét các định danh nguồn bị loại trừ không có kết quả. Đang chuẩn bị commit và công bố thay đổi chính thức lên main.
 
 Hoàn tất đợt rà soát: commit 20741e9 đã được push lên origin/main thành công. Toàn bộ thay đổi chính thức và chứng cứ kiểm định đã được công bố; cẩm nang vẫn ở local và notebook 01 giữ output riêng, không thuộc commit. Nhật ký xác nhận này được đồng bộ bằng commit tài liệu kế tiếp.
+
+## Thống nhất log return và rút gọn thực nghiệm — 19/11/2026
+
+- [x] Kiểm tra trạng thái, bảo toàn output notebook cá nhân và cố định thiết kế mới.
+- [x] Một mục tiêu log return, 5 phương pháp; ablation 32/38/43 biến và ARIMA/SARIMAX; GRU L=20/60.
+- [x] Chạy lại EDA, chuỗi thời gian, CV/Test, dự báo và giải thích; trích 3 ca lỗi có bằng chứng.
+- [x] Viết lại tài liệu theo 7 bước, cẩm nang riêng và Proposal PDF.
+- [x] Cập nhật/chạy 10 notebook và kiểm thử; kiểm tra artefact và chống rò rỉ.
+- [ ] Dọn kết quả cũ và tmp, commit/push main, xác minh cẩm nang không công bố.
+
+Thiết kế: giữ nguyên snapshot đến 30/09/2025 và cohort 1.559 nhãn để đối chiếu. Chọn mô hình bằng RMSE log return CV, không dùng Test. XGBoost chọn tham số trên 32 biến rồi giữ cùng tham số ở 38/43 biến để cô lập ảnh hưởng dữ liệu. GRU giữ hai cửa sổ. Baseline bằng 0 được ghi Đứng giá. Báo cáo quý trễ 45 ngày; cổ phiếu lưu hành dùng mốc hiệu lực đã có cộng 1 ngày (không giả định mọi số cổ phiếu đều là báo cáo quý). ADF/KPSS hỗ trợ lý do đổi thang mục tiêu, không chứng minh việc đổi thang bảo đảm dự báo tốt.
+
+Đã thay luồng classifier bằng một dự báo log return, dấu hướng -1/0/+1 và bộ metrics chung; bỏ mã lựa chọn bảng cũ. Đã xóa artefact đánh giá cũ trước khi chạy lại. Dữ liệu FPT xác minh vẫn 4.671 hàng, cohort chung 1.559 nhãn. CV đang chạy; cả ARIMA và SARIMAX dùng cùng lưới bậc và hằng số để so sánh minh bạch. Output notebook cá nhân 00/01 đã sao lưu ngoài repo tại thư mục private_notebook_outputs_20261119 trong workspace.
+
+Đã chạy xong 13 ứng viên × 5 fold và 9 cấu hình Test; mọi fit thống kê hội tụ. ARIMA (1,0,0) được chọn, CV RMSE 0,017191953; Test MAE 1,239203 nghìn VND. GRU chọn L=60 qua CV (0,017716299), Test MAE 1,221312; baseline 1,224967. XGBoost 32/38/43 giữ độ sâu 2: thêm dữ liệu làm RMSE tăng và đúng hướng giảm từ 51,98% xuống 48,02%. Đã sinh permutation/SHAP và 3 ca lỗi 03/04, 16/04, 03/02/2025, bối cảnh VN-Index từ snapshot gốc. 47 kiểm thử đạt. Tài liệu Markdown đã viết lại; đang biên dịch PDF và chạy notebook cách ly. Rà soát độc lập xác nhận không thấy leakage/metric sai; sẽ bỏ notebook 08 cũ bị trùng và làm rõ số hàng ngữ cảnh của ARIMA.
+
+Kiểm định cuối: 10/10 notebook chạy bằng kernel mới trong bản sao cách ly; 13 CSV báo cáo khớp ở rtol 1e-10 / atol 1e-12 và JSON dự báo giống hệt. 47/47 tests đạt sau sửa khởi tạo tmp cho clone mới. Toàn bộ 15 CSV raw giữ SHA-256; không tải lại hoặc thay dữ liệu gốc. Đã bỏ notebook 08 trùng. Proposal 6 trang biên dịch hai lượt, 0 cảnh báo Underfull/Overfull, đã xem cả 6 trang; hình SHAP đã sửa nhãn trục. Chứng cứ lưu tại reports/restructure_validation.json.
+
+Đã hoàn thiện cẩm nang riêng: kịch bản 10 phút/3 người/7 bước, ví dụ 5 ngày và công thức, 5 phương pháp, 3 bảng thực nghiệm, dòng dữ liệu thật 29/09→30/09/2025, permutation/SHAP, 3 ca lỗi và 10 câu vấn đáp. Tệp vẫn bị Git bỏ qua. Đang kiểm tra đóng gói cuối và công bố main.
+
+Cẩm nang đã kiểm tra đầy đủ 10 phần và 10 câu vấn đáp, không tracked; quy ước giữ nguyên Proposal trong các đợt sau đã ghi ở đầu nhật ký. Mọi kiểm thử/notebook đã hoàn tất; bắt đầu dọn tmp/cache và chuẩn bị commit chính thức.

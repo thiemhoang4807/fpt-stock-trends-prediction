@@ -67,8 +67,8 @@ def test_common_table_windows_use_full_context_not_compressed_rows():
     common = context.iloc[60:].copy().reset_index(drop=True)
     common.attrs["sequence_context"] = context
     prediction, artifact = fit_predict_sequence(
-        "LSTM",
-        "classification",
+        "GRU",
+        "regression",
         common,
         ["x"],
         np.arange(20),
@@ -78,7 +78,7 @@ def test_common_table_windows_use_full_context_not_compressed_rows():
         hidden_size=4,
     )
     assert len(prediction) == 4
-    assert ((prediction >= 0) & (prediction <= 1)).all()
+    assert np.isfinite(prediction).all()
     latest = predict_sequence_artifact(artifact, common)
     assert latest.shape == (1,)
     assert artifact["scaler_last_session_index"] == 79
