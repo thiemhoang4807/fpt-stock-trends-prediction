@@ -2,9 +2,9 @@
 
 Đồ án môn CS114 — nhóm Lê Vũ Thiêm Hoàng (25520584), Nguyễn Tấn Dũng (25520367), Lưu Hoàng Minh Duy (25520424).
 
-- **Một mục tiêu, hai đầu ra:** chỉ học log return; giá và hướng đều suy ra từ cùng dự báo. Không còn mô hình phân loại riêng.
-- **Lựa chọn bằng Train CV:** ARIMA có CV RMSE thấp nhất trong năm đại diện (0.017192); Test MAE giá 1.2392. Baseline đạt MAE 1.2250, nên mô hình được CV chọn chưa vượt baseline về MAE trên giai đoạn Test.
-- **Thêm dữ liệu chưa tự động tốt hơn:** XGBoost 32 → 43 biến có Test RMSE log return 0.018754 → 0.020089; đúng hướng 51.98% → 48.02%. GRU chọn **GRU L=60** bằng CV.
+- **Cùng 3.031 phiên mục tiêu** từ 07/08/2013 đến 30/09/2025 cho các cấu hình. Mỗi mô hình dự báo log return để suy ra giá và chiều biến động của phiên kế tiếp.
+- **ARIMA(0,0,0) được chọn qua Train CV** với RMSE log return 0,015860. MAE giá trên Test là 1,1106 nghìn VND, gần mức 1,1097 của Last-Close.
+- **XGBoost 38 biến có độ đúng hướng 55,00%**, so với 52,95% ở 32 và 42 biến. MAE giá tăng nhẹ từ 1,1100 lên 1,1164 rồi 1,1167 nghìn VND.
 
 ## 1. Bài toán
 
@@ -12,41 +12,27 @@ Một mô hình dự báo `r(t+1) = ln(C(t+1)/C(t))`; giá = `C(t) × exp(r dự
 
 ## 2. Dữ liệu
 
-4.671 phiên OHLCV FPT, **02/01/2007–30/09/2025**. Snapshot là bản dữ liệu cố định được lưu lại để cả nhóm chạy trên cùng số liệu. Giá do VCI cung cấp qua vnstock; nguồn bổ trợ gồm DNSE, Investing.com, World Bank và công bố FPT. Mỗi nguồn có lịch sử và tần suất khác nhau:
+Tệp giá lưu 4.671 hàng từ 02/01/2007 đến 30/09/2025. Pipeline bỏ hai ngày HOSE đóng cửa 23–24/01/2018, còn 4.669 phiên. Sau 49 phiên tích lũy cho SMA50, bảng kỹ thuật có 4.620 hàng. Chuỗi chung đủ 42 biến từ 15/05/2013. Phiên đầu vào 06/08/2013 có đủ 60 phiên liên tiếp và được gán nhãn bằng ngày mục tiêu 07/08/2013. Bảng chung có 3.032 hàng gồm 3.031 nhãn và đầu vào 30/09/2025 dành cho dự báo.
 
-| Nhóm dữ liệu | Khoảng quan sát trong bản lưu | Dùng để mô tả điều gì? |
+| Nguồn | Phạm vi và quan sát | Cách dùng |
 |---|---|---|
-| Giá và khối lượng FPT | 02/01/2007–30/09/2025, 4.671 phiên | Mức giá, đà tăng/giảm, dao động và hoạt động giao dịch |
-| VN-Index | 02/01/2007–30/09/2025, 4.635 phiên | Hướng và mức biến động thị trường chung |
-| USD/VND | 01/01/2007–30/09/2025, 4.893 quan sát | Giá một USD tính bằng VND |
-| Vàng XAU/USD | 01/01/2019–30/09/2025, 1.755 quan sát | Giá vàng quốc tế, nhân tỷ giá để đổi sang VND/ounce |
-| CPI | Ngày công bố 27/12/2018–06/09/2025, 81 quan sát | Mức tăng giá tiêu dùng so với cùng kỳ năm trước |
-| GDP | 2010–2024, 15 năm | Quy mô kinh tế theo USD hiện hành, không phải tốc độ tăng trưởng |
-| Báo cáo tài chính FPT | Quý I/2007–quý II/2025, 52 quý có khoảng trống | Doanh thu và ba mức lợi nhuận theo quý |
-| Cổ phiếu lưu hành FPT | 10 mốc tham chiếu từ 2017 đến 07/2025 | Số cổ phiếu đang lưu hành tại các mốc công bố |
+| FPT OHLCV, Vietcap qua vnstock | 4.671 hàng lưu, 2007–30/09/2025 | 4.669 phiên sau lọc lịch HOSE. Giá nghìn VND/cổ phiếu, khối lượng tính bằng cổ phiếu. |
+| VN-Index, DNSE và CafeF | 4.668 giá đóng cửa sau bổ sung 33 phiên và sửa 16 mức giá | Tính log return và độ biến động 20 phiên. |
+| USD/VND, Investing.com | 4.893 quan sát, 2007–30/09/2025 | VND trên một USD. |
+| XAU/USD, bản xuất Investing.com | 4.858 giá ngày, 01/01/2007–30/09/2025 | Nhân với tỷ giá để có VND mỗi ounce vàng quốc tế. |
+| CPI năm, World Bank WDI `FP.CPI.TOTL.ZG` | 20 năm 2005–2024 | Tỷ lệ lạm phát cả năm, đơn vị %. |
+| GDP năm, World Bank WDI `NY.GDP.MKTP.CD` | 20 năm 2005–2024 | GDP danh nghĩa cả năm, USD hiện hành. |
+| Kết quả kinh doanh FPT, Vietcap qua vnstock | 50 quý liên tục 2013Q1–2025Q2 trong phạm vi dùng | Doanh thu thuần, lợi nhuận gộp, EBIT và lợi nhuận sau thuế của cổ đông công ty mẹ. |
 
-Ngày của số liệu khác ngày mô hình được phép biết số liệu. Ví dụ quý II/2025 kết thúc 30/06, nhưng bốn chỉ tiêu tài chính chỉ được dùng từ **14/08/2025** theo giả định trễ 45 ngày. Các biến ngày được dùng từ ngày lịch tiếp theo; giá trị quá cũ trở lại thiếu. Không lấy số liệu tương lai để lấp quá khứ. Đọc [hướng dẫn nguồn, cách lấy, đơn vị và độ phủ sau ghép](data/README.md) để xem quy tắc riêng từng biến.
+**32 → 38 → 42 biến.** Bộ đầu gồm 5 OHLCV, 23 chỉ báo và 4 biến nến. Bộ 38 thêm 2 biến VN-Index, USD/VND, vàng, CPI và GDP. Bộ 42 thêm 4 chỉ tiêu kết quả kinh doanh. Số cổ phiếu lưu hành được loại khỏi thiết kế vì tệp sẵn có chỉ bắt đầu khả dụng từ năm 2018.
 
-Ba cấp đầu vào là **32 biến giá/kỹ thuật → thêm 6 biến thị trường/vĩ mô thành 38 → thêm 5 biến tài chính thành 43**. Đủ lịch sử giá từ 2007 không có nghĩa đủ mọi nguồn từ 2007. Sau yêu cầu đủ dữ liệu và cửa sổ 60 phiên liên tiếp, tập so sánh chung có 1.559 hàng gán nhãn, bắt đầu ở phiên mục tiêu 03/04/2019.
+Giá VN-Index, USD/VND và vàng được dùng sau một ngày lịch, tối đa 10 ngày từ lúc khả dụng. Báo cáo tài chính dùng theo giả định cuối quý cộng 45 ngày, giữ tối đa 150 ngày. CPI và GDP dùng theo giả định cuối năm cộng 180 ngày, giữ tối đa 550 ngày. Ví dụ số 2024 dùng từ phiên 30/06/2025 theo quy tắc này. Ghép lùi theo thời điểm khả dụng. Số CPI 3,6211 được hiểu là 3,6211%. Các ngày công bố và phiên bản số liệu lịch sử chưa xác minh đầy đủ.
 
-### Đọc hiểu dữ liệu và công thức từ đâu?
-
-1. [Cẩm nang hiểu dự án](docs/CAM_NANG_HIEU_DU_AN.md): dành cho cả nhóm, có ví dụ tính từng bước và kịch bản thuyết trình.
-2. [Nguồn và từ điển dữ liệu](data/README.md): mỗi biến lấy ở đâu, lấy thế nào, đơn vị, ý nghĩa, khoảng thời gian và cách xử lý thiếu.
-3. [EDA và đặc trưng](docs/EDA_VA_DAC_TRUNG.md): đọc biểu đồ, kiểm tra dữ liệu, giải thích đủ 32 biến giá/kỹ thuật, công thức và lý do sử dụng.
-4. [Báo cáo thực nghiệm](docs/REPORT.md): thiết kế đánh giá và kết quả thật của ba thí nghiệm.
-5. [Kiểm tra và bổ sung dữ liệu](docs/HUONG_DAN_KIEM_TRA_VA_BO_SUNG_DU_LIEU.md): danh sách thiếu/lỗi đã thấy, nguồn để tìm lịch sử sớm hơn và 9 bước kiểm tra file mới.
-6. [Kết quả tìm dữ liệu từ 2007](docs/DU_LIEU_TU_2007.md): đã tải 249 tháng CPI, 20 năm GDP, một phần vàng và 5 PDF FPT; giải thích các điều kiện còn thiếu để thay bộ huấn luyện.
-
-**Đợt tìm lịch sử từ 2007:** dữ liệu mới được lưu riêng ở [data/research/history_2007](data/research/history_2007/). Chạy `python src/fetch_historical_candidates.py` để dựng lại CSV và kiểm tra phần trùng từ bản lưu, không cần mạng. Thêm `--download` để tải phản hồi còn thiếu; các bản đã có được giữ nguyên. CPI/GDP đủ kỳ tham chiếu nhưng chưa xác minh lịch công bố và phiên bản lịch sử; vàng mới đủ 7 năm rời. Những bản này chưa được dùng để tạo các điểm số bên dưới.
-
-**Chất lượng dữ liệu còn cần hoàn thiện:** mốc vàng 2019/CPI 2018 là giới hạn bản đã thu thập. Rà soát bổ sung ghi nhận 36 ngày có trong FPT nhưng thiếu ở nguồn VN-Index; 17 đoạn tính return nguồn đi qua các ngày bị khuyết. Báo cáo quý thiếu 22 quý; các ngày công bố quý/GDP có phần giả định. Xem [audit chi tiết](reports/data_quality_review.json). Các bảng điểm dưới đây vẫn thuộc snapshot hiện hành, chưa phải kết quả trên nguồn đã bổ sung/sửa.
-
-Ví dụ mục đích của công thức: `close/SMA20 − 1` diễn tả giá hôm nay cao hơn trung bình 20 phiên bao nhiêu phần trăm; `log(1 + volume)` giảm chênh lệch thang đo của khối lượng; `ln(close ngày sau/close hôm nay)` là mục tiêu mô hình cần dự báo. **Đặc trưng mô tả đầu vào, mục tiêu là đáp án cần học**; không đưa cột đáp án vào đầu vào.
+[Sổ tay dữ liệu](data/README.md) · [EDA và công thức](docs/EDA_VA_DAC_TRUNG.md) · [Cẩm nang thuyết trình](docs/CAM_NANG_HIEU_DU_AN.md) · [Lịch sử và kiểm chứng nguồn](docs/DU_LIEU_TU_2007.md)
 
 ## 3. Đặc điểm chuỗi thời gian
 
-ADF bác bỏ nghiệm đơn vị của log return (p ≈ 1,05 × 10⁻¹⁷), nhưng KPSS vẫn bác bỏ dừng mức (p ≈ 0,0164). Kết quả hỗ trợ dùng biến động tương đối, không bảo đảm dự báo tốt. [Bảng kiểm định và ACF/PACF](docs/REPORT.md#3-đặc-điểm-chuỗi-thời-gian); STL ở phụ lục.
+ADF trên log return có p ≈ 5,63 × 10⁻¹⁷. KPSS có p ≈ 0,0338. Ở mức 5%, ADF bác bỏ nghiệm đơn vị và KPSS bác bỏ dừng mức. Hai kiểm định dùng lịch sử giá đến ngày kết thúc Train 29/11/2023. [Kiểm định và ACF/PACF](docs/REPORT.md#3-đặc-điểm-chuỗi-thời-gian)
 
 ## 4. Năm phương pháp
 
@@ -54,21 +40,21 @@ ADF bác bỏ nghiệm đơn vị của log return (p ≈ 1,05 × 10⁻¹⁷), n
 
 ## 5. Đánh giá
 
-Train 1.325 / Test 234 mẫu; Test từ 22/10/2024 đến 30/09/2025. Train dùng CV 5 fold, `gap=1`; chọn theo RMSE log return. Độ chính xác hướng chấm 227 phiên đổi giá, dự báo 0 tính sai. Bộ chuẩn hóa chỉ học Train; artefact đánh giá tách khỏi bản học lại để dự báo.
+**Train 2.576 mẫu (07/08/2013–29/11/2023)** và **Test 455 mẫu (30/11/2023–30/09/2025)**. Chia 85%/15% theo ngày mục tiêu. Hồi quy chấm 455 mẫu. Đúng hướng chấm 440 phiên đổi giá, dự báo đứng giá tính sai trên các phiên này. Train dùng `TimeSeriesSplit(n_splits=5, gap=1)`. Số hàng học lần lượt là 430, 859, 1.288, 1.717 và 2.146, với 429 hàng kiểm định mỗi fold. CV báo trung bình và độ lệch chuẩn mẫu. StandardScaler chỉ học từ phần Train của từng lượt fit.
 
 ## 6. Ba thí nghiệm và kết quả chính
 
 1. So sánh năm phương pháp trên cùng ngày, mô hình ML/GRU dùng 32 biến; ARIMA chỉ dùng log return.
-2. XGBoost cố định cấu hình, thêm dữ liệu **32 → 38 → 43**; đối sánh thêm ARIMA/SARIMAX.
+2. XGBoost cố định cấu hình, thêm dữ liệu **32 → 38 → 42**; đối sánh thêm ARIMA/SARIMAX.
 3. GRU **L=20 so với L=60**, chọn bằng CV.
 
-| Mô hình / cấu hình | CV RMSE log return | Test MAE giá (nghìn VND) | Test RMSE giá (nghìn VND) | Đúng hướng (%) | Dung sai ±1% (%) |
+| Mô hình / cấu hình | CV RMSE log return | Test MAE giá (nghìn VND) | Test RMSE giá (nghìn VND) | Đúng hướng | Dung sai ±1% |
 |---|---:|---:|---:|---:|---:|
-| Last-Close Baseline | 0.017250 ± 0.003429 | 1.2250 | 1.7398 | 0.00% | 54.70% |
-| Ridge Regression | 0.017612 ± 0.003467 | 1.2455 | 1.7534 | 52.42% | 52.99% |
-| XGBoost | 0.017750 ± 0.002956 | 1.2621 | 1.7774 | 51.98% | 52.56% |
-| ARIMA | 0.017192 ± 0.003481 | 1.2392 | 1.7537 | 48.90% | 54.27% |
-| GRU L=60 | 0.017716 ± 0.003444 | 1.2213 | 1.7384 | 54.19% | 54.27% |
+| Last-Close Baseline | 0.015890 ± 0.002139 | 1.1097 | 1.5623 | 0.00% | 55.16% |
+| Ridge Regression | 0.016166 ± 0.002189 | 1.1229 | 1.5794 | 48.41% | 54.73% |
+| XGBoost | 0.016390 ± 0.002035 | 1.1100 | 1.5610 | 52.95% | 55.60% |
+| ARIMA | 0.015860 ± 0.002130 | 1.1106 | 1.5636 | 52.27% | 55.16% |
+| GRU L=60 | 0.016054 ± 0.002182 | 1.1114 | 1.5618 | 49.77% | 55.16% |
 
 CV hiển thị trung bình ± độ lệch chuẩn qua 5 fold. Bảng chi tiết: [main](reports/main_benchmark.csv), [ablation](reports/ablation.csv), [ARIMA/SARIMAX](reports/statistical_extension.csv), [GRU](reports/lookback.csv). Có **9 cấu hình Test duy nhất, 10 artefact mô hình** gồm bản học lại.
 
@@ -83,8 +69,8 @@ Permutation Importance là phần chính; SHAP là phụ lục. [Báo cáo](docs
 ```bash
 python -m pip install -r requirements.txt
 python src/fetch_data.py --verify
-python src/audit_data_quality.py
 python src/fetch_supplemental.py --from-cache
+python src/audit_data_quality.py
 python src/eda.py
 python src/prepare.py
 python src/time_series_analysis.py

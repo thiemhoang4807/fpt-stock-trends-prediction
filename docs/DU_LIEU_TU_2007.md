@@ -2,6 +2,20 @@
 
 Ngày kiểm tra: 19/11/2026. Mốc nghiên cứu vẫn là **30/09/2025**.
 
+**Thiết kế đã triển khai dùng 32 → 38 → 42 biến từ năm 2013.** Phiên mục tiêu đầu tiên là 07/08/2013. Sau đối chiếu 33 phiên thiếu VN-Index, hiệu chỉnh 16 mức đóng cửa và bỏ hai ngày HOSE đóng cửa, tập chính thức có 3.031 nhãn (2.576 Train, 455 Test). Các số mẫu ở mục 8 ghi lại khảo sát trước khi khôi phục lịch, còn kết quả chính thức nằm trong [báo cáo thực nghiệm](REPORT.md).
+
+## Cập nhật sau khi nhận bản xuất vàng và chuyển sang CPI năm
+
+Tệp XAU/USD do thành viên nhóm tải từ Investing.com có 5.000 dòng. Sau khi chuẩn hóa ngày theo `dd/mm/yyyy` và cắt 142 dòng sau mốc nghiên cứu, còn **4.858 thanh giá ngày từ 01/01/2007 đến 30/09/2025**. Kiểm tra giá trị thiếu, ngày trùng, giá dương và quan hệ OHLC đều đạt. Khoảng cách lớn nhất giữa hai ngày có quan sát là 4 ngày lịch. Khi áp dụng quy tắc vàng hiện hành (dùng từ ngày sau, tối đa 10 ngày tuổi), **4.671/4.671 phiên FPT** có quan sát đủ điều kiện. [Nguồn bản xuất vàng](https://vn.investing.com/currencies/xau-usd-historical-data)
+
+So với snapshot đang huấn luyện, 1.742 ngày trùng có 1.570 giá đóng cửa khác nhau, chênh tối đa 7,80 USD/ounce. 13 ngày trong snapshot cũ không xuất hiện trong bản mới. Do đó bản mới được chuẩn hóa thành một chuỗi nguyên vẹn để kiểm tra. Báo cáo cục bộ liệt kê ngày lệch giữa hai bản để nhóm có thể đối chiếu.
+
+Nhóm chuyển sang tỷ lệ lạm phát CPI theo năm của World Bank WDI, mã `FP.CPI.TOTL.ZG`. Gói CSV chính thức cung cấp đủ **20 năm 2005–2024**, ví dụ 8,3444% năm 2007 và 3,6211% năm 2024. Cột `cpi_annual_inflation_pct` đại diện cho tỷ lệ cả năm. Giá trị CPI và GDP cả năm 2025 nằm ngoài phạm vi dữ liệu năm dùng trong đợt này. Ngày công bố từng năm chưa có trong các tệp nguồn, vì vậy cột `publication_date` để trống. Mốc cập nhật 11/11/2026 thuộc về bản dữ liệu WDI được tải. [Chuỗi CPI năm của Việt Nam](https://data.worldbank.org/indicator/FP.CPI.TOTL.ZG?locations=VN)
+
+Từ thư mục gốc, chạy `python src/prepare_macro_refresh.py --gold-csv <tệp-xuất-vàng> --cpi-zip <gói-CSV-WDI>` để kiểm tra lại các tệp xuất gốc. Pipeline thực nghiệm đọc các CSV đã xác minh và lưu trong `data/raw/supplemental/`. Chi tiết cấu trúc và mốc khả dụng nằm trong [sổ tay dữ liệu](../data/README.md).
+
+## Kết quả khảo sát trước bản xuất vàng mới
+
 **Có thể tìm được dữ liệu trước 2018–2019.** Hai mốc này là giới hạn của các tệp CPI/vàng đã thu thập trước đây, không phải bằng chứng rằng các chỉ số đó chưa tồn tại. Đợt này đã tải được lịch sử CPI và GDP dài hơn, một phần lịch sử vàng, cùng báo cáo tài chính FPT cũ. Tuy nhiên, bộ 43 biến chưa đủ điều kiện để huấn luyện liên tục từ 2007.
 
 Các bản mới nằm riêng tại [data/research/history_2007](../data/research/history_2007/). Dữ liệu huấn luyện, mô hình và điểm thực nghiệm hiện tại chưa thay đổi. [audit.json](../data/research/history_2007/audit.json) ghi số liệu kiểm tra; [download_history.json](../data/research/history_2007/download_history.json) ghi URL, thời điểm tải, lỗi và hash.
@@ -75,6 +89,8 @@ Các năm còn thiếu tệp: **2009–2013, 2015, 2018–2019, 2021–2025**. C
 
 ## 5. Báo cáo FPT: tìm thấy tài liệu cũ, cần thống nhất cách đọc
 
+Đợt kiểm tra API ngày 19/11/2026 cho thấy bản `vnstock 5.1.0` dừng phục vụ, nên lời gọi `Finance(symbol="FPT", source="VCI").income_statement(period="quarter", lang="vi")` không tải lại được snapshot. Bản `6.0.1` dùng `Fundamental().equity("FPT").income_statement(period="quarter", source="fhsc")`. Lần thử nhận lỗi thiếu `FHSC_API_KEY` ở cả báo cáo kết quả kinh doanh và bảng cân đối kế toán. Độ phủ quý của FHSC vẫn cần xác minh khi có quyền truy cập. Hàm `capital_history()` báo chưa được hỗ trợ ở thế hệ 6. [Tài liệu báo cáo tài chính](https://vnstocks.com/docs/vnstock/v6/bao-cao-tai-chinh-fundamental) · [Cấu hình khóa nguồn](https://vnstocks.com/docs/vnstock/v6/cai-dat)
+
 Đã tải **5 PDF do FPT lập**, lưu trên kho tài liệu tài chính công khai của CafeF. Bản nguồn, URL và hash được giữ để có thể kiểm tra lại:
 
 | Tài liệu | Trang PDF đã đối chiếu trực quan (đếm từ 1) | Dữ liệu trích |
@@ -127,3 +143,20 @@ Phản hồi API và tệp nhị phân nằm trong `raw/`; CSV nghiên cứu, c�
 5. Khi thay dữ liệu thật, chạy lại kiểm toán → ghép theo thời điểm có thể biết → tạo đặc trưng → CV trên Train → Test → dự báo/giải thích. Lưu phiên bản dữ liệu và kết quả mới; không gắn điểm hiện tại vào bộ dữ liệu kéo dài đến 2007.
 
 Đích của việc mở rộng là tăng độ phủ và kiểm tra tính ổn định qua các giai đoạn thị trường. Không chọn nguồn, khoảng thời gian hay cách sửa số để làm đẹp điểm Test.
+
+## 8. Khảo sát chọn mốc trước khi bổ sung các phiên VN-Index
+
+Mốc hợp lý cho thí nghiệm có **báo cáo tài chính FPT** là **năm 2013**, nếu nhóm dùng bốn chỉ tiêu kết quả kinh doanh và chưa đưa số cổ phiếu lưu hành vào mô hình. Chuỗi báo cáo quý liên tục bắt đầu ở quý I/2013. Theo giả định đang dùng là trễ 45 ngày, hàng đầu tiên có đủ 42 biến là **15/05/2013**. Hàng đầu tiên có đủ 60 phiên đầu vào liên tiếp là **06/08/2013**, ứng với phiên cần dự báo **07/08/2013**. Đặt mốc danh nghĩa 01/01/2012 hay 01/01/2013 đều cho cùng mẫu khi yêu cầu đủ các biến này.
+
+| Dữ liệu dùng để xác định cửa sổ chung | Ngày mục tiêu đầu tiên | Có nhãn | Train / Test theo 85% / 15% |
+|---|---|---:|---:|
+| 38 biến, xét từ năm 2012 | 04/01/2012 | 3.364 | 2.859 / 505 |
+| 42 biến, xét từ năm 2013 | 07/08/2013 | 2.969 | 2.523 / 446 |
+| 42 biến, xét từ năm 2014 | 03/01/2014 | 2.864 | 2.434 / 430 |
+| Đủ 43 biến với lịch cổ phiếu đang lưu | 25/09/2018 | 1.688 | 1.434 / 254 |
+
+Bộ 42 biến gồm 32 biến giá/kỹ thuật, 6 biến thị trường/vĩ mô và 4 chỉ tiêu báo cáo quý. Bộ 43 biến thêm số cổ phiếu lưu hành. Mốc 2018 xuất phát từ ngày có thể dùng sớm nhất của bảng cổ phiếu đang lưu, theo giả định đã ghi trong bảng nguồn. FPT có công bố ít nhất một mốc cổ phiếu có quyền biểu quyết vào 2013 và báo cáo thường niên 2016 có bảng số cổ phiếu lưu hành cuối 2015–2016. Có thể tìm tiếp lịch thay đổi vốn từ các công bố gốc nếu muốn giữ 43 biến và bắt đầu sớm hơn. Cần thống nhất loại cổ phiếu và ngày công bố trước khi ghép. [Công bố thay đổi cổ phiếu năm 2013](https://fpt.com/vi/tin-tuc/thong-bao-thay-doi-so-co-phieu-co-quyen-bieu-quyet-dang-luu-hanh) · [Báo cáo thường niên FPT 2016](https://fpt.com.vn/-/media/project/fpt-corporation/fpt/ir/report/tabs/annual-report/years/2016/2016/file-1/annualreport_eng.pdf)
+
+Đây là số mẫu khảo sát, tính đến 30/09/2025 với bản vàng mới và CPI/GDP năm. Bảng áp dụng thử độ trễ **180 ngày sau cuối năm** cho CPI/GDP. Hai đặc trưng VN-Index vẫn thiếu trên năm phiên 01–05/02/2021 sau phép ghép hiện hành. Các cửa sổ 60 phiên chạm khoảng trống này bị loại theo quy tắc hiện tại. Báo cáo chi tiết nằm trong `data/local/macro_2007/start_window_audit.json`.
+
+Nếu so sánh 32, 38 và 42 biến để đo tác dụng của các nhóm đặc trưng, dùng cùng ngày Train và Test của bộ 42 biến. Khi muốn đối chiếu riêng ảnh hưởng của việc kéo dài lịch sử với kết quả cũ, có thể giữ nguyên 234 phiên Test từ 22/10/2024 đến 30/09/2025. Khi đó bộ 42 biến bắt đầu năm 2013 có 2.735 mẫu Train trước Test, so với 1.325 mẫu của lần chạy cũ. Phép đối chiếu này cần kiểm soát cả thay đổi nguồn vàng và định nghĩa CPI nếu muốn tách riêng tác động của độ dài lịch sử.

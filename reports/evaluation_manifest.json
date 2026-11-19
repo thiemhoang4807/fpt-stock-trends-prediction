@@ -43,7 +43,7 @@
     ],
     "fit_scope": "Train only; frozen parameters during Test",
     "converged": true,
-    "training_context_rows": 1325,
+    "training_context_rows": 2576,
     "warnings": []
   },
   {
@@ -91,7 +91,7 @@
     ],
     "fit_scope": "Train only; frozen parameters during Test",
     "converged": true,
-    "training_context_rows": 1325,
+    "training_context_rows": 2576,
     "warnings": []
   },
   {
@@ -139,7 +139,7 @@
     ],
     "fit_scope": "Train only; frozen parameters during Test",
     "converged": true,
-    "training_context_rows": 1325,
+    "training_context_rows": 2576,
     "warnings": []
   },
   {
@@ -149,7 +149,7 @@
     "configuration": {
       "kind": "ARIMA",
       "order": [
-        1,
+        0,
         0,
         0
       ]
@@ -158,7 +158,7 @@
     "feature_columns": [],
     "fit_scope": "Train only; frozen parameters during Test",
     "converged": true,
-    "training_context_rows": 1389,
+    "training_context_rows": 2576,
     "warnings": [
       "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
     ]
@@ -208,7 +208,7 @@
     ],
     "fit_scope": "Train only; frozen parameters during Test",
     "converged": true,
-    "training_context_rows": 1325,
+    "training_context_rows": 2576,
     "warnings": []
   },
   {
@@ -256,13 +256,13 @@
     ],
     "fit_scope": "Train only; frozen parameters during Test",
     "converged": true,
-    "training_context_rows": 1325,
+    "training_context_rows": 2576,
     "warnings": []
   },
   {
     "config_id": "sarimax",
     "model": "SARIMAX",
-    "feature_level": "financial_43",
+    "feature_level": "financial_42",
     "configuration": {
       "kind": "SARIMAX",
       "order": [
@@ -277,17 +277,16 @@
       "vnindex_volatility_20d",
       "usd_vnd_rate",
       "gold_vnd_per_ounce",
-      "cpi_yoy_pct",
+      "cpi_annual_inflation_pct",
       "gdp_usd",
       "fpt_net_revenue_vnd",
       "fpt_gross_profit_vnd",
       "fpt_ebit_vnd",
-      "fpt_parent_net_profit_vnd",
-      "fpt_shares_outstanding"
+      "fpt_parent_net_profit_vnd"
     ],
     "fit_scope": "Train only; frozen parameters during Test",
     "converged": true,
-    "training_context_rows": 1389,
+    "training_context_rows": 2576,
     "warnings": [
       "Setting the shape on a NumPy array has been deprecated in NumPy 2.5.\nAs an alternative, you can create a new view using np.reshape (with copy=False if needed)."
     ]
@@ -338,18 +337,18 @@
       "vnindex_volatility_20d",
       "usd_vnd_rate",
       "gold_vnd_per_ounce",
-      "cpi_yoy_pct",
+      "cpi_annual_inflation_pct",
       "gdp_usd"
     ],
     "fit_scope": "Train only; frozen parameters during Test",
     "converged": true,
-    "training_context_rows": 1325,
+    "training_context_rows": 2576,
     "warnings": []
   },
   {
     "config_id": "xgboost_financial",
     "model": "XGBoost",
-    "feature_level": "financial_43",
+    "feature_level": "financial_42",
     "configuration": {
       "kind": "xgboost",
       "max_depth": 2
@@ -392,17 +391,16 @@
       "vnindex_volatility_20d",
       "usd_vnd_rate",
       "gold_vnd_per_ounce",
-      "cpi_yoy_pct",
+      "cpi_annual_inflation_pct",
       "gdp_usd",
       "fpt_net_revenue_vnd",
       "fpt_gross_profit_vnd",
       "fpt_ebit_vnd",
-      "fpt_parent_net_profit_vnd",
-      "fpt_shares_outstanding"
+      "fpt_parent_net_profit_vnd"
     ],
     "fit_scope": "Train only; frozen parameters during Test",
     "converged": true,
-    "training_context_rows": 1325,
+    "training_context_rows": 2576,
     "warnings": []
   }
 ]

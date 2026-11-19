@@ -11,8 +11,8 @@ Nếu mới bắt đầu, đọc [cẩm nang dùng chung](../docs/CAM_NANG_HIEU_
 | 02_fetch_supplemental | Nguồn bổ trợ, ý nghĩa, độ phủ, ví dụ ngày công bố và ghép lùi |
 | 03_eda | Kiểm toán, cách đọc biểu đồ giá/volume/return và quyết định xử lý |
 | 04_features | Công thức, mục đích của 32 biến và log return → giá/hướng |
-| 05_prepare | Từ 4.671 phiên đến 1.559 nhãn chung, 85/15 và 5 fold có gap |
-| 06_train | Năm phương pháp; XGBoost 32/38/43; GRU 20/60 |
+| 05_prepare | Từ 4.671 hàng lưu đến 3.031 nhãn chung, 85/15 và 5 fold có gap |
+| 06_train | Năm phương pháp, XGBoost 32/38/42 và GRU 20/60 |
 | 07_predict | Một mô hình học lại sinh dự báo mới nhất |
 | 08_time_series_analysis | ADF/KPSS, ACF/PACF; STL bổ trợ |
 | 09_explain | Permutation, ba ca lỗi; SHAP bổ trợ |

@@ -8,6 +8,44 @@ Thiết kế hiện hành: cutoff 30/09/2025; một mục tiêu next_log_return 
 
 ## Checklist theo giai đoạn
 
+### Tái huấn luyện theo cửa sổ 2013 và 42 biến — 19/11/2026
+
+- [x] Chốt phạm vi 32 → 38 → 42 biến theo yêu cầu. Đối chiếu nguồn cho các ngày thiếu VN-Index, xác minh hai ngày HOSE đóng cửa 23–24/01/2018.
+- [x] Đóng băng dữ liệu XAU/USD 4.858 ngày, CPI/GDP WDI 20 năm và 49 hàng sửa lịch sử VN-Index (33 bổ sung, 16 sửa giá đóng cửa). Lưu URL, lượng trùng và hash nguồn. CPI/GDP giả định cuối năm +180 ngày, tài chính quý +45 ngày. Không thiếu đầu vào trên tập chung sau hiệu chỉnh. Giữ bản giá gốc và lọc hai ngày HOSE đóng cửa khi chuẩn bị dữ liệu.
+- [x] Chạy EDA, ghép, chuẩn bị, ADF/KPSS, CV/Test, giải thích và dự báo. Có 3.031 nhãn từ 07/08/2013, Train 2.576 đến 29/11/2023, Test 455 đến 30/09/2025. XGBoost 32/38/42 đúng hướng 52,95/55,00/52,95%, MAE giá 1,1100/1,1164/1,1167. ARIMA(0,0,0) được chọn bằng CV RMSE 0,015860. Cập nhật tài liệu và kiểm chứng 67 tests đạt. Giữ ba tệp Proposal đã nộp.
+- [x] Chạy 10/10 notebook trong bản sao bằng kernel mới. 13 bảng báo cáo và 3 bảng đặc trưng khớp trong dung sai 1e-10/1e-12. JSON dự báo giống hệt. Không có dữ liệu thiếu trong tập chung hay ô ngoại sinh SARIMAX cần điền. Lưu kiểm định tại reports/study_2013_validation.json.
+- [ ] Kiểm tra và đồng bộ GitHub.
+
+### Xác định mốc bắt đầu thí nghiệm — 19/11/2026
+
+- [x] Đối chiếu 38, 42 và 43 biến với vàng mới, CPI/GDP năm giả định trễ 180 ngày, yêu cầu 60 phiên liên tiếp và chia thời gian 85%/15%. Bản 43 biến cũ tái lập đúng 1.559 nhãn, 1.325 Train và 234 Test.
+- [x] So mốc 2012–2014. Bộ 42 biến có hàng đầu vào đầy đủ 15/05/2013, mục tiêu đầu tiên 07/08/2013 và 2.969 nhãn (2.523/446). Lùi mốc danh nghĩa về 2012 không thêm nhãn. Lấy từ 2014 có 2.864 nhãn. Bộ 43 dùng các mốc cổ phiếu đang lưu bắt đầu dự báo 25/09/2018, có 1.688 nhãn.
+- [x] Ghi các phương án trong tài liệu và lưu phạm vi kiểm tra tại data/local/macro_2007/start_window_audit.json. Khuyến nghị 2013 cho 42 biến nếu được duyệt phạm vi. Cần xác minh quy tắc khả dụng CPI/GDP và năm phiên thiếu chỉ báo VN-Index trước lần chạy mới.
+
+### Kiểm tra nguồn báo cáo FPT bằng vnstock — 19/11/2026
+
+- [x] Xác nhận môi trường dự án đã cài `vnstock 5.1.0`; notebook tham khảo dùng `Finance` với FPT và VCI. Xóa bản clone tạm sau khi đọc.
+- [x] Gọi kết quả kinh doanh quý bằng `vnstock 5.1.0` với VCI, KBS, MAS. Tất cả báo bản cũ đã ngừng từ 11/11/2026. Cài `vnstock 6.0.1` và `vnstock-oapi 0.1.2` trong thư mục thử nghiệm. Gọi `Fundamental().equity("FPT")`: VCI báo tuyến báo cáo không hỗ trợ, FHSC báo thiếu `FHSC_API_KEY` cho cả kết quả kinh doanh và bảng cân đối. `Reference().company("FPT").capital_history(source="fhsc")` báo chưa hỗ trợ ở thế hệ 6.
+- [x] So tệp tham khảo với snapshot hiện hành: cùng 52 dòng, 29 cột và trùng giá trị từng dòng. Chỉ có 2007Q1–Q2 và 2013Q1–2025Q2. Chưa bổ sung được 22 quý 2007Q3–2012Q4. Đã xóa các bản clone tạm.
+- [ ] Chờ dữ liệu kết quả kinh doanh đã xuất hoặc khóa FHSC được người dùng cấu hình trên máy. Cần kiểm tra độ phủ và đối chiếu báo cáo gốc khi có kết quả. Lịch cổ phiếu lưu hành cần nguồn công bố riêng. Chưa thay snapshot hay chạy lại thí nghiệm.
+
+### Chuẩn hóa XAU/USD và CPI năm — 19/11/2026
+
+- [x] Nhận bản xuất XAU/USD từ người dùng. Tệp có 5.000 hàng theo thứ tự giảm dần từ 01/01/2007 đến 16/04/2026, ngày không trùng.
+- [x] Tải gói CSV WDI chính thức sau khi API JSON hết thời gian chờ. Hàng VNM/FP.CPI.TOTL.ZG có đủ 20 giá trị 2005–2024. Có số cả năm 2025 trong nguồn nhưng nằm sau cutoff. WDI ghi ngày cập nhật 11/11/2026.
+- [x] Chuẩn hóa vàng đến 30/09/2025. Giữ 4.858 hàng, cắt 142 hàng sau cutoff. Giá OHLC hợp lệ và mỗi ngày có tối đa một hàng. Trong 1.742 ngày trùng có 1.570 giá đóng khác snapshot đang dùng, lệch tối đa 7,80 USD/ounce. Bản mới thiếu 13 ngày có trong bản cũ. Kiểm tra ghép chỉ dùng vàng đã có từ ngày trước và tối đa 10 ngày tuổi cho kết quả 4.671/4.671 phiên FPT có giá đủ điều kiện.
+- [x] Lưu các bảng vàng, CPI năm, GDP năm và báo cáo kiểm định dưới data/local/macro_2007. Cập nhật tài liệu nguồn và thêm lệnh prepare_macro_refresh.py để xử lý lại tệp xuất. Toàn bộ 66 kiểm thử đạt.
+- [ ] Chờ xác nhận quy tắc khả dụng CPI/GDP và cách xử lý phạm vi bộ 43 biến. Dữ liệu phụ trợ tài chính còn thiếu 22 quý, lịch số cổ phiếu lưu hành từ trước 2018 chưa đủ và lịch VN-Index còn 36 phiên lệch với FPT. Chưa ghép dữ liệu mới vào huấn luyện. Bản Proposal, dữ liệu chính và kết quả thực nghiệm giữ nguyên.
+
+### Xác minh ba nguồn vĩ mô người dùng chỉ định — 19/11/2026
+
+- [x] Mở lại lịch CPI Việt Nam và bảng lịch sử XAU/USD trên Investing.com. Lịch CPI mở rộng được đến 29/05/2024 trong phiên kiểm tra, sau đó nút Hiển thị thêm chưa trả thêm hàng. Bộ lọc vàng nhận 01/01/2007–30/09/2025, nhưng bảng vẫn hiển thị tháng gần nhất và nút Tải xuống mở hộp đăng ký/đăng nhập.
+- [x] Đối chiếu chỉ tiêu GDP danh nghĩa theo USD hiện hành của World Bank. Bản phản hồi API đã lưu có đủ 20 năm 2005–2024, đúng quốc gia và mã chỉ tiêu, khớp SHA-256. Ngày công bố từng năm chưa xác minh.
+- [ ] Chờ tệp CPI theo ngày công bố và XAU/USD ngày do người dùng cung cấp. Bộ 43 biến cũng cần xác minh các quý tài chính còn thiếu, lịch cổ phiếu lưu hành và các phiên lệch lịch VN-Index so với FPT trước khi mở rộng về 2007.
+- [ ] Kiểm định độ phủ và tính khả dụng theo thời gian, rồi xử lý lại dữ liệu và chạy toàn bộ pipeline theo phạm vi đã xác nhận.
+
+Người dùng yêu cầu dừng ngay khâu thu thập nếu gặp dữ liệu không tải được hoặc cần xác minh. Lần kiểm tra này chưa ghi đè đầu vào hay chạy lại huấn luyện.
+
 ### Tìm và kiểm chứng lịch sử từ 2007 — 19/11/2026
 
 - [x] Kiểm tra trạng thái main sạch và đọc cấu trúc dữ liệu đang dùng.

@@ -129,10 +129,16 @@ def test_main_choice_depends_only_on_cv():
 def test_published_metrics_reconstruct_from_each_prediction():
     metrics = pd.read_csv(ROOT / "reports/all_test_metrics.csv")
     predictions = pd.read_csv(ROOT / "reports/test_predictions.csv")
+    split = json.loads((ROOT / "reports/training_summary.json").read_text())["split"]
+    expected_dates = predictions.loc[predictions.config_id.eq("last_close"), "target_date"].tolist()
+    assert len(expected_dates) == split["test_rows"] == 455
+    assert expected_dates == sorted(set(expected_dates))
+    assert expected_dates[0] == split["test_target_date_start"]
+    assert expected_dates[-1] == split["test_target_date_end"]
     assert len(metrics) == 9
     for row in metrics.itertuples():
         p = predictions.loc[predictions.config_id.eq(row.config_id)].copy()
-        assert len(p) == 234
+        assert p.target_date.tolist() == expected_dates
         assert p.target_date.iloc[-1] == "2025-09-30"
         np.testing.assert_allclose(
             p.predicted_close,
@@ -157,7 +163,7 @@ def test_published_metrics_reconstruct_from_each_prediction():
 
 def test_tables_artifacts_and_fixed_ablation_design():
     groups = feature_groups()
-    assert list(map(len, groups.values())) == [32, 38, 43]
+    assert list(map(len, groups.values())) == [32, 38, 42]
     for name, count in [
         ("main_benchmark", 5),
         ("ablation", 3),

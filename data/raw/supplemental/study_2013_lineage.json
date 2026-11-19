@@ -1,0 +1,204 @@
+{
+  "cutoff": "2025-09-30",
+  "xau_usd": {
+    "source_url": "https://vn.investing.com/currencies/xau-usd-historical-data",
+    "source_sha256": "222bb15c2ef322ebaecff7bd8e146b7a7c5567d3f7c11ca61345b550b7cd994a",
+    "source_rows": 5000,
+    "source_start": "2007-01-01",
+    "source_end": "2026-04-16",
+    "rows_after_cutoff_removed": 142,
+    "price_unit": "USD per troy ounce",
+    "rows": 4858,
+    "start": "2007-01-01",
+    "end": "2025-09-30",
+    "largest_gap_calendar_days": 4,
+    "weekday_dates_without_bar": [
+      "2012-01-02",
+      "2012-12-25",
+      "2013-01-01",
+      "2013-12-25",
+      "2014-01-01",
+      "2014-12-25",
+      "2015-01-01",
+      "2015-12-25",
+      "2016-03-25",
+      "2016-12-26",
+      "2017-01-02",
+      "2017-04-14",
+      "2017-12-25",
+      "2018-01-01",
+      "2018-03-30",
+      "2019-01-01",
+      "2019-04-19",
+      "2019-12-25",
+      "2020-01-01",
+      "2020-04-10",
+      "2020-12-25",
+      "2021-01-01",
+      "2021-04-02",
+      "2021-12-24",
+      "2022-04-15",
+      "2022-12-26",
+      "2023-01-02",
+      "2023-04-07",
+      "2023-12-25",
+      "2024-01-01",
+      "2024-03-29",
+      "2024-12-25",
+      "2025-01-01",
+      "2025-04-18"
+    ],
+    "overlap_rows": 1742,
+    "different_closes": 1570,
+    "max_absolute_close_difference_usd": 7.7999999999999545,
+    "old_snapshot_dates_absent": [
+      "2019-01-01",
+      "2019-12-25",
+      "2020-01-01",
+      "2020-04-10",
+      "2020-12-25",
+      "2021-01-01",
+      "2021-04-02",
+      "2021-12-24",
+      "2022-04-15",
+      "2022-12-26",
+      "2023-01-02",
+      "2023-12-25",
+      "2024-01-01"
+    ],
+    "fpt_sessions_checked": 4671,
+    "fpt_sessions_without_eligible_gold": 0,
+    "gold_availability_check": {
+      "delay_calendar_days": 1,
+      "max_age_calendar_days": 10
+    }
+  },
+  "annual_cpi": {
+    "source_url": "https://api.worldbank.org/v2/en/indicator/FP.CPI.TOTL.ZG?downloadformat=csv",
+    "source_sha256": "09f784d70cf4aa2cf10988a554cdb030629f77b9e8b1a9abebfe7ed2150e6cab",
+    "indicator": "FP.CPI.TOTL.ZG",
+    "years": [
+      2005,
+      2006,
+      2007,
+      2008,
+      2009,
+      2010,
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+    ],
+    "vintage": "2026-11-11",
+    "verified_publication_dates": 0
+  },
+  "annual_gdp": {
+    "indicator": "NY.GDP.MKTP.CD",
+    "source_sha256": "af2733fe686cc00edc09fde39dfb3c1a79d5c18f273242522a56aa53a660b5a1",
+    "years": [
+      2005,
+      2006,
+      2007,
+      2008,
+      2009,
+      2010,
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+    ],
+    "verified_publication_dates": 0
+  },
+  "vnindex_additions": {
+    "count": 33,
+    "checks": [
+      {
+        "url": "https://cafef.vn/du-lieu/Ajax/PageNew/DataHistory/PriceHistory.ashx?Symbol=VNINDEX&StartDate=01%2F15%2F2021&EndDate=02%2F10%2F2021&PageIndex=1&PageSize=100",
+        "response_sha256": "667511f637cf0ee92be2ed60f5988f7782fc0378e0c5ccbed8ed4fddd1bcd844",
+        "overlap_rows": 7,
+        "max_abs_overlap_close_difference": 0.0
+      },
+      {
+        "url": "https://cafef.vn/du-lieu/Ajax/PageNew/DataHistory/PriceHistory.ashx?Symbol=VNINDEX&StartDate=07%2F08%2F2021&EndDate=07%2F28%2F2021&PageIndex=1&PageSize=200",
+        "response_sha256": "21e2c7085c54c53b8fbe5d64a7e70abc59727d3a43bc6d1ff5f06c7d075c5dda",
+        "overlap_rows": 11,
+        "max_abs_overlap_close_difference": 0.0
+      },
+      {
+        "url": "https://cafef.vn/du-lieu/Ajax/PageNew/DataHistory/PriceHistory.ashx?Symbol=VNINDEX&StartDate=04%2F04%2F2023&EndDate=04%2F12%2F2023&PageIndex=1&PageSize=200",
+        "response_sha256": "14c1d6c7c5395a6e22846fd95ff115af22626246422f85143fe8dc5a7980c281",
+        "overlap_rows": 6,
+        "max_abs_overlap_close_difference": 0.0
+      },
+      {
+        "url": "https://cafef.vn/du-lieu/Ajax/PageNew/DataHistory/PriceHistory.ashx?Symbol=VNINDEX&StartDate=08%2F07%2F2024&EndDate=08%2F16%2F2024&PageIndex=1&PageSize=200",
+        "response_sha256": "9c8d2eb9450c80d5dc13b8daf837189234b5b66815ab7eda4c49ef63c2bfa3f2",
+        "overlap_rows": 7,
+        "max_abs_overlap_close_difference": 0.0
+      },
+      {
+        "url": "https://cafef.vn/du-lieu/Ajax/PageNew/DataHistory/PriceHistory.ashx?Symbol=VNINDEX&StartDate=05%2F01%2F2020&EndDate=06%2F01%2F2020&PageIndex=1&PageSize=100",
+        "response_sha256": "c8432cd789b3bc2b0fa97f8b8242e23d4d4a0a0d995a703ddd12357b91f99147",
+        "overlap_rows": 16,
+        "max_abs_overlap_close_difference": 13.779999999999973
+      },
+      {
+        "url": "https://cafef.vn/du-lieu/Ajax/PageNew/DataHistory/PriceHistory.ashx?Symbol=VNINDEX&StartDate=07%2F01%2F2020&EndDate=08%2F01%2F2020&PageIndex=1&PageSize=100",
+        "response_sha256": "b901f6c53fb28f67ed792b2d1524ecee1be72d4f48ac9232f82e72809587fcbc",
+        "overlap_rows": 20,
+        "max_abs_overlap_close_difference": 5.329999999999927
+      },
+      {
+        "url": "https://cafef.vn/du-lieu/Ajax/PageNew/DataHistory/PriceHistory.ashx?Symbol=VNINDEX&StartDate=08%2F01%2F2020&EndDate=09%2F01%2F2020&PageIndex=1&PageSize=100",
+        "response_sha256": "d34d4073c0834c6dd200cd3a3a607ae564ff4f501254e1eda76cf04d4e30f0cc",
+        "overlap_rows": 18,
+        "max_abs_overlap_close_difference": 1.8299999999999272
+      },
+      {
+        "url": "https://cafef.vn/du-lieu/Ajax/PageNew/DataHistory/PriceHistory.ashx?Symbol=VNINDEX&StartDate=09%2F01%2F2020&EndDate=10%2F01%2F2020&PageIndex=1&PageSize=100",
+        "response_sha256": "18711253332cca7438bdef9dc565bc7b6342060b3ade7c47576546a4d4f7af39",
+        "overlap_rows": 18,
+        "max_abs_overlap_close_difference": 3.400000000000091
+      }
+    ],
+    "retrieved_at_utc": "2026-11-19T15:46:21.375776+00:00",
+    "closed_hose_dates": [
+      "2018-01-23",
+      "2018-01-24"
+    ],
+    "closure_evidence": "https://baochinhphu.vn/hose-giao-dich-tro-lai-sau-hai-ngay-dong-cua-102233882.htm",
+    "replaced_closes": 16,
+    "comparison_evidence": [
+      "https://funan.com.vn/en/diem-tin-giao-dich-15072020.409463",
+      "https://shs.com.vn/Sites/QuoteVN/SiteRoot/reportattach/20200929_17290_Market%20Lens%20Final.pdf",
+      "https://www.aisec.com.vn/blog/ban-tin-thi-truong-chung-khoan-1852020-thi-truong-tang-vot-cap-doi-hpg-va-hsg-noi-song"
+    ]
+  },
+  "study_start": "2013-01-01",
+  "frozen_files": {
+    "gold_xauusd_study.csv": "a578a861e074b1b038b3cb6913bcada59b6070ba4e2bbe8790b58a60ef6f33f5",
+    "vietnam_cpi_annual.csv": "3e2c8abf1a7b13a6bb8ed1934eda989126692da1f8ae32a8ed4ccb6fa2d36b57",
+    "vietnam_gdp_annual.csv": "00a2178a31631d22d4a17e8fe1e35d51a6029522d76bf90d9d12db5c151bc129",
+    "vnindex_close_corrections.csv": "ed5ad857ef8eb1c4d8d1c4365384abca4856457c1c2378e12893c1a99ee2327f"
+  }
+}

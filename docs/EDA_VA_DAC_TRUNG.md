@@ -20,7 +20,7 @@ Ký hiệu dùng xuyên suốt:
 | `std` | Mức độ các số phân tán quanh trung bình | Độ lệch chuẩn |
 | `ln` và `exp` | Logarit tự nhiên và phép tính ngược của nó | `ln(1.01)` khoảng 0.00995; `exp(0.00995)` khoảng 1.01 |
 
-**Đặc trưng** là thông tin đưa vào mô hình. **Mục tiêu/nhãn** là đáp án muốn mô hình học cách dự đoán. `next_close`, `next_return`, `next_log_return`, `target_date` và `direction` nằm trong bảng để chấm kết quả hoặc quản lý ngày; chúng không được đưa vào danh sách 32/38/43 đầu vào.
+**Đặc trưng** là thông tin đưa vào mô hình. **Mục tiêu/nhãn** là đáp án muốn mô hình học cách dự đoán. `next_close`, `next_return`, `next_log_return`, `target_date` và `direction` nằm trong bảng để chấm kết quả hoặc quản lý ngày; chúng không được đưa vào danh sách 32/38/42 đầu vào.
 
 ## 2. EDA: xem dữ liệu để trả lời câu hỏi nào?
 
@@ -35,7 +35,7 @@ EDA là viết tắt của *Exploratory Data Analysis*: xem xét, mô tả và k
 | Ngày có trùng, có theo thứ tự không? | Hai hàng một ngày có thể làm lệch toàn bộ phép trễ và nhãn phiên kế tiếp. | 0 ngày trùng, đã tăng dần. | Báo lỗi nếu trùng; sắp tăng dần trước khi tạo đặc trưng. |
 | Có quan sát sau 30/09/2025 không? | Nhãn của hàng cuối không được vô tình lấy từ ngoài phạm vi nghiên cứu. | 4.671 phiên, 02/01/2007–30/09/2025. | Cắt mốc **trước** khi `shift(-1)` tạo mục tiêu. |
 | Giá có dương và hữu hạn không? | Chia cho 0 hoặc lấy log của giá âm làm công thức vô nghĩa. | Giá OHLC nằm trong 1.562–119.36875 nghìn VND/cổ phiếu. | Không cho phép giá ≤ 0, vô cực hoặc `NaN`. |
-| Khối lượng có âm hoặc bằng 0? | Khối lượng âm là dữ liệu sai; bằng 0 cần ghi nhận nhưng chưa đủ cơ sở để sửa thành số khác. | 2 phiên bằng 0; lớn nhất 23.514.300 cổ phiếu. | Cấm âm; giữ số 0 và dùng `ln(1+volume)` khi cần lấy log. |
+| Khối lượng có âm hoặc bằng 0? | Đối chiếu lịch giao dịch khi có volume bằng 0. | Hai hàng bằng 0 rơi vào ngày HOSE đóng cửa. | Bỏ hai ngày đóng cửa trước khi tính return. Giá trị volume lớn nhất còn lại là 23.514.300 cổ phiếu. |
 | Nến có hợp lý không? | Giá mở/đóng phải nằm trong khoảng thấp nhất–cao nhất của cùng phiên. | 3 phiên bất nhất: 17/08/2007, 10/06/2009, 07/12/2009. | Ghi trong kiểm toán, không âm thầm sửa. Cả 3 nằm trước cửa sổ thí nghiệm chung. |
 | File đầu vào có bị thay sau lần chạy không? | Hai người dùng hai snapshot khác nhau có thể ra kết quả khác dù code giống nhau. | Có mã SHA-256 trong `reports/data_audit.json`. | Băm nội dung với xuống dòng chuẩn hóa để đối chiếu snapshot. |
 
@@ -52,9 +52,9 @@ Nếu một hàng vi phạm, công thức nến có thể cho kết quả khó d
 | [Giá đóng cửa](../figures/01_fpt_close.png) | Mức giá có thay đổi lớn giữa các giai đoạn? | Trục ngang là ngày, trục dọc là nghìn VND/cổ phiếu theo snapshot. Mức giá cao hơn không tự có nghĩa phiên kế tiếp sẽ tăng. |
 | [Khối lượng](../figures/02_fpt_volume.png) | Thanh khoản có tăng dần hoặc xuất hiện phiên đột biến? | Trục khối lượng dùng thang `symlog`: phần lớn được nén giống log để nhìn được cả số nhỏ và số rất lớn, nhưng vẫn hiển thị được số 0. Khoảng cách trên hình không phải chênh lệch tuyến tính. |
 | [Phân phối lợi nhuận](../figures/03_daily_return_distribution.png) | Đa số phiên đổi ít hay nhiều? Có đuôi biến động lớn? | Mỗi cột đếm số phiên rơi vào một khoảng lợi nhuận; đường 0 phân biệt tăng/giảm. Đây là lợi nhuận đơn từ đóng cửa hôm trước đến hôm nay. |
-| [Số phiên tăng/giảm/đứng giá](../figures/04_next_session_class_balance.png) | Nếu luôn nói “tăng” thì đúng được bao nhiêu? | Có 2.118 chuyển tiếp tăng, 2.074 giảm, 478 không đổi trong 4.670 chuyển tiếp. Không thể lấy tỷ lệ này thay cho tỷ lệ trên riêng tập Test. |
+| [Số phiên tăng/giảm/đứng giá](../figures/04_next_session_class_balance.png) | Nếu luôn nói “tăng” thì đúng được bao nhiêu? | Có 2.118 chuyển tiếp tăng, 2.074 giảm, 476 không đổi trong 4.668 chuyển tiếp. Không thể lấy tỷ lệ này thay cho tỷ lệ trên riêng tập Test. |
 
-Số liệu mô tả toàn snapshot: lợi nhuận đơn trung bình **0.0644%/phiên**, độ lệch chuẩn **1.9189%/phiên**; nhỏ nhất **−6.9896%**, lớn nhất **+6.9922%**. Phân vị 1% là −4.9473%, phân vị 99% là +4.9716%. “Phân vị 1%” nghĩa là khoảng 1% số quan sát nằm dưới ngưỡng này; không phải xác suất cố định của một phiên tương lai.
+Số liệu mô tả toàn snapshot: lợi nhuận đơn trung bình **0.0644%/phiên**, độ lệch chuẩn **1.9193%/phiên**; nhỏ nhất **−6.9896%**, lớn nhất **+6.9922%**. Phân vị 1% là −4.9473%, phân vị 99% là +4.9717%. “Phân vị 1%” nghĩa là khoảng 1% số quan sát nằm dưới ngưỡng này; không phải xác suất cố định của một phiên tương lai.
 
 Trung vị lợi nhuận bằng 0. Không nên suy ra rằng giá không biến động: các phiên tăng và giảm có thể bù nhau quanh giữa phân phối. Code EDA dùng `std(ddof=1)` để mô tả độ lệch chuẩn mẫu; các đặc trưng lăn ở phần sau dùng `ddof=0`. Hai mục đích này khác nhau và đã được ghi rõ.
 
@@ -80,12 +80,12 @@ Lợi nhuận log còn có tính cộng theo thời gian: `ln(110/100) + ln(121/
 - **KPSS** khởi đầu từ giả thuyết chuỗi **dừng quanh một mức trung bình hằng** trong cấu hình đang dùng (`regression="c"`). `p < 0.05` là bằng chứng bác bỏ giả thuyết dừng mức đó.
 - `p-value` không phải “xác suất chuỗi dừng”. Đó là thước đo mức độ dữ liệu không phù hợp với giả thuyết gốc dưới mô hình kiểm định. Không bác bỏ cũng không có nghĩa đã chứng minh giả thuyết đúng.
 
-Kết quả chính sử dụng lịch sử đến **21/10/2024**, là ngày kết thúc Train. Đây là lịch sử giá đầy đủ để phân tích chuỗi, không phải chỉ 1.325 hàng đủ dữ liệu đa nguồn.
+Kết quả chính sử dụng lịch sử đến **29/11/2023**, là ngày kết thúc Train. Đây là lịch sử giá đầy đủ để phân tích chuỗi, không phải chỉ 2.576 hàng đủ dữ liệu đa nguồn.
 
 | Chuỗi | Số quan sát | ADF: p-value | KPSS: p-value | Diễn giải vừa đủ theo kiểm định |
 |---|---:|---:|---:|---|
-| Giá đóng cửa | 4.437 | 1.0000 | < 0.01 | ADF không bác bỏ nghiệm đơn vị; KPSS bác bỏ dừng mức. |
-| Lợi nhuận log | 4.436 | ≈ 1.05 × 10⁻¹⁷ | ≈ 0.01638 | Có bằng chứng mạnh chống nghiệm đơn vị, nhưng KPSS vẫn bác bỏ dừng mức. |
+| Giá đóng cửa | 4.214 | 0.9991 | < 0.01 | ADF không bác bỏ nghiệm đơn vị; KPSS bác bỏ dừng mức. |
+| Lợi nhuận log | 4.213 | ≈ 5.63 × 10⁻¹⁷ | ≈ 0.03382 | Có bằng chứng mạnh chống nghiệm đơn vị, nhưng KPSS vẫn bác bỏ dừng mức. |
 
 File kết quả ghi KPSS của giá là `0.01` kèm cảnh báo: giá trị thật nhỏ hơn giới hạn bảng tra. Vì vậy bảng trên ghi `< 0.01`, không coi `0.01` là giá trị chính xác. Số liệu toàn snapshot cũng được lưu để mô tả, tách khỏi nhóm `train_history`.
 
@@ -113,7 +113,7 @@ STL trong dự án chỉ là hình mô tả trên lịch sử Train. Các thành
 
 32 đầu vào gồm **5 trường gốc + 23 chỉ báo kỹ thuật + 4 đặc trưng nến**. Một “chỉ báo kỹ thuật” chỉ là một phép tóm tắt giá/khối lượng quá khứ. Nó cho mô hình một góc nhìn dễ học hơn; bản thân chỉ báo không tự phát ra lệnh mua/bán đúng.
 
-Trong các bảng dưới, tỷ lệ `0.02` đọc là 2%. Cột có hậu tố `_pct` vẫn được lưu dưới dạng tỷ lệ, không tự nhân 100. RSI được đưa về 0–1; CPI bổ trợ lại lưu theo **điểm phần trăm**, chẳng hạn `3.24` là 3.24%: cần đọc đúng đơn vị của từng cột.
+Trong các bảng dưới, tỷ lệ `0.02` đọc là 2%. Cột có hậu tố `_pct` vẫn được lưu dưới dạng tỷ lệ, không tự nhân 100. RSI được đưa về 0–1; CPI bổ trợ lại lưu theo **điểm phần trăm**, chẳng hạn `3.6211` là 3.6211%: cần đọc đúng đơn vị của từng cột.
 
 ### 4.1. Năm trường gốc
 
@@ -332,9 +332,9 @@ Một ngày có thể có thân nến dương nhưng vẫn giảm so với đón
 
 SMA50 cần 50 giá. Tại phiên đầu tiên chỉ có 1 giá, không thể tính đúng SMA50 nếu chưa biết tương lai. Code để ô thiếu (`NaN`), rồi loại các hàng chưa đủ 23 chỉ báo kỹ thuật. Đây là giai đoạn **tích lũy đủ lịch sử**, đôi khi gọi là *warm-up*.
 
-Snapshot có 4.671 hàng; bảng kỹ thuật có **4.622 hàng** bắt đầu ở ngày đầu vào **20/03/2007**, tức 49 hàng đầu chưa đủ chỉ báo dài nhất. Trong dữ liệu khác, khoảng giá/khối lượng hoàn toàn không đổi có thể làm mẫu số bằng 0 và tạo thêm hàng không hợp lệ; không được mặc định rằng mọi lần chạy đều chỉ mất 49 hàng.
+Snapshot có 4.671 hàng. Hai ngày HOSE đóng cửa 23–24/01/2018 được bỏ trước khi tạo đặc trưng. Bảng kỹ thuật có **4.620 hàng** bắt đầu ở ngày đầu vào **20/03/2007**, tức 49 hàng đầu chưa đủ chỉ báo dài nhất. Trong dữ liệu khác, khoảng giá/khối lượng hoàn toàn không đổi có thể làm mẫu số bằng 0 và tạo thêm hàng không hợp lệ; không được mặc định rằng mọi lần chạy đều chỉ mất 49 hàng.
 
-Bảng kỹ thuật giữ hàng cuối 30/09/2025 dù chưa có đáp án phiên sau. Vì vậy có 4.622 hàng đủ đặc trưng nhưng chỉ **4.621 hàng có nhãn**. Không điền nhãn chưa biết bằng 0: đó sẽ thành một đáp án đứng giá giả.
+Bảng kỹ thuật giữ hàng cuối 30/09/2025 dù chưa có đáp án phiên sau. Vì vậy có 4.620 hàng đủ đặc trưng nhưng chỉ **4.619 hàng có nhãn**. Không điền nhãn chưa biết bằng 0: đó sẽ thành một đáp án đứng giá giả.
 
 ### 6.2. Vì sao so sánh thực nghiệm bắt đầu muộn hơn năm 2007?
 
@@ -342,11 +342,11 @@ Các nguồn bổ trợ không có cùng độ dài với giá FPT. Sau khi căn
 
 `prepare.py` yêu cầu:
 
-1. Đủ **43 đầu vào** tại mỗi hàng trong cửa sổ lịch sử cần dùng.
+1. Đủ **42 đầu vào** tại mỗi hàng trong cửa sổ lịch sử cần dùng.
 2. Có **60 phiên giao dịch liên tiếp** thỏa điều kiện đó, để GRU 20 và GRU 60 cũng so công bằng.
 3. Giữ `session_index`, tức vị trí của phiên trong chuỗi gốc, để kiểm tra thật sự liên tiếp. Xóa một hàng thiếu không được làm hai ngày vốn cách nhau một phiên biến thành hai hàng liền ngày giả.
 
-Kết quả là **1.560 hàng**, ngày đầu vào từ 02/04/2019 đến 30/09/2025; **1.559 nhãn** có ngày mục tiêu từ 03/04/2019 đến 30/09/2025. Sự thu hẹp này đến từ **độ phủ thực tế + ngày hiệu lực + yêu cầu cửa sổ 60 phiên**, không phải vì giá FPT chỉ bắt đầu từ 2019.
+Kết quả là **3.032 hàng**, ngày đầu vào từ 06/08/2013 đến 30/09/2025; **3.031 nhãn** có ngày mục tiêu từ 07/08/2013 đến 30/09/2025. Sự thu hẹp này đến từ **độ phủ thực tế + ngày hiệu lực + yêu cầu cửa sổ 60 phiên**, trong khi kho giá bắt đầu vào năm 2007.
 
 Dữ liệu bổ trợ được chọn bằng cách tìm bản ghi gần nhất đã có hiệu lực trước/ngay ngày đầu vào, đồng thời kiểm tra nó có quá cũ không. Không nội suy một đường đi qua báo cáo quý tương lai để lấp các ngày của quý hiện tại. [Hướng dẫn dữ liệu](../data/README.md) trình bày riêng độ trễ, giới hạn tuổi và số hàng thiếu của từng biến.
 

@@ -92,7 +92,7 @@ def experiment_specs():
         "gru_60": ("GRU L=60", "price_32", [dict(kind="GRU", lookback=60)]),
         "sarimax": (
             "SARIMAX",
-            "financial_43",
+            "financial_42",
             [dict(kind="SARIMAX", order=o) for o in [(0, 0, 0), (1, 0, 0)]],
         ),
     }
@@ -245,7 +245,7 @@ def run_training(
     # Keep the XGBoost hyperparameters fixed: only the input columns change.
     for config_id, level in [
         ("xgboost_macro", "macro_38"),
-        ("xgboost_financial", "financial_43"),
+        ("xgboost_financial", "financial_42"),
     ]:
         spec = selected_specs["xgboost_price"].copy()
         catalog[config_id] = ("XGBoost", level, [spec])

@@ -9,6 +9,8 @@ import pandas as pd
 
 REQUIRED_COLUMNS = ("time", "open", "high", "low", "close", "volume")
 RESEARCH_END_DATE = "2025-09-30"
+STUDY_START = "2013-01-01"
+HOSE_CLOSURES = ("2018-01-23", "2018-01-24")
 
 FEATURE_COLUMNS = [
     "return_1d",
@@ -89,6 +91,8 @@ def load_price_data(path: str | Path, end: str = RESEARCH_END_DATE) -> pd.DataFr
         raise ValueError("Volume cannot be negative")
 
     data = data.loc[data["time"].le(pd.Timestamp(end))]
+    # The vendor includes two zero-volume rows during a confirmed HOSE closure.
+    data = data.loc[~data.time.isin(pd.to_datetime(HOSE_CLOSURES))]
     if data.empty:
         raise ValueError(f"No price observations on or before {end}")
     return data.sort_values("time").reset_index(drop=True)

@@ -5,9 +5,9 @@
   "model": "ARIMA",
   "feature_level": "price_32",
   "current_close": 82.54,
-  "predicted_next_log_return": 0.00033714373880885105,
-  "predicted_next_close": 82.56783253572023,
+  "predicted_next_log_return": 0.0009559630890050568,
+  "predicted_next_close": 82.61894292061368,
   "predicted_direction_sign": 1,
   "predicted_direction": "up",
-  "predicted_change_percent_from_current": 0.03372005781465681
+  "predicted_change_percent_from_current": 0.0956420167357308
 }

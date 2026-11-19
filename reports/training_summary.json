@@ -12,14 +12,14 @@
     "gru_60"
   ],
   "split": {
-    "train_target_date_start": "2019-04-03",
-    "train_target_date_end": "2024-10-21",
-    "test_target_date_start": "2024-10-22",
+    "train_target_date_start": "2013-08-07",
+    "train_target_date_end": "2023-11-29",
+    "test_target_date_start": "2023-11-30",
     "test_target_date_end": "2025-09-30",
     "split_method": "chronological by target session date; first 85% train, last 15% test",
-    "labeled_rows": 1559,
-    "train_rows": 1325,
-    "test_rows": 234
+    "labeled_rows": 3031,
+    "train_rows": 2576,
+    "test_rows": 455
   },
   "target": "next_log_return",
   "artifact_count": 10,
@@ -27,43 +27,43 @@
   "cv_folds": [
     {
       "fold": 1,
-      "train_rows": 224,
-      "validation_rows": 220,
-      "train_target_end": "2020-02-25",
-      "validation_input_start": "2020-02-26",
-      "validation_target_end": "2021-01-06"
+      "train_rows": 430,
+      "validation_rows": 429,
+      "train_target_end": "2015-05-07",
+      "validation_input_start": "2015-05-08",
+      "validation_target_end": "2017-01-16"
     },
     {
       "fold": 2,
-      "train_rows": 444,
-      "validation_rows": 220,
-      "train_target_end": "2021-01-05",
-      "validation_input_start": "2021-01-06",
-      "validation_target_end": "2022-03-02"
+      "train_rows": 859,
+      "validation_rows": 429,
+      "train_target_end": "2017-01-13",
+      "validation_input_start": "2017-01-16",
+      "validation_target_end": "2018-10-08"
     },
     {
       "fold": 3,
-      "train_rows": 664,
-      "validation_rows": 220,
-      "train_target_end": "2022-03-01",
-      "validation_input_start": "2022-03-02",
-      "validation_target_end": "2023-01-12"
+      "train_rows": 1288,
+      "validation_rows": 429,
+      "train_target_end": "2018-10-05",
+      "validation_input_start": "2018-10-08",
+      "validation_target_end": "2020-06-29"
     },
     {
       "fold": 4,
-      "train_rows": 884,
-      "validation_rows": 220,
-      "train_target_end": "2023-01-11",
-      "validation_input_start": "2023-01-12",
-      "validation_target_end": "2023-11-30"
+      "train_rows": 1717,
+      "validation_rows": 429,
+      "train_target_end": "2020-06-26",
+      "validation_input_start": "2020-06-29",
+      "validation_target_end": "2022-03-16"
     },
     {
       "fold": 5,
-      "train_rows": 1104,
-      "validation_rows": 220,
-      "train_target_end": "2023-11-29",
-      "validation_input_start": "2023-11-30",
-      "validation_target_end": "2024-10-21"
+      "train_rows": 2146,
+      "validation_rows": 429,
+      "train_target_end": "2022-03-15",
+      "validation_input_start": "2022-03-16",
+      "validation_target_end": "2023-11-29"
     }
   ]
 }

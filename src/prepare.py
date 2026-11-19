@@ -10,6 +10,7 @@ import pandas as pd
 
 from features import (
     PRICE_ONLY_FEATURE_COLUMNS,
+    STUDY_START,
     build_feature_table,
     load_price_data,
 )
@@ -59,7 +60,15 @@ def build_experiment_table(
         BRANCH_PRICE: list(PRICE_ONLY_FEATURE_COLUMNS),
         BRANCH_MACRO: list(PRICE_ONLY_FEATURE_COLUMNS) + supplemental_columns,
     }
-    complete = joined[branches[BRANCH_MACRO]].notna().all(axis=1)
+    in_study = joined.date.ge(STUDY_START)
+    complete = in_study & joined[branches[BRANCH_MACRO]].notna().all(axis=1)
+    first_complete = joined.loc[complete, "date"].min()
+    active = joined.loc[joined.date.ge(first_complete)]
+    incomplete = active[branches[BRANCH_MACRO]].isna().any(axis=1)
+    if incomplete.any() or not active.session_index.diff().dropna().eq(1).all():
+        raise ValueError(
+            "Incomplete input or missing session within the common study window"
+        )
     # Same dates for all lookbacks; never compress holes into adjacent sessions.
     consecutive = joined["session_index"].diff(59).eq(59)
     eligible = complete.rolling(60, min_periods=60).sum().eq(60) & consecutive
@@ -78,7 +87,7 @@ def feature_groups() -> dict[str, list[str]]:
     return {
         "price_32": price,
         "macro_38": price + macro,
-        "financial_43": price + macro + financial,
+        "financial_42": price + macro + financial,
     }
 
 

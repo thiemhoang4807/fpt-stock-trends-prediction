@@ -13,6 +13,7 @@ import pandas as pd
 import shap
 from sklearn.inspection import permutation_importance
 from prepare import build_experiment_table, DEFAULT_INPUT, DEFAULT_SUPPLEMENTAL
+from fetch_supplemental import load_market_closes
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -33,14 +34,8 @@ def error_cases(reports_dir, table):
     cases["actual_change_percent"] = np.expm1(cases.actual_log_return) * 100
     cases["predicted_change_percent"] = np.expm1(cases.predicted_log_return) * 100
     # Same-session market returns describe errors AFTER evaluation; they are not inputs.
-    candidates = list((ROOT / "data/raw").rglob("*vnindex*.csv"))
-    if len(candidates) != 1:
-        raise ValueError(f"Expected one raw VN-Index snapshot, found {len(candidates)}")
-    index = pd.read_csv(candidates[0])
-    date_column = "time" if "time" in index else "date"
-    index[date_column] = pd.to_datetime(index[date_column])
-    index = index.sort_values(date_column)
-    returns = pd.Series(index.close.pct_change().to_numpy() * 100, index[date_column])
+    index = load_market_closes()
+    returns = index.set_index("time").close.pct_change() * 100
     cases["vnindex_same_session_change_percent"] = cases.target_date.map(returns)
     cases["interpretation"] = (
         "Observed next-session move is much larger than the model forecast. "

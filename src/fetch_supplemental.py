@@ -12,6 +12,7 @@ from urllib.request import Request, urlopen
 
 import numpy as np
 import pandas as pd
+from features import STUDY_START, load_price_data
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW_DIR = ROOT / "data" / "raw" / "supplemental"
@@ -25,13 +26,12 @@ MODEL_SUPPLEMENTAL_COLUMNS = [
     "vnindex_volatility_20d",
     "usd_vnd_rate",
     "gold_vnd_per_ounce",
-    "cpi_yoy_pct",
+    "cpi_annual_inflation_pct",
     "gdp_usd",
     "fpt_net_revenue_vnd",
     "fpt_gross_profit_vnd",
     "fpt_ebit_vnd",
     "fpt_parent_net_profit_vnd",
-    "fpt_shares_outstanding",
 ]
 
 MARKET_MACRO_COLUMNS = MODEL_SUPPLEMENTAL_COLUMNS[:6]
@@ -415,6 +415,31 @@ def release_aware_asof(
     ).drop(columns=["available_date"])
 
 
+def load_market_closes(raw_dir: Path = RAW_DIR) -> pd.DataFrame:
+    """Read DNSE closes and apply dated CafeF corrections without overwriting the archive."""
+    market = pd.read_csv(
+        raw_dir / "vnindex_source.csv", usecols=["time", "close"], parse_dates=["time"]
+    )
+    corrections = raw_dir / "vnindex_close_corrections.csv"
+    if corrections.exists():
+        extra = pd.read_csv(
+            corrections, usecols=["time", "close"], parse_dates=["time"]
+        )
+        if extra.time.duplicated().any():
+            raise ValueError("Duplicate VN-Index correction dates")
+        market = pd.concat(
+            [market.loc[~market.time.isin(extra.time)], extra], ignore_index=True
+        )
+    if (
+        market.time.isna().any()
+        or market.time.duplicated().any()
+        or not np.isfinite(market.close).all()
+        or market.close.le(0).any()
+    ):
+        raise ValueError("Invalid VN-Index close observations")
+    return market.sort_values("time").reset_index(drop=True)
+
+
 def prepare_multisource_features(
     price_data: pd.DataFrame, raw_dir: Path = RAW_DIR, end: str = DEFAULT_END
 ) -> tuple[pd.DataFrame, dict]:
@@ -427,15 +452,9 @@ def prepare_multisource_features(
     )
     delays = {
         "usd_vnd_daily.csv": ("usd_vnd", ["usd_vnd_rate"], 1, 10),
-        "gold_xauusd_daily.csv": ("gold", ["gold_usd_per_ounce"], 1, 10),
-        "vietnam_cpi.csv": ("cpi", ["cpi_yoy_pct"], 1, 65),
-        "vietnam_gdp.csv": ("gdp", ["gdp_usd"], 180, 550),
-        "ict_industry.csv": (
-            "industry",
-            ["ict_market_cap_vnd", "ict_pe", "ict_absolute_pe"],
-            1,
-            180,
-        ),
+        "gold_xauusd_study.csv": ("gold", ["gold_usd_per_ounce"], 1, 10),
+        "vietnam_cpi_annual.csv": ("cpi", ["cpi_annual_inflation_pct"], 180, 550),
+        "vietnam_gdp_annual.csv": ("gdp", ["gdp_usd"], 180, 550),
         "fpt_fundamentals_quarterly.csv": (
             "fundamentals",
             [
@@ -447,12 +466,9 @@ def prepare_multisource_features(
             45,
             150,
         ),
-        "fpt_shares_outstanding.csv": ("shares", ["fpt_shares_outstanding"], 1, 550),
     }
     source_audit: dict[str, dict] = {}
-    vn = pd.read_csv(raw_dir / "vnindex_source.csv", parse_dates=["time"]).sort_values(
-        "time"
-    )
+    vn = load_market_closes(raw_dir)
     vn = vn.loc[vn.time.le(pd.Timestamp(end))].copy()
     vn["vnindex_return_1d"] = np.log(vn.close / vn.close.shift(1))
     vn["vnindex_volatility_20d"] = vn.vnindex_return_1d.rolling(20).std(ddof=0)
@@ -467,7 +483,7 @@ def prepare_multisource_features(
     for col in cols:
         data[col] = aligned_market[col].to_numpy()
     source_audit["vnindex"] = {
-        "provider": "DNSE",
+        "provider": "DNSE with verified CafeF close corrections",
         "raw_rows": len(vn),
         "first_date": str(vn.time.min().date()),
         "last_date": str(vn.time.max().date()),
@@ -479,6 +495,8 @@ def prepare_multisource_features(
             source_audit[group] = {"status": "missing", "file": filename}
             continue
         raw = pd.read_csv(path)
+        if group in {"cpi", "gdp"}:
+            raw = raw.rename(columns={"period_end": "time"})
         selected = [column for column in columns if column in raw.columns]
         if raw.empty or "time" not in raw.columns or not selected:
             source_audit[group] = {
@@ -526,14 +544,13 @@ def prepare_multisource_features(
         "no_backfill": True,
         "alignment": "backward as-of join; each value appears only after its availability date",
         "release_delays_calendar_days": {
-            "daily_market_fx_gold_and_industry": 1,
-            "cpi_after_source_release_date": 1,
+            "daily_market_fx_gold": 1,
+            "annual_cpi_after_period_end": 180,
             "annual_gdp_after_period_end": 180,
             "quarterly_fundamentals_after_period_end": 45,
-            "shares_outstanding_after_source_availability_date": 1,
         },
         "model_supplemental_columns": MODEL_SUPPLEMENTAL_COLUMNS,
-        "point_in_time_limitations": "Financial +45d and annual GDP +180d are assumed release dates, not a historical release-vintage archive; revisions and index constituent changes can remain.",
+        "point_in_time_limitations": "Financial +45d and annual CPI/GDP +180d are assumed availability dates; historical revision vintages are unavailable.",
         "source_audit": source_audit,
     }
     return data, audit
@@ -545,19 +562,32 @@ def run_from_cache(
     end = pd.Timestamp(end).strftime("%Y-%m-%d")
     trimmed = trim_source_exports(raw_dir, end) if trim_inputs else {}
     raw_audit = normalize_source_snapshots(raw_dir, end=end)
-    prices = pd.read_csv(PRICE_PATH)
-    prices["time"] = pd.to_datetime(prices["time"], errors="coerce")
-    prices = prices.loc[prices["time"].le(pd.Timestamp(end))]
+    prices = load_price_data(PRICE_PATH, end=end)
+    expected_market_dates = prices.loc[prices.time.ge(STUDY_START), "time"]
+    missing_market = expected_market_dates.loc[
+        ~expected_market_dates.isin(load_market_closes(raw_dir).time)
+    ]
+    if not missing_market.empty:
+        raise ValueError(
+            f"VN-Index observations missing in the study window: {missing_market.dt.strftime('%Y-%m-%d').tolist()}"
+        )
     aligned, audit = prepare_multisource_features(prices, raw_dir, end=end)
+    # Report Q1/2013 first becomes eligible on 15 May under the stated lag.
+    first_report_available = (
+        pd.Timestamp(STUDY_START) + pd.offsets.QuarterEnd() + pd.Timedelta(days=45)
+    )
+    missing = (
+        aligned.loc[aligned.date.ge(first_report_available), MODEL_SUPPLEMENTAL_COLUMNS]
+        .isna()
+        .sum()
+    )
+    if missing.any():
+        raise ValueError(
+            f"Missing study values after the first quarterly report: {missing[missing.gt(0)].to_dict()}"
+        )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     aligned.to_csv(
         output_path, index=False, date_format="%Y-%m-%d", lineterminator="\n"
-    )
-    audit["sector_coverage"] = audit_industry_coverage(raw_dir, end)
-    (ROOT / "reports").mkdir(exist_ok=True)
-    (ROOT / "reports/sector_coverage_audit.json").write_text(
-        json.dumps(audit["sector_coverage"], ensure_ascii=False, indent=2),
-        encoding="utf-8",
     )
     audit["normalized_raw_sources"] = raw_audit
     audit["input_rows_removed_by_cutoff_this_run"] = trimmed
@@ -570,13 +600,21 @@ def run_from_cache(
         }
         for path in sorted(raw_dir.glob("*_source.csv"))
     }
-    shares_path = raw_dir / "fpt_shares_outstanding.csv"
-    audit["input_snapshots"][shares_path.name] = {
-        "sha256": hashlib.sha256(
-            shares_path.read_bytes().replace(b"\r\n", b"\n")
-        ).hexdigest(),
-        "bytes": shares_path.stat().st_size,
-    }
+    for name in (
+        "gold_xauusd_study.csv",
+        "vietnam_cpi_annual.csv",
+        "vietnam_gdp_annual.csv",
+        "vnindex_close_corrections.csv",
+        "study_2013_lineage.json",
+    ):
+        path = raw_dir / name
+        audit["input_snapshots"][name] = {
+            "sha256": hashlib.sha256(
+                path.read_bytes().replace(b"\r\n", b"\n")
+            ).hexdigest(),
+            "bytes": path.stat().st_size,
+        }
+    audit["study_start"] = STUDY_START
     audit["output_file"] = (
         output_path.relative_to(ROOT).as_posix()
         if output_path.is_relative_to(ROOT)

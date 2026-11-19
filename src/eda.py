@@ -40,7 +40,7 @@ def _draw_pipeline_overview(output_path: Path) -> None:
     ax.set_axis_off()
     boxes = [
         (0.15, 0.80, "Dữ liệu đến 30/09/2025\nOHLCV + nguồn bổ trợ", "#DCEAF7"),
-        (0.50, 0.80, "Căn ngày có thể biết\n32 / 38 / 43 đặc trưng", "#E4F1E5"),
+        (0.50, 0.80, "Căn ngày có thể biết\n32 / 38 / 42 đặc trưng", "#E4F1E5"),
         (0.85, 0.80, "Train 85%: CV 5 fold\nTest 15%: chấm sau lựa chọn", "#EEE1F3"),
         (
             0.15,
@@ -51,7 +51,7 @@ def _draw_pipeline_overview(output_path: Path) -> None:
         (
             0.50,
             0.43,
-            "TN2: thêm dữ liệu\nXGBoost 32 → 38 → 43\nARIMA so với SARIMAX",
+            "TN2: thêm dữ liệu\nXGBoost 32 → 38 → 42\nARIMA so với SARIMAX",
             "#FCE9D8",
         ),
         (
@@ -209,12 +209,6 @@ def run_eda(input_path: Path, figures_dir: Path, reports_dir: Path) -> dict:
             "figures/04_next_session_class_balance.png",
         ],
     }
-    sector_path = reports_dir / "sector_coverage_audit.json"
-    summary["sector_coverage_audit"] = (
-        json.loads(sector_path.read_text(encoding="utf-8"))
-        if sector_path.exists()
-        else {"status": "audit pending"}
-    )
     summary["regression_target"] = "next_log_return = ln(next_close/current_close)"
     audit_path = reports_dir / "data_audit.json"
     audit_path.write_text(

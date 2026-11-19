@@ -23,7 +23,7 @@
     "arima": {
       "kind": "ARIMA",
       "order": [
-        1,
+        0,
         0,
         0
       ]
@@ -54,14 +54,14 @@
     }
   },
   "boundaries": {
-    "train_target_date_start": "2019-04-03",
-    "train_target_date_end": "2024-10-21",
-    "test_target_date_start": "2024-10-22",
+    "train_target_date_start": "2013-08-07",
+    "train_target_date_end": "2023-11-29",
+    "test_target_date_start": "2023-11-30",
     "test_target_date_end": "2025-09-30",
     "split_method": "chronological by target session date; first 85% train, last 15% test",
-    "labeled_rows": 1559,
-    "train_rows": 1325,
-    "test_rows": 234
+    "labeled_rows": 3031,
+    "train_rows": 2576,
+    "test_rows": 455
   },
   "ablation": "XGBoost settings chosen on price_32 then fixed for all three levels",
   "statistical_comparison": "same order grid and constant trend; orders selected within Train CV",

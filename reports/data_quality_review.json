@@ -53,9 +53,9 @@
       "nonfinite_numeric_values": 0
     },
     "gold": {
-      "file": "data/raw/supplemental/gold_xauusd_daily.csv",
-      "rows": 1755,
-      "first_date": "2019-01-01",
+      "file": "data/raw/supplemental/gold_xauusd_study.csv",
+      "rows": 4858,
+      "first_date": "2007-01-01",
       "last_date": "2025-09-30",
       "invalid_dates": 0,
       "duplicate_dates": 0,
@@ -67,32 +67,39 @@
       "nonfinite_numeric_values": 0
     },
     "cpi": {
-      "file": "data/raw/supplemental/vietnam_cpi.csv",
-      "rows": 81,
-      "first_date": "2018-12-27",
-      "last_date": "2025-09-06",
-      "invalid_dates": 0,
-      "duplicate_dates": 0,
-      "ascending_dates": true,
-      "nulls_by_column": {
-        "time": 0,
-        "cpi_yoy_pct": 0
-      },
-      "nonfinite_numeric_values": 0
-    },
-    "gdp": {
-      "file": "data/raw/supplemental/vietnam_gdp.csv",
-      "rows": 15,
-      "first_date": "2010-12-31",
+      "file": "data/raw/supplemental/vietnam_cpi_annual.csv",
+      "rows": 20,
+      "first_date": "2005-12-31",
       "last_date": "2024-12-31",
       "invalid_dates": 0,
       "duplicate_dates": 0,
       "ascending_dates": true,
       "nulls_by_column": {
+        "year": 0,
         "time": 0,
-        "gdp_usd": 0
+        "cpi_annual_inflation_pct": 0,
+        "publication_date": 20,
+        "api_vintage": 0
       },
-      "nonfinite_numeric_values": 0
+      "nonfinite_numeric_values": 20
+    },
+    "gdp": {
+      "file": "data/raw/supplemental/vietnam_gdp_annual.csv",
+      "rows": 20,
+      "first_date": "2005-12-31",
+      "last_date": "2024-12-31",
+      "invalid_dates": 0,
+      "duplicate_dates": 0,
+      "ascending_dates": true,
+      "nulls_by_column": {
+        "year": 0,
+        "gdp_usd": 0,
+        "time": 0,
+        "publication_date": 20,
+        "publication_status": 0,
+        "api_vintage": 0
+      },
+      "nonfinite_numeric_values": 20
     },
     "financial": {
       "file": "data/raw/supplemental/fpt_fundamentals_quarterly.csv",
@@ -108,23 +115,6 @@
         "fpt_gross_profit_vnd": 0,
         "fpt_ebit_vnd": 0,
         "fpt_parent_net_profit_vnd": 0
-      },
-      "nonfinite_numeric_values": 0
-    },
-    "shares": {
-      "file": "data/raw/supplemental/fpt_shares_outstanding.csv",
-      "rows": 10,
-      "first_date": "2018-06-30",
-      "last_date": "2025-08-01",
-      "invalid_dates": 0,
-      "duplicate_dates": 0,
-      "ascending_dates": true,
-      "nulls_by_column": {
-        "time": 0,
-        "fpt_shares_outstanding": 0,
-        "period_end": 0,
-        "availability_basis": 0,
-        "source_url": 0
       },
       "nonfinite_numeric_values": 0
     }
@@ -159,45 +149,15 @@
     "2018-01-23",
     "2018-01-24"
   ],
+  "verified_hose_closures_excluded": [
+    "2018-01-23",
+    "2018-01-24"
+  ],
   "calendar_comparison": {
     "fpt_dates_absent_from_vnindex": [
-      "2007-07-23",
-      "2018-01-23",
-      "2018-01-24",
-      "2020-05-12",
-      "2020-05-14",
-      "2020-05-22",
-      "2020-05-27",
-      "2020-05-29",
-      "2020-07-16",
-      "2020-07-17",
-      "2020-07-20",
-      "2020-08-20",
-      "2020-08-21",
-      "2020-08-24",
-      "2020-08-25",
-      "2020-09-14",
-      "2020-09-15",
-      "2020-09-18",
-      "2020-09-28",
-      "2021-01-21",
-      "2021-01-22",
-      "2021-01-25",
-      "2021-01-26",
-      "2021-01-27",
-      "2021-01-28",
-      "2021-01-29",
-      "2021-02-01",
-      "2021-02-02",
-      "2021-02-03",
-      "2021-02-04",
-      "2021-07-12",
-      "2021-07-13",
-      "2021-07-14",
-      "2021-07-23",
-      "2023-04-07",
-      "2024-08-12"
+      "2007-07-23"
     ],
+    "fpt_dates_absent_from_vnindex_in_study": [],
     "vnindex_dates_absent_from_fpt": [],
     "vnindex_return_intervals_needing_review": [
       {
@@ -205,153 +165,6 @@
         "source_date": "2007-07-24",
         "fpt_dates_between": [
           "2007-07-23"
-        ],
-        "interpretation": "Return across adjacent source rows spans multiple FPT-calendar sessions; verify source and exchange calendar."
-      },
-      {
-        "previous_source_date": "2018-01-22",
-        "source_date": "2018-01-25",
-        "fpt_dates_between": [
-          "2018-01-23",
-          "2018-01-24"
-        ],
-        "interpretation": "Return across adjacent source rows spans multiple FPT-calendar sessions; verify source and exchange calendar."
-      },
-      {
-        "previous_source_date": "2020-05-11",
-        "source_date": "2020-05-13",
-        "fpt_dates_between": [
-          "2020-05-12"
-        ],
-        "interpretation": "Return across adjacent source rows spans multiple FPT-calendar sessions; verify source and exchange calendar."
-      },
-      {
-        "previous_source_date": "2020-05-13",
-        "source_date": "2020-05-15",
-        "fpt_dates_between": [
-          "2020-05-14"
-        ],
-        "interpretation": "Return across adjacent source rows spans multiple FPT-calendar sessions; verify source and exchange calendar."
-      },
-      {
-        "previous_source_date": "2020-05-21",
-        "source_date": "2020-05-25",
-        "fpt_dates_between": [
-          "2020-05-22"
-        ],
-        "interpretation": "Return across adjacent source rows spans multiple FPT-calendar sessions; verify source and exchange calendar."
-      },
-      {
-        "previous_source_date": "2020-05-26",
-        "source_date": "2020-05-28",
-        "fpt_dates_between": [
-          "2020-05-27"
-        ],
-        "interpretation": "Return across adjacent source rows spans multiple FPT-calendar sessions; verify source and exchange calendar."
-      },
-      {
-        "previous_source_date": "2020-05-28",
-        "source_date": "2020-06-01",
-        "fpt_dates_between": [
-          "2020-05-29"
-        ],
-        "interpretation": "Return across adjacent source rows spans multiple FPT-calendar sessions; verify source and exchange calendar."
-      },
-      {
-        "previous_source_date": "2020-07-15",
-        "source_date": "2020-07-21",
-        "fpt_dates_between": [
-          "2020-07-16",
-          "2020-07-17",
-          "2020-07-20"
-        ],
-        "interpretation": "Return across adjacent source rows spans multiple FPT-calendar sessions; verify source and exchange calendar."
-      },
-      {
-        "previous_source_date": "2020-08-19",
-        "source_date": "2020-08-26",
-        "fpt_dates_between": [
-          "2020-08-20",
-          "2020-08-21",
-          "2020-08-24",
-          "2020-08-25"
-        ],
-        "interpretation": "Return across adjacent source rows spans multiple FPT-calendar sessions; verify source and exchange calendar."
-      },
-      {
-        "previous_source_date": "2020-09-11",
-        "source_date": "2020-09-16",
-        "fpt_dates_between": [
-          "2020-09-14",
-          "2020-09-15"
-        ],
-        "interpretation": "Return across adjacent source rows spans multiple FPT-calendar sessions; verify source and exchange calendar."
-      },
-      {
-        "previous_source_date": "2020-09-17",
-        "source_date": "2020-09-21",
-        "fpt_dates_between": [
-          "2020-09-18"
-        ],
-        "interpretation": "Return across adjacent source rows spans multiple FPT-calendar sessions; verify source and exchange calendar."
-      },
-      {
-        "previous_source_date": "2020-09-25",
-        "source_date": "2020-09-29",
-        "fpt_dates_between": [
-          "2020-09-28"
-        ],
-        "interpretation": "Return across adjacent source rows spans multiple FPT-calendar sessions; verify source and exchange calendar."
-      },
-      {
-        "previous_source_date": "2021-01-20",
-        "source_date": "2021-02-05",
-        "fpt_dates_between": [
-          "2021-01-21",
-          "2021-01-22",
-          "2021-01-25",
-          "2021-01-26",
-          "2021-01-27",
-          "2021-01-28",
-          "2021-01-29",
-          "2021-02-01",
-          "2021-02-02",
-          "2021-02-03",
-          "2021-02-04"
-        ],
-        "interpretation": "Return across adjacent source rows spans multiple FPT-calendar sessions; verify source and exchange calendar."
-      },
-      {
-        "previous_source_date": "2021-07-09",
-        "source_date": "2021-07-15",
-        "fpt_dates_between": [
-          "2021-07-12",
-          "2021-07-13",
-          "2021-07-14"
-        ],
-        "interpretation": "Return across adjacent source rows spans multiple FPT-calendar sessions; verify source and exchange calendar."
-      },
-      {
-        "previous_source_date": "2021-07-22",
-        "source_date": "2021-07-26",
-        "fpt_dates_between": [
-          "2021-07-23"
-        ],
-        "interpretation": "Return across adjacent source rows spans multiple FPT-calendar sessions; verify source and exchange calendar."
-      },
-      {
-        "previous_source_date": "2023-04-06",
-        "source_date": "2023-04-10",
-        "fpt_dates_between": [
-          "2023-04-07"
-        ],
-        "interpretation": "Return across adjacent source rows spans multiple FPT-calendar sessions; verify source and exchange calendar."
-      },
-      {
-        "previous_source_date": "2024-08-09",
-        "source_date": "2024-08-13",
-        "fpt_dates_between": [
-          "2024-08-12"
         ],
         "interpretation": "Return across adjacent source rows spans multiple FPT-calendar sessions; verify source and exchange calendar."
       }
@@ -362,42 +175,30 @@
     "vnindex_return_1d": {
       "first_valid_session": "2007-01-04",
       "last_valid_session": "2025-09-30",
-      "missing_rows": 7,
-      "missing_pct": 0.149860843502462,
-      "internal_missing_rows": 5,
+      "missing_rows": 2,
+      "missing_pct": 0.04283572499464553,
+      "internal_missing_rows": 0,
       "missing_runs": [
         {
           "first_session": "2007-01-02",
           "last_session": "2007-01-03",
           "rows": 2,
           "position": "leading"
-        },
-        {
-          "first_session": "2021-02-01",
-          "last_session": "2021-02-05",
-          "rows": 5,
-          "position": "internal"
         }
       ]
     },
     "vnindex_volatility_20d": {
       "first_valid_session": "2007-01-31",
       "last_valid_session": "2025-09-30",
-      "missing_rows": 26,
-      "missing_pct": 0.5566259901520018,
-      "internal_missing_rows": 5,
+      "missing_rows": 21,
+      "missing_pct": 0.4497751124437781,
+      "internal_missing_rows": 0,
       "missing_runs": [
         {
           "first_session": "2007-01-02",
           "last_session": "2007-01-30",
           "rows": 21,
           "position": "leading"
-        },
-        {
-          "first_session": "2021-02-01",
-          "last_session": "2021-02-05",
-          "rows": 5,
-          "position": "internal"
         }
       ]
     },
@@ -410,55 +211,34 @@
       "missing_runs": []
     },
     "gold_vnd_per_ounce": {
-      "first_valid_session": "2019-01-02",
+      "first_valid_session": "2007-01-02",
       "last_valid_session": "2025-09-30",
-      "missing_rows": 2988,
-      "missing_pct": 63.969171483622354,
+      "missing_rows": 0,
+      "missing_pct": 0.0,
       "internal_missing_rows": 0,
-      "missing_runs": [
-        {
-          "first_session": "2007-01-02",
-          "last_session": "2018-12-28",
-          "rows": 2988,
-          "position": "leading"
-        }
-      ]
+      "missing_runs": []
     },
-    "cpi_yoy_pct": {
-      "first_valid_session": "2018-12-28",
+    "cpi_annual_inflation_pct": {
+      "first_valid_session": "2007-01-02",
       "last_valid_session": "2025-09-30",
-      "missing_rows": 2987,
-      "missing_pct": 63.94776279169343,
+      "missing_rows": 0,
+      "missing_pct": 0.0,
       "internal_missing_rows": 0,
-      "missing_runs": [
-        {
-          "first_session": "2007-01-02",
-          "last_session": "2018-12-27",
-          "rows": 2987,
-          "position": "leading"
-        }
-      ]
+      "missing_runs": []
     },
     "gdp_usd": {
-      "first_valid_session": "2011-06-29",
+      "first_valid_session": "2007-01-02",
       "last_valid_session": "2025-09-30",
-      "missing_rows": 1110,
-      "missing_pct": 23.763648041104688,
+      "missing_rows": 0,
+      "missing_pct": 0.0,
       "internal_missing_rows": 0,
-      "missing_runs": [
-        {
-          "first_session": "2007-01-02",
-          "last_session": "2011-06-28",
-          "rows": 1110,
-          "position": "leading"
-        }
-      ]
+      "missing_runs": []
     },
     "fpt_net_revenue_vnd": {
       "first_valid_session": "2007-05-15",
       "last_valid_session": "2025-09-30",
       "missing_rows": 1407,
-      "missing_pct": 30.12202954399486,
+      "missing_pct": 30.13493253373313,
       "internal_missing_rows": 1322,
       "missing_runs": [
         {
@@ -479,7 +259,7 @@
       "first_valid_session": "2007-05-15",
       "last_valid_session": "2025-09-30",
       "missing_rows": 1407,
-      "missing_pct": 30.12202954399486,
+      "missing_pct": 30.13493253373313,
       "internal_missing_rows": 1322,
       "missing_runs": [
         {
@@ -500,7 +280,7 @@
       "first_valid_session": "2007-05-15",
       "last_valid_session": "2025-09-30",
       "missing_rows": 1407,
-      "missing_pct": 30.12202954399486,
+      "missing_pct": 30.13493253373313,
       "internal_missing_rows": 1322,
       "missing_runs": [
         {
@@ -521,7 +301,7 @@
       "first_valid_session": "2007-05-15",
       "last_valid_session": "2025-09-30",
       "missing_rows": 1407,
-      "missing_pct": 30.12202954399486,
+      "missing_pct": 30.13493253373313,
       "internal_missing_rows": 1322,
       "missing_runs": [
         {
@@ -535,21 +315,6 @@
           "last_session": "2013-05-14",
           "rows": 1322,
           "position": "internal"
-        }
-      ]
-    },
-    "fpt_shares_outstanding": {
-      "first_valid_session": "2018-07-02",
-      "last_valid_session": "2025-09-30",
-      "missing_rows": 2859,
-      "missing_pct": 61.20745022479126,
-      "internal_missing_rows": 0,
-      "missing_runs": [
-        {
-          "first_session": "2007-01-02",
-          "last_session": "2018-06-29",
-          "rows": 2859,
-          "position": "leading"
         }
       ]
     }
@@ -592,18 +357,17 @@
       "rows_residual_over_1_vnd": 0
     }
   },
-  "cpi_reference_period_status": "Release date and value are stored, but reference month is not a separate field. Missing release-calendar months cannot establish missing economic reference months.",
-  "publication_date_status": "Quarter-end+45 and year-end+180 are assumptions; shares include one assumed availability date. Historical revision vintages have not been verified.",
+  "cpi_reference_period_status": "World Bank WDI annual inflation, 2005–2024; actual publication dates are not in the export.",
+  "publication_date_status": "Quarter-end+45 and CPI/GDP year-end+180 are assumptions. Historical revision vintages have not been verified.",
   "source_file_sha256": {
     "data/raw/fpt/fpt_historical_price.csv": "3839e982af4f088da5d8a5e08878124838583d7b65e5bf9eac280c1bddcdc1a6",
     "data/raw/supplemental/vnindex_source.csv": "cc348bdcf888c947cf9929c14a58c719553662ff6ae875fc7a0ec9127e1e8d18",
     "data/raw/supplemental/usd_vnd_daily.csv": "d82290ae103bcb25c1590f89ce7ccf6e52b312a206585317c2a957062a2b14ca",
-    "data/raw/supplemental/gold_xauusd_daily.csv": "b9691e60840064477841ab14e3f2903ad3b833f4c3150825668f7627f002783a",
-    "data/raw/supplemental/vietnam_cpi.csv": "91b5cdb3ebd20e7927b705ca693f7176918001db7d62c5ed8c213e71e830ef04",
-    "data/raw/supplemental/vietnam_gdp.csv": "35cf181db9ccf415e80f592cec47d36d61e35c9e80fcef8062d990a6fd17a1cd",
+    "data/raw/supplemental/gold_xauusd_study.csv": "a578a861e074b1b038b3cb6913bcada59b6070ba4e2bbe8790b58a60ef6f33f5",
+    "data/raw/supplemental/vietnam_cpi_annual.csv": "3e2c8abf1a7b13a6bb8ed1934eda989126692da1f8ae32a8ed4ccb6fa2d36b57",
+    "data/raw/supplemental/vietnam_gdp_annual.csv": "00a2178a31631d22d4a17e8fe1e35d51a6029522d76bf90d9d12db5c151bc129",
     "data/raw/supplemental/fpt_fundamentals_quarterly.csv": "fed368fa1c6369184a74f84ac36cfb3cade9c63794a349b17b176621ae056f76",
-    "data/raw/supplemental/fpt_shares_outstanding.csv": "a4382c6287993e9fe55cd005c86bbef840ecc2e755ddf3b09093927351ac2f70",
-    "data/processed/fpt_multisource_features.csv": "ffe11d013bd0fb7a858c0b7a6f55e79c3980393b5e2c20a3b7efd1662a14d66b",
+    "data/processed/fpt_multisource_features.csv": "9b43734d2641c1f815da8560899bce863d4c116cd45025b1915292325650c207",
     "data/raw/supplemental/fpt_income_statement_source.csv": "06f3062ebe1e094b4c6ad8f83b24df2abee89b5185a7c490e35ee61526b5870b"
   }
 }

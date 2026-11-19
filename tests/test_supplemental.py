@@ -136,7 +136,13 @@ def test_committed_sources_have_correct_ebit_and_same_two_branch_cohort():
         root / "data/raw/fpt/fpt_historical_price.csv"
     )
     assert len(branches[BRANCH_PRICE]) == 32
-    assert len(branches[BRANCH_MACRO]) == 43
+    assert len(branches[BRANCH_MACRO]) == 42
+    assert common.target_date.min() == pd.Timestamp("2013-08-07")
+    assert common.session_index.diff().dropna().eq(1).all()
+    assert pd.Timestamp("2018-01-23") not in set(base.date)
+    assert pd.Timestamp("2018-01-24") not in set(base.date)
+    assert "cpi_annual_inflation_pct" in branches[BRANCH_MACRO]
+    assert "fpt_shares_outstanding" not in branches[BRANCH_MACRO]
     assert set(MODEL_SUPPLEMENTAL_COLUMNS).issubset(branches[BRANCH_MACRO])
     assert common[branches[BRANCH_MACRO]].notna().all().all()
     assert common["target_date"].dropna().max() == pd.Timestamp("2025-09-30")
@@ -161,3 +167,14 @@ def test_vnindex_date_units_and_rejected_mismatched_payload():
     raw["v"] = []
     with pytest.raises(ValueError, match="equal"):
         normalize_vnindex_response(raw, "2024-01-01", "2024-01-03")
+
+
+def test_missing_input_in_study_window_stops_training_preparation(tmp_path):
+    from prepare import DEFAULT_INPUT, DEFAULT_SUPPLEMENTAL
+
+    frame = pd.read_csv(DEFAULT_SUPPLEMENTAL)
+    frame.loc[frame.date.eq("2021-02-02"), "vnindex_return_1d"] = float("nan")
+    broken = tmp_path / "broken.csv"
+    frame.to_csv(broken, index=False)
+    with pytest.raises(ValueError, match="Incomplete input"):
+        build_experiment_table(DEFAULT_INPUT, broken)

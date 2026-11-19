@@ -5,7 +5,7 @@
   "volume_unit": "cổ phiếu",
   "data_sha256": "3839e982af4f088da5d8a5e08878124838583d7b65e5bf9eac280c1bddcdc1a6",
   "historical_price_adjustment_factor": 0.8875000000000001,
-  "row_count": 4671,
+  "row_count": 4669,
   "columns": [
     "time",
     "open",
@@ -20,7 +20,7 @@
   "price_max": 119.36875,
   "close_min": 1.61525,
   "close_max": 118.073,
-  "volume_min": 0,
+  "volume_min": 1820,
   "volume_max": 23514300,
   "missing_values_by_column": {
     "time": 0,
@@ -32,7 +32,7 @@
   },
   "duplicate_dates": 0,
   "is_chronologically_sorted": true,
-  "zero_volume_sessions": 2,
+  "zero_volume_sessions": 0,
   "ohlc_consistency_violations": 3,
   "ohlc_violation_dates": [
     "2007-08-17",
@@ -41,19 +41,19 @@
   ],
   "daily_return_min": -0.06989633583085308,
   "daily_return_max": 0.06992187500000013,
-  "daily_return_mean": 0.0006440851855642523,
-  "daily_return_std": 0.019189026905547593,
+  "daily_return_mean": 0.0006443611432273047,
+  "daily_return_std": 0.019193133472504828,
   "daily_return_quantiles": {
-    "0.01": -0.04947271991092215,
-    "0.25": -0.008662026916977428,
+    "0.01": -0.04947494685696932,
+    "0.25": -0.008667149999023599,
     "0.5": 0.0,
-    "0.75": 0.009422850412249772,
-    "0.99": 0.04971557853910806
+    "0.75": 0.009427483993294294,
+    "0.99": 0.04971726483235442
   },
   "next_session_direction_counts": {
     "up": 2118,
     "down": 2074,
-    "unchanged": 478
+    "unchanged": 476
   },
   "figures": [
     "figures/01_fpt_close.png",
@@ -61,25 +61,5 @@
     "figures/03_daily_return_distribution.png",
     "figures/04_next_session_class_balance.png"
   ],
-  "sector_coverage_audit": {
-    "provider": "Simply Wall St Vietnam Tech",
-    "url": "https://simplywall.st/markets/vn/tech",
-    "archive_rows": 33,
-    "archive_first_date": "2016-02-06",
-    "archive_last_date": "2025-07-24",
-    "covers_2007": false,
-    "largest_gap_calendar_days": 108,
-    "modeling_status": "excluded",
-    "excluded_columns": [
-      "ict_market_cap_vnd",
-      "ict_pe",
-      "ict_absolute_pe"
-    ],
-    "reason": "Sparse sector valuation snapshots; no 2007 coverage and historical constituent membership/weights are not archived. No backward interpolation or fabricated sector history.",
-    "live_page_check_date": "2026-10-29",
-    "live_page_evidence": "Public sector page offers 1Y/3Y/5Y/10Y views and currently aggregated company financials; this does not verify a 2007 point-in-time series.",
-    "alternative_decision": "Retain VN-Index as a broad-market control. It is NOT an ICT-sector replacement. A fixed basket of today's listed technology firms would introduce selection/survivorship bias without historical constituents; therefore no synthetic ICT proxy is claimed.",
-    "ablation_policy": "Industry is excluded from all experiments; report only the 32/38/43 input levels without an empty sector row."
-  },
   "regression_target": "next_log_return = ln(next_close/current_close)"
 }

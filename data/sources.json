@@ -1,6 +1,6 @@
 {
   "research_cutoff": "2025-09-30",
-  "collection_mode": "Frozen public-source CSV exports and official company disclosures; normalization is reproducible offline. Online downloads can have access limits or revised history.",
+  "collection_mode": "Frozen vendor observations and user-supplied XAU/USD export with documented modeled availability dates.",
   "sources": [
     {
       "id": "fpt_ohlcv",
@@ -23,40 +23,33 @@
     {
       "id": "gold",
       "provider": "Investing.com",
-      "file": "raw/supplemental/gold_xauusd_source.csv",
+      "file": "raw/supplemental/gold_xauusd_study.csv",
       "url": "https://vn.investing.com/currencies/xau-usd-historical-data",
-      "date_format": "%d/%m/%Y",
-      "value_column": "Lần cuối",
-      "unit": "USD per troy ounce; multiply aligned gold and FX to obtain VND per troy ounce"
+      "date_format": "%Y-%m-%d",
+      "value_column": "gold_usd_per_ounce",
+      "unit": "USD per troy ounce; multiply aligned gold and FX to obtain VND per troy ounce",
+      "range": "2007-01-01 to 2025-09-30",
+      "rows": 4858,
+      "source_details": "User-supplied Investing.com daily export, validated and truncated to the study cutoff."
     },
     {
       "id": "cpi",
-      "provider": "Investing.com economic calendar, source General Statistics Office of Vietnam",
-      "file": "raw/supplemental/vietnam_cpi_source.csv",
-      "url": "https://vn.investing.com/economic-calendar/vietnamese-cpi-1851",
-      "date_format": "%m/%d/%Y",
-      "date_column": "Ngày Phát Hành",
-      "value_column": "Thực tế",
-      "unit": "year-over-year percent"
+      "provider": "World Bank World Development Indicators (IMF IFS)",
+      "file": "raw/supplemental/vietnam_cpi_annual.csv",
+      "url": "https://data.worldbank.org/indicator/FP.CPI.TOTL.ZG?locations=VN",
+      "indicator": "FP.CPI.TOTL.ZG",
+      "range": "2005–2024",
+      "unit": "annual inflation percent",
+      "availability_rule": "year-end plus 180 calendar days (assumption)"
     },
     {
       "id": "gdp",
       "provider": "World Bank World Development Indicators",
-      "file": "raw/supplemental/vietnam_gdp_source.csv",
+      "file": "raw/supplemental/vietnam_gdp_annual.csv",
       "url": "https://data.worldbank.org/indicator/NY.GDP.MKTP.CD?locations=VN",
       "unit": "current USD, annual GDP level",
-      "availability_rule": "year-end plus 180 calendar days; assumed rather than an observed historical release vintage"
-    },
-    {
-      "id": "technology_sector",
-      "provider": "Simply Wall St Vietnam Tech sector",
-      "file": "raw/supplemental/ict_industry_source.csv",
-      "url": "https://simplywall.st/markets/vn/tech",
-      "date_format": "%d-%m-%Y",
-      "market_cap_unit": "VND; t suffix denotes 1e12",
-      "pe_units": "multiples; retain source PE and Absolute PE as separate fields",
-      "limitation": "33 sparse snapshots from 2016-02-06 to 2025-07-24; no 2007 coverage, historical constituents or revision vintages. Not used as a model feature.",
-      "modeling_status": "excluded; retained for coverage audit only"
+      "availability_rule": "year-end plus 180 calendar days; assumed rather than an observed historical release vintage",
+      "range": "2005–2024"
     },
     {
       "id": "fpt_quarterly_statements",
@@ -65,16 +58,8 @@
       "url": "https://fpt.com/en/ir/information-disclosures",
       "unit": "VND per reported quarter",
       "ebit_definition": "pretax profit plus absolute interest expense",
-      "availability_rule": "quarter-end plus 45 calendar days, assumed; source statements may have been restated"
-    },
-    {
-      "id": "fpt_shares_outstanding",
-      "provider": "FPT Corporation annual reports and issuance disclosures",
-      "file": "raw/supplemental/fpt_shares_outstanding.csv",
-      "url": "https://fpt.com/en/ir/information-disclosures",
-      "unit": "shares outstanding, excluding treasury shares where separately reported",
-      "availability_rule": "Each CSV row records a publication/reference date and exact official report URL; applied one calendar day later",
-      "limitation": "Last-known archived observations, not a full daily register. The 2017 observation uses a conservative assumed availability date."
+      "availability_rule": "quarter-end plus 45 calendar days, assumed; source statements may have been restated",
+      "model_periods": "2013Q1–2025Q2"
     },
     {
       "id": "vnindex",
@@ -84,7 +69,12 @@
       "unit": "index points",
       "usage": "log return and 20-session volatility, available after one calendar day",
       "range": "2007-01-02 to 2025-09-30",
-      "rows": 4635
+      "rows": 4668,
+      "corrections": "raw/supplemental/vnindex_close_corrections.csv",
+      "correction_source": "https://cafef.vn/du-lieu/lich-su-giao-dich-vnindex-1.chn",
+      "corrected_observations": "33 added, 16 closes corrected"
     }
-  ]
+  ],
+  "study_start": "2013-01-01",
+  "lineage": "raw/supplemental/study_2013_lineage.json"
 }
