@@ -14,8 +14,8 @@ Thiết kế hiện hành: cutoff 30/09/2025; một mục tiêu next_log_return 
 - [x] Tìm nguồn trực tiếp cho vàng, CPI, GDP, báo cáo quý và cổ phiếu lưu hành từ 2007; kiểm tra thêm lịch VN-Index.
 - [x] Tải bản ứng viên riêng, ghi URL, thời gian, đơn vị, phạm vi và dấu kiểm tra; không ghi đè snapshot khi chưa kiểm chứng.
 - [x] So phần giao nhau, số kỳ thiếu, ngày công bố và khả năng nối dữ liệu; quyết định từng nguồn trên chất lượng dữ liệu, không dựa vào điểm Test.
-- [x] Lưu dữ liệu đủ điều kiện cùng quy trình tái lập và báo cáo rõ phần còn thiếu. Chỉ chạy lại thực nghiệm khi dữ liệu mới đủ tiêu chuẩn để thay bộ đang dùng.
-- [ ] Cập nhật tài liệu/cẩm nang, kiểm thử và đồng bộ GitHub; giữ nguyên Proposal đã nộp.
+- [x] Lưu các bản ứng viên đã tải cùng quy trình tái lập và báo cáo rõ điều kiện còn thiếu. Chưa thay bộ huấn luyện khi chưa đạt tiêu chuẩn.
+- [x] Cập nhật tài liệu/cẩm nang, kiểm thử và đồng bộ GitHub; giữ nguyên Proposal đã nộp.
 
 Phát hiện đầu: World Bank có kho lạm phát tháng và dữ liệu GDP lịch sử; website FPT có công bố báo cáo quý IV/2007 ngày 24/01/2008. Cần tải nội dung để xác nhận trường số, độ phủ và ngày có thể biết; chưa coi kết quả tìm kiếm là dataset hoàn chỉnh.
 
@@ -24,6 +24,8 @@ Phát hiện đầu: World Bank có kho lạm phát tháng và dữ liệu GDP l
 Đã lưu 17 tệp phản hồi/PDF gốc (~5,08 MB) và các CSV ứng viên vào data/research/history_2007. Script fetch_historical_candidates.py chạy ngoại tuyến, kiểm tra tháng liên tục trước khi tính CPI cùng kỳ, giải mã vàng đúng đơn vị và dừng tải một máy chủ khi gặp HTTP 429. 62 tests đạt. Vàng sau bỏ hàng lịch rỗng còn 2.182 thanh; 260 ngày trùng lệch tương đối tuyệt đối trung bình 0,132181%, tối đa 1,331965%. GDP trùng 15 năm, lệch tối đa 0,013363%. VN-Index tải lại vẫn 4.635 phiên, 36 ngày không khớp lịch FPT và giá không đổi. Đã xem trực quan 6 trang PDF; giữ riêng số cổ phiếu phổ thông/ưu đãi/quỹ và số liệu doanh thu chưa đồng nhất. Chưa đủ điều kiện thay bộ 43 biến nên không huấn luyện lại. Đã cập nhật hướng dẫn tìm nguồn, README, sổ tay dữ liệu, REPORT và cẩm nang công khai; Proposal giữ nguyên.
 
 Kiểm tra cuối đợt mở rộng: 63/63 tests đạt, CLI dựng ứng viên ngoại tuyến thành công, snapshot FPT verify đạt 4.671 hàng và hash giữ nguyên. 60 tệp được bảo vệ không đổi; 10 notebook hợp lệ; liên kết mới không hỏng; không có định danh tham khảo bị cấm trong các tệp sửa. Chứng cứ tại reports/history_extension_validation.json. Cẩm nang vẫn được Git theo dõi và sẽ công bố cùng tài liệu nguồn mới. Đang đóng gói và push main; không chỉnh Proposal.
+
+Hoàn tất đợt tìm và kiểm chứng: commit 96a725f đã push thành công lên origin/main. Đã dọn thư mục tìm kiếm tạm/cache sau khi lưu bằng chứng. 17 tệp nguồn được cấu hình giữ nguyên byte qua Git và đã đối chiếu SHA-256 giữa file local và blob Git. Cẩm nang công khai có trong commit. Giới hạn còn lại được nêu trong docs/DU_LIEU_TU_2007.md và audit.json; không tuyên bố bộ 43 biến đã đầy đủ từ 2007. Nhật ký xác nhận này được đồng bộ bằng commit tiếp theo.
 
 ### Cập nhật hướng dẫn dữ liệu và chia sẻ cẩm nang — 19/11/2026
 
