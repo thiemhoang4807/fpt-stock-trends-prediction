@@ -12,7 +12,34 @@ Một mô hình dự báo `r(t+1) = ln(C(t+1)/C(t))`; giá = `C(t) × exp(r dự
 
 ## 2. Dữ liệu
 
-4.671 phiên OHLCV FPT, **02/01/2007–30/09/2025**. Snapshot VCI/vnstock; dữ liệu bổ trợ DNSE, Investing.com, World Bank và công bố FPT. Ba cấp 32/38/43 biến ghép theo ngày có thể biết, không điền ngược. Ngành ICT bị loại vì không đủ độ phủ. Xem [nguồn và quy tắc dữ liệu](data/README.md).
+4.671 phiên OHLCV FPT, **02/01/2007–30/09/2025**. Snapshot là bản dữ liệu cố định được lưu lại để cả nhóm chạy trên cùng số liệu. Giá do VCI cung cấp qua vnstock; nguồn bổ trợ gồm DNSE, Investing.com, World Bank và công bố FPT. Mỗi nguồn có lịch sử và tần suất khác nhau:
+
+| Nhóm dữ liệu | Khoảng quan sát trong bản lưu | Dùng để mô tả điều gì? |
+|---|---|---|
+| Giá và khối lượng FPT | 02/01/2007–30/09/2025, 4.671 phiên | Mức giá, đà tăng/giảm, dao động và hoạt động giao dịch |
+| VN-Index | 02/01/2007–30/09/2025, 4.635 phiên | Hướng và mức biến động thị trường chung |
+| USD/VND | 01/01/2007–30/09/2025, 4.893 quan sát | Giá một USD tính bằng VND |
+| Vàng XAU/USD | 01/01/2019–30/09/2025, 1.755 quan sát | Giá vàng quốc tế, nhân tỷ giá để đổi sang VND/ounce |
+| CPI | Ngày công bố 27/12/2018–06/09/2025, 81 quan sát | Mức tăng giá tiêu dùng so với cùng kỳ năm trước |
+| GDP | 2010–2024, 15 năm | Quy mô kinh tế theo USD hiện hành, không phải tốc độ tăng trưởng |
+| Báo cáo tài chính FPT | Quý I/2007–quý II/2025, 52 quý có khoảng trống | Doanh thu và ba mức lợi nhuận theo quý |
+| Cổ phiếu lưu hành FPT | 10 mốc tham chiếu từ 2017 đến 07/2025 | Số cổ phiếu đang lưu hành tại các mốc công bố |
+
+Ngày của số liệu khác ngày mô hình được phép biết số liệu. Ví dụ quý II/2025 kết thúc 30/06, nhưng bốn chỉ tiêu tài chính chỉ được dùng từ **14/08/2025** theo giả định trễ 45 ngày. Các biến ngày được dùng từ ngày lịch tiếp theo; giá trị quá cũ trở lại thiếu. Không lấy số liệu tương lai để lấp quá khứ. Đọc [hướng dẫn nguồn, cách lấy, đơn vị và độ phủ sau ghép](data/README.md) để xem quy tắc riêng từng biến.
+
+Ba cấp đầu vào là **32 biến giá/kỹ thuật → thêm 6 biến thị trường/vĩ mô thành 38 → thêm 5 biến tài chính thành 43**. Đủ lịch sử giá từ 2007 không có nghĩa đủ mọi nguồn từ 2007. Sau yêu cầu đủ dữ liệu và cửa sổ 60 phiên liên tiếp, tập so sánh chung có 1.559 hàng gán nhãn, bắt đầu ở phiên mục tiêu 03/04/2019.
+
+### Đọc hiểu dữ liệu và công thức từ đâu?
+
+1. [Cẩm nang hiểu dự án](docs/CAM_NANG_HIEU_DU_AN.md): dành cho cả nhóm, có ví dụ tính từng bước và kịch bản thuyết trình.
+2. [Nguồn và từ điển dữ liệu](data/README.md): mỗi biến lấy ở đâu, lấy thế nào, đơn vị, ý nghĩa, khoảng thời gian và cách xử lý thiếu.
+3. [EDA và đặc trưng](docs/EDA_VA_DAC_TRUNG.md): đọc biểu đồ, kiểm tra dữ liệu, giải thích đủ 32 biến giá/kỹ thuật, công thức và lý do sử dụng.
+4. [Báo cáo thực nghiệm](docs/REPORT.md): thiết kế đánh giá và kết quả thật của ba thí nghiệm.
+5. [Kiểm tra và bổ sung dữ liệu](docs/HUONG_DAN_KIEM_TRA_VA_BO_SUNG_DU_LIEU.md): danh sách thiếu/lỗi đã thấy, nguồn để tìm lịch sử sớm hơn và 9 bước kiểm tra file mới.
+
+**Chất lượng dữ liệu còn cần hoàn thiện:** mốc vàng 2019/CPI 2018 là giới hạn bản đã thu thập. Rà soát bổ sung ghi nhận 36 ngày có trong FPT nhưng thiếu ở nguồn VN-Index; 17 đoạn tính return nguồn đi qua các ngày bị khuyết. Báo cáo quý thiếu 22 quý; các ngày công bố quý/GDP có phần giả định. Xem [audit chi tiết](reports/data_quality_review.json). Các bảng điểm dưới đây vẫn thuộc snapshot hiện hành, chưa phải kết quả trên nguồn đã bổ sung/sửa.
+
+Ví dụ mục đích của công thức: `close/SMA20 − 1` diễn tả giá hôm nay cao hơn trung bình 20 phiên bao nhiêu phần trăm; `log(1 + volume)` giảm chênh lệch thang đo của khối lượng; `ln(close ngày sau/close hôm nay)` là mục tiêu mô hình cần dự báo. **Đặc trưng mô tả đầu vào, mục tiêu là đáp án cần học**; không đưa cột đáp án vào đầu vào.
 
 ## 3. Đặc điểm chuỗi thời gian
 
@@ -53,6 +80,7 @@ Permutation Importance là phần chính; SHAP là phụ lục. [Báo cáo](docs
 ```bash
 python -m pip install -r requirements.txt
 python src/fetch_data.py --verify
+python src/audit_data_quality.py
 python src/fetch_supplemental.py --from-cache
 python src/eda.py
 python src/prepare.py
@@ -69,14 +97,16 @@ Chạy theo ô tại [00_RUN_ALL.ipynb](notebooks/00_RUN_ALL.ipynb), hoặc từ
 
 ```text
 src/          thu thập, đặc trưng, chuẩn bị, metrics, train, sequence_models,
-              time_series_analysis, plots, explain, predict
+              audit_data_quality, time_series_analysis, plots, explain, predict
 notebooks/    00 chạy toàn bộ; 01–09 giải thích và chạy từng bước
 data/         raw snapshot và processed do pipeline tạo
 reports/      CV, 3 thí nghiệm, dự báo từng phiên, kiểm toán, ca lỗi
 models/       evaluation/ (9 bản Train-only), best_regressor.joblib
 figures/      EDA, ACF/PACF, 3 thí nghiệm, permutation; phụ lục SHAP/STL
-docs/         REPORT.md, PROPOSAL.md, cs114_proposal.tex/.pdf
+docs/         REPORT.md, CAM_NANG_HIEU_DU_AN.md, EDA_VA_DAC_TRUNG.md,
+              HUONG_DAN_KIEM_TRA_VA_BO_SUNG_DU_LIEU.md,
+              PROPOSAL.md, cs114_proposal.tex/.pdf
 tests/        kiểm định dữ liệu, thời gian, cửa sổ, đầu ra và artefact
 ```
 
-[Proposal Markdown](docs/PROPOSAL.md) · [Proposal PDF](docs/cs114_proposal.pdf). Cẩm nang riêng bị Git bỏ qua.
+[Cẩm nang dùng chung](docs/CAM_NANG_HIEU_DU_AN.md) · [Proposal Markdown đã nộp](docs/PROPOSAL.md) · [Proposal PDF đã nộp](docs/cs114_proposal.pdf). Proposal được giữ theo bản đã nộp; thiết kế thực nghiệm hiện hành nằm trong báo cáo và cẩm nang.

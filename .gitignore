@@ -15,7 +15,6 @@ Thumbs.db
 .idea/
 *.log
 tmp/
-docs/CAM_NANG_HIEU_DU_AN.md
 *.aux
 *.toc
 *.out

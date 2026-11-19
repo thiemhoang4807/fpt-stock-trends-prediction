@@ -8,6 +8,23 @@ Thiết kế hiện hành: cutoff 30/09/2025; một mục tiêu next_log_return 
 
 ## Checklist theo giai đoạn
 
+### Cập nhật hướng dẫn dữ liệu và chia sẻ cẩm nang — 19/11/2026
+
+Yêu cầu mới: giải thích nguồn, cách lấy, đơn vị, ý nghĩa, mục đích, độ phủ và xử lý từng biến đang sử dụng; mở rộng EDA và lý do dùng các công thức. Người dùng cho phép công bố cẩm nang lên GitHub từ đợt này, thay cho quy ước giữ riêng trước đây. Không chỉnh ba tệp Proposal đã nộp. Phần hỏi đáp riêng trong cuộc trò chuyện không bổ sung vào tài liệu.
+
+- [x] Đọc trạng thái Git, tài liệu, mã thu thập và các báo cáo kiểm toán hiện có; lưu dấu kiểm tra dữ liệu, kết quả, mô hình, biểu đồ và Proposal trước khi chỉnh tài liệu.
+- [x] Đối chiếu nguồn và độ phủ thực tế, viết hướng dẫn dữ liệu theo từng trường.
+- [x] Bổ sung hướng dẫn EDA, công thức đặc trưng và các ô giải thích trong notebook.
+- [x] Cập nhật cẩm nang dùng chung, README và báo cáo; bỏ quy tắc Git bỏ qua cẩm nang.
+- [x] Kiểm thử, kiểm tra liên kết và tính nhất quán số liệu; xác nhận dữ liệu/mô hình/kết quả/Proposal không đổi.
+- [ ] Commit và push tài liệu chính thức lên main, xác minh cẩm nang có trong bản công bố.
+
+Phát hiện ban đầu: có 4.671 phiên OHLCV, nhưng nguồn vàng bắt đầu 2019, CPI cuối 2018 và báo cáo quý có khoảng trống. Cần phân biệt kỳ số liệu, ngày hiệu lực theo quy tắc, và độ phủ sau khi ghép lên lịch giao dịch. Tập so sánh chung có 1.559 nhãn, các mô hình dùng 32/38/43 biến.
+
+Tiến độ bổ sung: hoàn thành data/README.md, tài liệu EDA/công thức, cẩm nang dùng chung và các ô giải thích notebook 01–05/08. Sửa ba tên trường nguồn bị lỗi mã hóa trong data/sources.json. Lượt kiểm tra đầu: 47 tests pass; fetch_data --verify xác nhận 4.671 hàng và hash giá không đổi.
+
+Theo câu hỏi tiếp theo về thiếu dữ liệu, thêm src/audit_data_quality.py và reports/data_quality_review.json để rà soát chỉ đọc. Phát hiện 36 ngày có trong FPT nhưng không có trong nguồn VN-Index, 17 đoạn return nguồn có thể trải qua nhiều phiên; sau ghép giữ giá trị cũ còn 5 ô thiếu nội bộ. Thiếu 22 quý tài chính (2007Q3–2012Q4); ba đẳng thức kế toán khớp ở cả 52 hàng hiện có. Giá có 3 bất nhất OHLC và 2 phiên volume bằng 0 cần đối chiếu. Các số liệu nguồn không được tự sửa. Viết hướng dẫn tìm thêm dữ liệu và 9 bước kiểm tra file mới; phân biệt giới hạn bản thu thập với giới hạn nhà cung cấp. Các trang công khai xác nhận có đầu mối CPI 2007, vàng bình quân trước 2007, GDP trước 2010; chưa nghiệm thu chuỗi vàng ngày/CPI đầy đủ từ 2007. Kiểm tra cuối: 47 tests pass (9,07 giây), 10 notebook hợp lệ và mọi ô code phân tích cú pháp được; không chạy lại huấn luyện. Liên kết nội bộ hợp lệ, không có từ khóa tham khảo bị cấm trong các file được rà. Đối chiếu 71 hash xác nhận dữ liệu/mô hình/kết quả/biểu đồ/Proposal cũ không đổi; cẩm nang không còn bị Git bỏ qua. Chứng cứ tại reports/documentation_validation.json. Bước tiếp theo: commit và push.
+
 ### 1. Dữ liệu và kiểm toán
 
 - [x] Kiểm tra Git và bảo toàn thay đổi của dự án; đang làm trên main.

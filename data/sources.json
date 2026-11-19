@@ -17,7 +17,7 @@
       "file": "raw/supplemental/usd_vnd_source.csv",
       "url": "https://vn.investing.com/currencies/usd-vnd-historical-data",
       "date_format": "%d/%m/%Y",
-      "value_column": "Láº§n cuá»‘i",
+      "value_column": "Lần cuối",
       "unit": "VND per USD"
     },
     {
@@ -26,7 +26,7 @@
       "file": "raw/supplemental/gold_xauusd_source.csv",
       "url": "https://vn.investing.com/currencies/xau-usd-historical-data",
       "date_format": "%d/%m/%Y",
-      "value_column": "Láº§n cuá»‘i",
+      "value_column": "Lần cuối",
       "unit": "USD per troy ounce; multiply aligned gold and FX to obtain VND per troy ounce"
     },
     {
@@ -35,8 +35,8 @@
       "file": "raw/supplemental/vietnam_cpi_source.csv",
       "url": "https://vn.investing.com/economic-calendar/vietnamese-cpi-1851",
       "date_format": "%m/%d/%Y",
-      "date_column": "NgÃ y PhÃ¡t HÃ nh",
-      "value_column": "Thá»±c táº¿",
+      "date_column": "Ngày Phát Hành",
+      "value_column": "Thực tế",
       "unit": "year-over-year percent"
     },
     {
