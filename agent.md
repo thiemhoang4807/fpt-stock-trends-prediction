@@ -8,6 +8,23 @@ Thiết kế hiện hành: cutoff 30/09/2025; một mục tiêu next_log_return 
 
 ## Checklist theo giai đoạn
 
+### Tìm và kiểm chứng lịch sử từ 2007 — 19/11/2026
+
+- [x] Kiểm tra trạng thái main sạch và đọc cấu trúc dữ liệu đang dùng.
+- [x] Tìm nguồn trực tiếp cho vàng, CPI, GDP, báo cáo quý và cổ phiếu lưu hành từ 2007; kiểm tra thêm lịch VN-Index.
+- [x] Tải bản ứng viên riêng, ghi URL, thời gian, đơn vị, phạm vi và dấu kiểm tra; không ghi đè snapshot khi chưa kiểm chứng.
+- [x] So phần giao nhau, số kỳ thiếu, ngày công bố và khả năng nối dữ liệu; quyết định từng nguồn trên chất lượng dữ liệu, không dựa vào điểm Test.
+- [x] Lưu dữ liệu đủ điều kiện cùng quy trình tái lập và báo cáo rõ phần còn thiếu. Chỉ chạy lại thực nghiệm khi dữ liệu mới đủ tiêu chuẩn để thay bộ đang dùng.
+- [ ] Cập nhật tài liệu/cẩm nang, kiểm thử và đồng bộ GitHub; giữ nguyên Proposal đã nộp.
+
+Phát hiện đầu: World Bank có kho lạm phát tháng và dữ liệu GDP lịch sử; website FPT có công bố báo cáo quý IV/2007 ngày 24/01/2008. Cần tải nội dung để xác nhận trường số, độ phủ và ngày có thể biết; chưa coi kết quả tìm kiếm là dataset hoàn chỉnh.
+
+Đã tải: World Bank GEM 249 tháng chỉ số CPI (01/2005–09/2025, không thiếu kỳ), WDI 20 năm GDP (2005–2024). CPI tính cùng kỳ so với 81 mốc hiện có lệch tối đa 0,03979 điểm phần trăm khi suy đoán kỳ tham chiếu từ lịch phát hành; đây là đối chiếu khảo sát, chưa xác minh lịch công bố lịch sử. Giá vàng tải thành công 7 năm rời (2006/2007/2008/2014/2016/2017/2020); các năm khác gặp timeout và sau đó HTTP 429 nên dừng tải nguồn này. Đã tải báo cáo thường niên 2007, báo cáo quý II/2009 và I/II/III/2010 của FPT; nhìn bảng gốc xác nhận cổ phiếu phổ thông khác tổng cổ phiếu gồm ưu đãi. Các nguồn hiện lưu riêng để kiểm định, chưa thay dữ liệu huấn luyện.
+
+Đã lưu 17 tệp phản hồi/PDF gốc (~5,08 MB) và các CSV ứng viên vào data/research/history_2007. Script fetch_historical_candidates.py chạy ngoại tuyến, kiểm tra tháng liên tục trước khi tính CPI cùng kỳ, giải mã vàng đúng đơn vị và dừng tải một máy chủ khi gặp HTTP 429. 62 tests đạt. Vàng sau bỏ hàng lịch rỗng còn 2.182 thanh; 260 ngày trùng lệch tương đối tuyệt đối trung bình 0,132181%, tối đa 1,331965%. GDP trùng 15 năm, lệch tối đa 0,013363%. VN-Index tải lại vẫn 4.635 phiên, 36 ngày không khớp lịch FPT và giá không đổi. Đã xem trực quan 6 trang PDF; giữ riêng số cổ phiếu phổ thông/ưu đãi/quỹ và số liệu doanh thu chưa đồng nhất. Chưa đủ điều kiện thay bộ 43 biến nên không huấn luyện lại. Đã cập nhật hướng dẫn tìm nguồn, README, sổ tay dữ liệu, REPORT và cẩm nang công khai; Proposal giữ nguyên.
+
+Kiểm tra cuối đợt mở rộng: 63/63 tests đạt, CLI dựng ứng viên ngoại tuyến thành công, snapshot FPT verify đạt 4.671 hàng và hash giữ nguyên. 60 tệp được bảo vệ không đổi; 10 notebook hợp lệ; liên kết mới không hỏng; không có định danh tham khảo bị cấm trong các tệp sửa. Chứng cứ tại reports/history_extension_validation.json. Cẩm nang vẫn được Git theo dõi và sẽ công bố cùng tài liệu nguồn mới. Đang đóng gói và push main; không chỉnh Proposal.
+
 ### Cập nhật hướng dẫn dữ liệu và chia sẻ cẩm nang — 19/11/2026
 
 Yêu cầu mới: giải thích nguồn, cách lấy, đơn vị, ý nghĩa, mục đích, độ phủ và xử lý từng biến đang sử dụng; mở rộng EDA và lý do dùng các công thức. Người dùng cho phép công bố cẩm nang lên GitHub từ đợt này, thay cho quy ước giữ riêng trước đây. Không chỉnh ba tệp Proposal đã nộp. Phần hỏi đáp riêng trong cuộc trò chuyện không bổ sung vào tài liệu.

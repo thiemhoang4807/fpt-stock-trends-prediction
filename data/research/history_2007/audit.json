@@ -1,0 +1,183 @@
+{
+  "status": "research_candidates_not_training_inputs",
+  "cutoff": "2025-09-30",
+  "cpi": {
+    "index_months": 249,
+    "yoy_months": 237,
+    "first_month": "2005-01",
+    "last_month": "2025-09",
+    "missing_reference_months": 0,
+    "verified_publication_dates": 0,
+    "vintage": "2026-09-08"
+  },
+  "gdp": {
+    "years": 20,
+    "first_year": 2005,
+    "last_year": 2024,
+    "verified_publication_dates": 0,
+    "vintage": "2026-11-11"
+  },
+  "gold": {
+    "downloaded_years": [
+      2006,
+      2007,
+      2008,
+      2014,
+      2016,
+      2017,
+      2020
+    ],
+    "missing_year_files_2007_2025": [
+      2009,
+      2010,
+      2011,
+      2012,
+      2013,
+      2015,
+      2018,
+      2019,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+    ],
+    "retained_rows": 2182,
+    "by_year": [
+      {
+        "year": 2006,
+        "calendar_records": 365,
+        "flat_fillers_removed": 52,
+        "missing_calendar_days_before_cutoff": 0,
+        "retained_records": 313
+      },
+      {
+        "year": 2007,
+        "calendar_records": 365,
+        "flat_fillers_removed": 52,
+        "missing_calendar_days_before_cutoff": 0,
+        "retained_records": 313
+      },
+      {
+        "year": 2008,
+        "calendar_records": 366,
+        "flat_fillers_removed": 52,
+        "missing_calendar_days_before_cutoff": 0,
+        "retained_records": 314
+      },
+      {
+        "year": 2014,
+        "calendar_records": 365,
+        "flat_fillers_removed": 54,
+        "missing_calendar_days_before_cutoff": 0,
+        "retained_records": 311
+      },
+      {
+        "year": 2016,
+        "calendar_records": 366,
+        "flat_fillers_removed": 56,
+        "missing_calendar_days_before_cutoff": 0,
+        "retained_records": 310
+      },
+      {
+        "year": 2017,
+        "calendar_records": 365,
+        "flat_fillers_removed": 56,
+        "missing_calendar_days_before_cutoff": 0,
+        "retained_records": 309
+      },
+      {
+        "year": 2020,
+        "calendar_records": 366,
+        "flat_fillers_removed": 54,
+        "missing_calendar_days_before_cutoff": 0,
+        "retained_records": 312
+      }
+    ],
+    "basis": "Dukascopy XAU/USD BID, USD per ounce, UTC daily bars; differs from existing Investing close"
+  },
+  "overlap": {
+    "cpi": {
+      "rows": 81,
+      "max_absolute_difference_percentage_points": 0.03979002005836829,
+      "reference_period_status": "inferred for diagnostic only; not verified publication history"
+    },
+    "gdp": {
+      "rows": 15,
+      "max_absolute_relative_difference_pct": 0.013362530667881956
+    },
+    "gold": {
+      "rows": 260,
+      "mean_absolute_relative_difference_pct": 0.1321812685786914,
+      "max_absolute_relative_difference_pct": 1.3319652602621357
+    }
+  },
+  "ready_to_replace_training_dataset": false,
+  "blockers": [
+    "Gold year files incomplete",
+    "CPI/GDP historical publication dates and first-release vintages unverified",
+    "Quarterly financial gap and shares chronology not fully reconstructed"
+  ],
+  "source_hashes": {
+    "cpi_metadata.json": "5bdc6dd1aa2e43475c03f8d32dfb92013f2bcd52fafc5a342b6df7d040527740",
+    "fpt_2007_annual.pdf": "9a788ce515673042d688490612424a249c29af040aa3cc1984a0d44421925056",
+    "fpt_2009q2.pdf": "e6e79636d1868e7b233ca7efe0cdc58840790ae8db74121cd2594a22f9e9af4d",
+    "fpt_2010q1.pdf": "e7223eaba010c89368706fbdabc6d8c7765ea25a5cd1e06e5322f22388680810",
+    "fpt_2010q2.pdf": "b2a1b9c0bb331ed38564d458b6b00e6bea47da4aed17395c22490b1c5e3d2690",
+    "fpt_2010q3.pdf": "2b741d7c05abc83a138c4755ff9d76eb25a012b40fa6a85350244abf6ba8b981",
+    "gold_binary_metadata.json": "34f3e07e21b4d9318548fe76e2d0d3d1a8f66a4bc441806b6bfe7e6b7b0de192",
+    "gold_dukascopy_2006.bi5": "9fa6af3401419f647ceb9ad832ed813c72d466216b0c894b8772aa0dab45993e",
+    "gold_dukascopy_2007.bi5": "457059f406fae0b45d99873cb86dfa07b9a92250f7cbcd6dce2f8d00c4dcdf34",
+    "gold_dukascopy_2008.bi5": "6b9c93ad7fc0ea3ba1089571b6dc1e031fb7ff43043a8a23a09b259a0e3334fc",
+    "gold_dukascopy_2014.bi5": "ec10c2a2d18face4583287f7935e42647d01070109a431167feced0a4f061af4",
+    "gold_dukascopy_2016.bi5": "3f4c35f67e97e778714bae2dcda56695e2f84ad68e6f7a516610464c4dd541c1",
+    "gold_dukascopy_2017.bi5": "6dabd63b27bc781d2c81555bd1f857f36297cc35c6a5197fd99f5b57d64ad261",
+    "gold_dukascopy_2020.bi5": "96821554d99e280dca2d5af67fabb5f8518d3a82d063f0f0e42d1bfe4db6ae8f",
+    "vnindex_refresh.json": "cb127953f1ebea20f269673520db1b7a3a345dc98e787f0364bcdf59b629f1dc",
+    "worldbank_cpi_gem.json": "9c88ed1f563cc01e6a04a8f46e453d1c1ac26e312c818b11f5191e84db9607dc",
+    "worldbank_gdp.json": "af2733fe686cc00edc09fde39dfb3c1a79d5c18f273242522a56aa53a660b5a1"
+  },
+  "vnindex_refresh": {
+    "rows": 4635,
+    "missing_fpt_sessions": [
+      "2007-07-23",
+      "2018-01-23",
+      "2018-01-24",
+      "2020-05-12",
+      "2020-05-14",
+      "2020-05-22",
+      "2020-05-27",
+      "2020-05-29",
+      "2020-07-16",
+      "2020-07-17",
+      "2020-07-20",
+      "2020-08-20",
+      "2020-08-21",
+      "2020-08-24",
+      "2020-08-25",
+      "2020-09-14",
+      "2020-09-15",
+      "2020-09-18",
+      "2020-09-28",
+      "2021-01-21",
+      "2021-01-22",
+      "2021-01-25",
+      "2021-01-26",
+      "2021-01-27",
+      "2021-01-28",
+      "2021-01-29",
+      "2021-02-01",
+      "2021-02-02",
+      "2021-02-03",
+      "2021-02-04",
+      "2021-07-12",
+      "2021-07-13",
+      "2021-07-14",
+      "2021-07-23",
+      "2023-04-07",
+      "2024-08-12"
+    ],
+    "new_dates": 0,
+    "max_absolute_close_change": 0.0
+  }
+}

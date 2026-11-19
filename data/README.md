@@ -6,6 +6,8 @@ Dự án dùng snapshot (bản chụp dữ liệu đã cố định) để tái 
 
 Đọc [hướng dẫn kiểm tra và bổ sung dữ liệu](../docs/HUONG_DAN_KIEM_TRA_VA_BO_SUNG_DU_LIEU.md), [EDA và công thức](../docs/EDA_VA_DAC_TRUNG.md) và [cẩm nang dùng chung](../docs/CAM_NANG_HIEU_DU_AN.md).
 
+**Bổ sung ngày 19/11/2026:** đã tìm và tải lịch sử dài hơn vào [research/history_2007](research/history_2007/): CPI tháng 2005–09/2025, GDP năm 2005–2024, vàng thuộc 7 năm rời và 5 báo cáo FPT cũ. Đây là các bản ứng viên đang kiểm định, tách khỏi dữ liệu huấn luyện trong bảng dưới. Xem [kết quả tìm nguồn từ 2007](../docs/DU_LIEU_TU_2007.md) để biết URL tải, đơn vị, phép đối chiếu và phần chưa đủ điều kiện. Lệnh mới: `python src/fetch_historical_candidates.py`.
+
 | Dữ liệu | Nguồn tài chính | Cách lấy và tệp nguồn | Phạm vi snapshot sau cắt |
 |---|---|---|---|
 | OHLCV FPT | VCI/Vietcap qua vnstock | Quote.history; data/raw/fpt/fpt_historical_price.csv | 4.671 phiên, 02/01/2007–30/09/2025 |
@@ -17,7 +19,7 @@ Dự án dùng snapshot (bản chụp dữ liệu đã cố định) để tái 
 | Báo cáo tài chính FPT | VCI qua vnstock | Báo cáo kết quả kinh doanh quý; supplemental/fpt_income_statement_source.csv | 52 kỳ từ 2007-Q1 đến 2025-Q2; thiếu giai đoạn 2007-Q3–2012-Q4 |
 | Số cổ phiếu lưu hành | Công bố và báo cáo thường niên FPT | Trích chỉ tiêu và ngày có thể biết; supplemental/fpt_shares_outstanding.csv | 10 mốc, báo cáo cuối 2017 đến tăng vốn tháng 7/2025 |
 
-Các tệp dưới supplemental/ đều nằm trong data/raw/. Các lần thu thập trước lưu CSV nguồn và trích công bố cổ phiếu từ FPT, sau đó chuẩn hóa. Đợt cập nhật tài liệu này chỉ kiểm tra, không tải lại hoặc thay các giá trị nguồn. Các bản xuất vĩ mô/tài chính được tái dùng để giữ khả năng tái lập; riêng VN-Index đã được tải trực tiếp từ API DNSE trong đợt nâng cấp. Hash và thông tin truy xuất nằm trong `data/raw/supplemental/vnindex_lineage.json`.
+Các tệp dưới supplemental/ đều nằm trong data/raw/. Các lần thu thập trước lưu CSV nguồn và trích công bố cổ phiếu từ FPT, sau đó chuẩn hóa. Các giá trị của snapshot huấn luyện này được giữ nguyên để tái lập kết quả. Bản ứng viên mới và lần đối chiếu tải lại VN-Index nằm trong data/research/history_2007. Hash và thông tin truy xuất của bản VN-Index dùng huấn luyện nằm trong `data/raw/supplemental/vnindex_lineage.json`.
 
 Nguồn trực tiếp và mô tả công cụ:
 

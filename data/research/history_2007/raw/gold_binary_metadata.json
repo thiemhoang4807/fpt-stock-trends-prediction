@@ -1,0 +1,13 @@
+{
+  "url": "https://raw.githubusercontent.com/Leo4815162342/dukascopy-node/v1.43.0/src/utils/instrument-meta-data/generated/instrument-meta-data.json",
+  "full_response_sha256": "8b380d2a33e6ecfa44e5cb94752e6f01b1ed2e2b8f2257f0d8a7e1491dbf8e50",
+  "xauusd": {
+    "name": "XAU/USD",
+    "description": "Spot gold",
+    "decimalFactor": 1000,
+    "startHourForTicks": "2003-05-05T00:01:03.421Z",
+    "startDayForMinuteCandles": "2003-05-05T00:01:00.000Z",
+    "startMonthForHourlyCandles": "2003-05-05T00:00:00.000Z",
+    "startYearForDailyCandles": "1999-06-03T00:00:00.000Z"
+  }
+}

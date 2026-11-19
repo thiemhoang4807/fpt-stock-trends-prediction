@@ -4,9 +4,9 @@ Tài liệu dành cho người mới vừa tải dữ liệu về. Mục tiêu l
 
 ## 1. Vì sao vàng từ 2019, CPI từ 2018?
 
-**Đó là phạm vi của những tệp đã thu thập, không phải giới hạn được chứng minh của lịch sử dữ liệu.** Bản vàng có 1.755 quan sát từ 01/01/2019; bản CPI có 81 lần công bố từ 27/12/2018. Chưa có lịch sử đầy đủ từ 2007 trong repository. Không nên viết “không có dữ liệu trước đó” khi mới chỉ kiểm tra file đang có.
+**Đó là phạm vi của những tệp dùng huấn luyện, không phải giới hạn được chứng minh của lịch sử dữ liệu.** Bản vàng hiện hành có 1.755 quan sát từ 01/01/2019; bản CPI có 81 lần công bố từ 27/12/2018. Đợt tìm bổ sung đã tải 249 tháng CPI từ 2005, 20 năm GDP và một phần vàng/báo cáo FPT, lưu riêng để kiểm định. Xem [kết quả thực tế và lệnh tải](DU_LIEU_TU_2007.md). Bộ đầu vào đầy đủ 43 biến vẫn chưa có lịch sử liên tục từ 2007.
 
-Có bằng chứng dữ liệu sớm hơn tồn tại: danh mục của cơ quan thống kê có [công bố CPI tháng 12/2007](https://www.nso.gov.vn/du-lieu-va-so-lieu-thong-ke/2019/12/chi-so-gia-tieu-dung-chi-so-gia-vang-va-chi-so-gia-do-la-my-thang-12-nam-2007/) và [niên giám 2007](https://www.nso.gov.vn/wp-content/uploads/2026/01/niengiam2007_watermark.pdf). Đây là đầu mối để trích/đối chiếu; đợt rà soát này chưa tải và nghiệm thu đầy đủ chuỗi CPI 2007–2018. Đường dẫn được đăng lại nhiều năm sau không phải ngày công bố gốc để đưa vào mô hình.
+Danh mục của cơ quan thống kê có [công bố CPI tháng 12/2007](https://www.nso.gov.vn/du-lieu-va-so-lieu-thong-ke/2019/12/chi-so-gia-tieu-dung-chi-so-gia-vang-va-chi-so-gia-do-la-my-thang-12-nam-2007/) và [niên giám 2007](https://www.nso.gov.vn/wp-content/uploads/2026/01/niengiam2007_watermark.pdf). Đây là đầu mối đối chiếu với chuỗi tháng World Bank vừa tải và tìm lịch công bố gốc. Đường dẫn được đăng lại nhiều năm sau không phải ngày công bố gốc để đưa vào mô hình.
 
 Với vàng, [World Gold Council](https://www.gold.org/goldhub/data/gold-prices) mô tả chuỗi giá bình quân tháng/quý/năm từ 1978, đồng thời thông báo hạn chế dữ liệu LBMA lịch sử từ tháng 3/2025. Điều này xác nhận lịch sử sớm hơn tồn tại, **không xác nhận đã lấy được chuỗi giá đóng cửa hàng ngày từ 2007** tương thích với XAU/USD đang dùng. Không lấy trung bình tháng rồi gọi nó là giá ngày.
 

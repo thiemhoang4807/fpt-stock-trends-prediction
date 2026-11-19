@@ -1,0 +1,530 @@
+[
+  {
+    "file": "worldbank_gdp.json",
+    "url": "https://api.worldbank.org/v2/country/VNM/indicator/NY.GDP.MKTP.CD?date=2005:2024&format=json&per_page=100",
+    "retrieved_at_utc": "2026-11-19T11:05:21.240865+00:00",
+    "status": 200,
+    "content_type": "application/json;charset=utf-8",
+    "bytes": 4251,
+    "sha256": "af2733fe686cc00edc09fde39dfb3c1a79d5c18f273242522a56aa53a660b5a1",
+    "response_archived": true
+  },
+  {
+    "file": "worldbank_cpi_gem.json",
+    "url": "https://api.worldbank.org/v2/country/VNM/indicator/CPTOTNSXN?source=15&date=2005M01:2025M09&format=json&per_page=1000",
+    "retrieved_at_utc": "2026-11-19T11:05:21.241880+00:00",
+    "status": 200,
+    "content_type": "application/json;charset=utf-8",
+    "bytes": 52286,
+    "sha256": "9c88ed1f563cc01e6a04a8f46e453d1c1ac26e312c818b11f5191e84db9607dc",
+    "response_archived": true
+  },
+  {
+    "file": "worldbank_inflation.xlsx",
+    "url": "https://thedocs.worldbank.org/en/doc/1ad246272dbbc437c74323719506aa0c-0350012021/original/Inflation-data.xlsx",
+    "retrieved_at_utc": "2026-11-19T11:05:21.242510+00:00",
+    "status": 200,
+    "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "bytes": 5591789,
+    "sha256": "03627f4c9063c79f252bad3ae3d6b851627977be690e9db0c220b08b2e139260",
+    "response_archived": false
+  },
+  {
+    "file": "gold_stooq.csv",
+    "url": "https://stooq.com/q/d/l/?s=xauusd&i=d&d1=20060101&d2=20250930",
+    "retrieved_at_utc": "2026-11-19T11:05:23.086287+00:00",
+    "status": 200,
+    "content_type": "text/html; charset=utf-8",
+    "bytes": 796,
+    "sha256": "a4853cee6b8e64cb315f64972bf70d8ef7808e616b89a4e8e81a5ef914514d6b",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2007.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2007/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T11:05:23.824164+00:00",
+    "status": 200,
+    "content_type": "application/octet-stream",
+    "bytes": 5293,
+    "sha256": "457059f406fae0b45d99873cb86dfa07b9a92250f7cbcd6dce2f8d00c4dcdf34",
+    "response_archived": true
+  },
+  {
+    "file": "fpt_2007q4_page.html",
+    "url": "https://fpt.com/vi/tin-tuc/bao-cao-tai-chinh-quy-iv-nam-2007-",
+    "retrieved_at_utc": "2026-11-19T11:05:41.234116+00:00",
+    "error": "<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: certificate has expired (_ssl.c:1077)>",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2006.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2006/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T11:07:40.565811+00:00",
+    "error": "<urlopen error [WinError 10054] An existing connection was forcibly closed by the remote host>",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2008.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2008/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T11:07:40.568118+00:00",
+    "status": 200,
+    "bytes": 5584,
+    "content_type": "application/octet-stream",
+    "sha256": "6b9c93ad7fc0ea3ba1089571b6dc1e031fb7ff43043a8a23a09b259a0e3334fc",
+    "response_archived": true
+  },
+  {
+    "file": "gold_dukascopy_2009.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2009/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T11:07:40.568733+00:00",
+    "error": "<urlopen error [WinError 10054] An existing connection was forcibly closed by the remote host>",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2010.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2010/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T11:08:02.727826+00:00",
+    "error": "<urlopen error [WinError 10054] An existing connection was forcibly closed by the remote host>",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2011.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2011/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T11:08:12.402511+00:00",
+    "error": "<urlopen error _ssl.c:1059: The handshake operation timed out>",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2012.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2012/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T11:08:12.411697+00:00",
+    "error": "<urlopen error [WinError 10054] An existing connection was forcibly closed by the remote host>",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2013.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2013/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T11:08:22.935746+00:00",
+    "error": "<urlopen error [WinError 10060] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond>",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2014.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2014/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T11:08:24.313708+00:00",
+    "status": 200,
+    "bytes": 5330,
+    "content_type": "application/octet-stream",
+    "sha256": "ec10c2a2d18face4583287f7935e42647d01070109a431167feced0a4f061af4",
+    "response_archived": true
+  },
+  {
+    "file": "gold_dukascopy_2015.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2015/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T11:08:38.580358+00:00",
+    "error": "<urlopen error [WinError 10060] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond>",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2016.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2016/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T11:08:39.341625+00:00",
+    "error": "<urlopen error [WinError 10060] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond>",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2017.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2017/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T11:08:44.006885+00:00",
+    "status": 200,
+    "bytes": 5238,
+    "content_type": "application/octet-stream",
+    "sha256": "6dabd63b27bc781d2c81555bd1f857f36297cc35c6a5197fd99f5b57d64ad261",
+    "response_archived": true
+  },
+  {
+    "file": "gold_dukascopy_2018.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2018/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T11:08:59.535330+00:00",
+    "error": "<urlopen error [WinError 10060] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond>",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2019.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2019/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T11:08:59.639599+00:00",
+    "error": "<urlopen error [WinError 10054] An existing connection was forcibly closed by the remote host>",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2020.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2020/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T11:09:00.402335+00:00",
+    "error": "<urlopen error [WinError 10060] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond>",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2021.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2021/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T11:09:09.252005+00:00",
+    "error": "<urlopen error [WinError 10060] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond>",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2022.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2022/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T11:09:20.568096+00:00",
+    "error": "<urlopen error [WinError 10060] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond>",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2023.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2023/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T11:09:21.442076+00:00",
+    "error": "<urlopen error [WinError 10054] An existing connection was forcibly closed by the remote host>",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2024.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2024/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T11:09:30.281262+00:00",
+    "error": "<urlopen error [WinError 10060] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond>",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2025.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2025/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T11:09:41.624223+00:00",
+    "error": "<urlopen error [WinError 10060] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond>",
+    "response_archived": false
+  },
+  {
+    "file": "cpi_metadata.json",
+    "url": "https://api.worldbank.org/v2/indicator/CPTOTNSXN?source=15&format=json",
+    "retrieved_at_utc": "2026-11-19T11:09:44.042706+00:00",
+    "status": 200,
+    "bytes": 423,
+    "content_type": "application/json;charset=utf-8",
+    "sha256": "5bdc6dd1aa2e43475c03f8d32dfb92013f2bcd52fafc5a342b6df7d040527740",
+    "response_archived": true
+  },
+  {
+    "file": "dukas_source_tree.json",
+    "url": "https://api.github.com/repos/Leo4815162342/dukascopy-node/git/trees/master?recursive=1",
+    "retrieved_at_utc": "2026-11-19T11:09:44.552982+00:00",
+    "status": 200,
+    "bytes": 65486,
+    "content_type": "application/json; charset=utf-8",
+    "sha256": "422b48b293128e2fc5c0a9b204409cb8302b72950218880a3a19cf4b79d7208f",
+    "response_archived": false
+  },
+  {
+    "file": "fpt_2007_consolidated.pdf",
+    "url": "https://fpt.com.vn/Resources/2008/03/22/20080322114114_7913310.pdf",
+    "retrieved_at_utc": "2026-11-19T11:09:45.087312+00:00",
+    "error": "<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: certificate has expired (_ssl.c:1077)>",
+    "response_archived": false
+  },
+  {
+    "file": "fpt_2007_annual.pdf",
+    "url": "https://cafef1.mediacdn.vn/Images/Uploaded/DuLieuDownload/2007/FPT_07CN_BCTN.pdf",
+    "retrieved_at_utc": "2026-11-19T11:09:45.204135+00:00",
+    "status": 200,
+    "bytes": 2989708,
+    "content_type": "application/pdf; charset=utf-8",
+    "sha256": "9a788ce515673042d688490612424a249c29af040aa3cc1984a0d44421925056",
+    "response_archived": true
+  },
+  {
+    "file": "fpt_2007q3.pdf",
+    "url": "https://cafef1.mediacdn.vn/Images/Uploaded/DuLieuDownload/2007/FPT_07Q3_BCTC_HN.pdf",
+    "retrieved_at_utc": "2026-11-19T11:09:45.965298+00:00",
+    "error": "HTTP Error 404: NOT FOUND",
+    "response_archived": false
+  },
+  {
+    "file": "fpt_2008q1.pdf",
+    "url": "https://cafef1.mediacdn.vn/Images/Uploaded/DuLieuDownload/2008/FPT_08Q1_BCTC_HN.pdf",
+    "retrieved_at_utc": "2026-11-19T11:09:46.126327+00:00",
+    "error": "HTTP Error 404: NOT FOUND",
+    "response_archived": false
+  },
+  {
+    "file": "vnindex_refresh.json",
+    "url": "https://api.dnse.com.vn/chart-api/v2/ohlcs/index?symbol=VNINDEX&resolution=1D&from=1167609600&to=1759276800",
+    "retrieved_at_utc": "2026-11-19T11:09:47.285658+00:00",
+    "status": 200,
+    "bytes": 219837,
+    "content_type": "application/json",
+    "sha256": "cb127953f1ebea20f269673520db1b7a3a345dc98e787f0364bcdf59b629f1dc",
+    "response_archived": true
+  },
+  {
+    "file": "gold_dukascopy_2006.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2006/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:14:40.797585+00:00",
+    "status": 200,
+    "bytes": 5466,
+    "sha256": "9fa6af3401419f647ceb9ad832ed813c72d466216b0c894b8772aa0dab45993e",
+    "response_archived": true
+  },
+  {
+    "file": "gold_dukascopy_2009.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2009/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:14:40.798701+00:00",
+    "error": "<urlopen error _ssl.c:1059: The handshake operation timed out>",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2010.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2010/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:14:53.276324+00:00",
+    "error": "<urlopen error timed out>",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2011.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2011/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:15:01.214219+00:00",
+    "error": "<urlopen error timed out>",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2012.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2012/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:15:13.281556+00:00",
+    "error": "<urlopen error timed out>",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2013.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2013/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:15:21.226843+00:00",
+    "error": "<urlopen error timed out>",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2015.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2015/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:15:33.295260+00:00",
+    "error": "<urlopen error [WinError 10054] An existing connection was forcibly closed by the remote host>",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2016.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2016/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:15:41.262084+00:00",
+    "status": 200,
+    "bytes": 5317,
+    "sha256": "3f4c35f67e97e778714bae2dcda56695e2f84ad68e6f7a516610464c4dd541c1",
+    "response_archived": true
+  },
+  {
+    "file": "gold_dukascopy_2018.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2018/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:15:41.774576+00:00",
+    "error": "<urlopen error [WinError 10054] An existing connection was forcibly closed by the remote host>",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2019.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2019/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:15:52.768572+00:00",
+    "error": "<urlopen error timed out>",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2020.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2020/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:16:02.986918+00:00",
+    "status": 200,
+    "bytes": 5513,
+    "sha256": "96821554d99e280dca2d5af67fabb5f8518d3a82d063f0f0e42d1bfe4db6ae8f",
+    "response_archived": true
+  },
+  {
+    "file": "gold_dukascopy_2021.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2021/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:16:12.782395+00:00",
+    "error": "HTTP Error 429: Too Many Requests",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2022.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2022/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:16:20.075317+00:00",
+    "error": "HTTP Error 429: Too Many Requests",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2023.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2023/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:16:20.416402+00:00",
+    "error": "HTTP Error 429: Too Many Requests",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2024.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2024/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:16:21.702960+00:00",
+    "error": "HTTP Error 429: Too Many Requests",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2025.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2025/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:16:22.106450+00:00",
+    "error": "HTTP Error 429: Too Many Requests",
+    "response_archived": false
+  },
+  {
+    "file": "dukas_instruments.json",
+    "url": "https://raw.githubusercontent.com/Leo4815162342/dukascopy-node/master/src/utils/instrument-meta-data/generated/instrument-meta-data.json",
+    "retrieved_at_utc": "2026-11-19T12:16:23.055006+00:00",
+    "status": 200,
+    "bytes": 525109,
+    "sha256": "76b2ebc72624db19a3a2c4dbbe2ac1ac11a2d81db48f378fb2568dc3d0f26b36",
+    "response_archived": false
+  },
+  {
+    "file": "gold_host_test.bi5",
+    "url": "https://www.dukascopy.com/datafeed/XAUUSD/2009/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:16:01.044217+00:00",
+    "error": "HTTPSConnectionPool(host='www.dukascopy.com', port=443): Max retries exceeded with url: /datafeed/XAUUSD/2009/BID_candles_day_1.bi5 (Caused by NewConnectionError(\"HTTPSConnection(host='www.dukascopy.com', port=443): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))",
+    "response_archived": false
+  },
+  {
+    "file": "fpt_2009q2.pdf",
+    "url": "https://cafef1.mediacdn.vn/Images/Uploaded/DuLieuDownload/2009/FPT_09Q2_BCTC.pdf",
+    "retrieved_at_utc": "2026-11-19T12:16:07.177616+00:00",
+    "status": 200,
+    "bytes": 409196,
+    "sha256": "e6e79636d1868e7b233ca7efe0cdc58840790ae8db74121cd2594a22f9e9af4d",
+    "response_archived": true
+  },
+  {
+    "file": "fpt_2010q1.pdf",
+    "url": "https://cafef1.mediacdn.vn/Images/Uploaded/DuLieuDownload/2010/FPT_10Q1_BCTC_HN.pdf",
+    "retrieved_at_utc": "2026-11-19T12:16:08.478737+00:00",
+    "status": 200,
+    "bytes": 587913,
+    "sha256": "e7223eaba010c89368706fbdabc6d8c7765ea25a5cd1e06e5322f22388680810",
+    "response_archived": true
+  },
+  {
+    "file": "fpt_2010q2.pdf",
+    "url": "https://cafef1.mediacdn.vn/Images/Uploaded/DuLieuDownload/2010/FPT_10Q2_BCTC.pdf",
+    "retrieved_at_utc": "2026-11-19T12:16:09.333717+00:00",
+    "status": 200,
+    "bytes": 558862,
+    "sha256": "b2a1b9c0bb331ed38564d458b6b00e6bea47da4aed17395c22490b1c5e3d2690",
+    "response_archived": true
+  },
+  {
+    "file": "fpt_2010q3.pdf",
+    "url": "https://cafef1.mediacdn.vn/Images/Uploaded/DuLieuDownload/2010/FPT_10Q3_BCTC_HN.pdf",
+    "retrieved_at_utc": "2026-11-19T12:16:09.941601+00:00",
+    "status": 200,
+    "bytes": 220657,
+    "sha256": "2b741d7c05abc83a138c4755ff9d76eb25a012b40fa6a85350244abf6ba8b981",
+    "response_archived": true
+  },
+  {
+    "file": "gold_dukascopy_2007.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2007/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:16:35.314501+00:00",
+    "error": "429 Client Error: Too Many Requests for url: https://datafeed.dukascopy.com/datafeed/XAUUSD/2007/BID_candles_day_1.bi5",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2009.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2009/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:16:36.658924+00:00",
+    "error": "429 Client Error: Too Many Requests for url: https://datafeed.dukascopy.com/datafeed/XAUUSD/2009/BID_candles_day_1.bi5",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2010.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2010/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:16:36.871020+00:00",
+    "error": "429 Client Error: Too Many Requests for url: https://datafeed.dukascopy.com/datafeed/XAUUSD/2010/BID_candles_day_1.bi5",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2011.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2011/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:16:37.082639+00:00",
+    "error": "429 Client Error: Too Many Requests for url: https://datafeed.dukascopy.com/datafeed/XAUUSD/2011/BID_candles_day_1.bi5",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2012.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2012/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:16:37.737637+00:00",
+    "error": "429 Client Error: Too Many Requests for url: https://datafeed.dukascopy.com/datafeed/XAUUSD/2012/BID_candles_day_1.bi5",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2013.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2013/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:16:37.949411+00:00",
+    "error": "429 Client Error: Too Many Requests for url: https://datafeed.dukascopy.com/datafeed/XAUUSD/2013/BID_candles_day_1.bi5",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2015.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2015/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:16:38.162894+00:00",
+    "error": "429 Client Error: Too Many Requests for url: https://datafeed.dukascopy.com/datafeed/XAUUSD/2015/BID_candles_day_1.bi5",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2018.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2018/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:16:38.374158+00:00",
+    "error": "429 Client Error: Too Many Requests for url: https://datafeed.dukascopy.com/datafeed/XAUUSD/2018/BID_candles_day_1.bi5",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2019.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2019/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:16:38.585784+00:00",
+    "error": "429 Client Error: Too Many Requests for url: https://datafeed.dukascopy.com/datafeed/XAUUSD/2019/BID_candles_day_1.bi5",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2021.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2021/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:16:38.803968+00:00",
+    "error": "429 Client Error: Too Many Requests for url: https://datafeed.dukascopy.com/datafeed/XAUUSD/2021/BID_candles_day_1.bi5",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2022.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2022/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:16:39.343888+00:00",
+    "error": "429 Client Error: Too Many Requests for url: https://datafeed.dukascopy.com/datafeed/XAUUSD/2022/BID_candles_day_1.bi5",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2023.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2023/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:16:39.555244+00:00",
+    "error": "429 Client Error: Too Many Requests for url: https://datafeed.dukascopy.com/datafeed/XAUUSD/2023/BID_candles_day_1.bi5",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2024.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2024/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:16:39.768005+00:00",
+    "error": "429 Client Error: Too Many Requests for url: https://datafeed.dukascopy.com/datafeed/XAUUSD/2024/BID_candles_day_1.bi5",
+    "response_archived": false
+  },
+  {
+    "file": "gold_dukascopy_2025.bi5",
+    "url": "https://datafeed.dukascopy.com/datafeed/XAUUSD/2025/BID_candles_day_1.bi5",
+    "retrieved_at_utc": "2026-11-19T12:16:40.593863+00:00",
+    "error": "429 Client Error: Too Many Requests for url: https://datafeed.dukascopy.com/datafeed/XAUUSD/2025/BID_candles_day_1.bi5",
+    "response_archived": false
+  }
+]

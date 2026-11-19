@@ -1,0 +1,2 @@
+# Preserve archived provider bytes and SHA-256 across Windows/Linux checkouts.
+data/research/history_2007/raw/** -text whitespace=cr-at-eol

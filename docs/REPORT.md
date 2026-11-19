@@ -261,6 +261,12 @@ STL trên log(close) với chu kỳ quy ước 5 phiên chỉ nhằm mô tả xu
 
 ![STL bổ trợ](../figures/13_time_series_decomposition.png)
 
+### Khảo sát bổ sung nguồn lịch sử từ 2007
+
+Đợt kiểm tra nguồn ngày 19/11/2026 đã tải 249 tháng chỉ số CPI (2005–09/2025), tính được 237 tháng CPI cùng kỳ; tải 20 năm GDP (2005–2024), 7 năm vàng rời và 5 PDF báo cáo FPT cũ. Phần trùng CPI lệch tối đa 0,039790 điểm phần trăm theo cách suy đoán tháng tham chiếu; GDP lệch tối đa 0,013363%; vàng lệch tương đối tuyệt đối trung bình 0,132181% trên 260 ngày trùng. Đây là phép kiểm tra nguồn dữ liệu, không phải kết quả đánh giá mô hình mới. Tải lại VN-Index vẫn cho 4.635 phiên và cùng 36 ngày thiếu so với lịch FPT.
+
+Dữ liệu nằm ở [data/research/history_2007](../data/research/history_2007/), được dựng và kiểm định bằng `python src/fetch_historical_candidates.py`. [Báo cáo tìm nguồn](DU_LIEU_TU_2007.md) trình bày URL, công thức, phạm vi, đối chiếu và các PDF đã xem. Vàng còn thiếu năm; lịch công bố/phiên bản CPI, GDP và chuỗi tài chính chưa hoàn chỉnh. Vì vậy đợt này giữ nguyên đầu vào, cửa sổ CV/Test, mô hình và toàn bộ bảng điểm ở trên.
+
 ## Giới hạn nghiên cứu & Hướng phát triển
 
 Đây là thực nghiệm học thuật trên một mã cổ phiếu, không phải khuyến nghị đầu tư. Các ngày Test đã từng được xem ở thiết kế trước; phiên bản này chọn bằng Train CV nhưng không được gọi là một holdout mới chưa từng quan sát. Thí nghiệm này cũng không cô lập tác động của đổi mục tiêu so với dự báo giá trực tiếp, nên không kết luận quan hệ nhân quả hoặc “giải quyết triệt để” dự báo chứng khoán.

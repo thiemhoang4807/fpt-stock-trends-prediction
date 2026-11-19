@@ -36,6 +36,9 @@ Ba cấp đầu vào là **32 biến giá/kỹ thuật → thêm 6 biến thị 
 3. [EDA và đặc trưng](docs/EDA_VA_DAC_TRUNG.md): đọc biểu đồ, kiểm tra dữ liệu, giải thích đủ 32 biến giá/kỹ thuật, công thức và lý do sử dụng.
 4. [Báo cáo thực nghiệm](docs/REPORT.md): thiết kế đánh giá và kết quả thật của ba thí nghiệm.
 5. [Kiểm tra và bổ sung dữ liệu](docs/HUONG_DAN_KIEM_TRA_VA_BO_SUNG_DU_LIEU.md): danh sách thiếu/lỗi đã thấy, nguồn để tìm lịch sử sớm hơn và 9 bước kiểm tra file mới.
+6. [Kết quả tìm dữ liệu từ 2007](docs/DU_LIEU_TU_2007.md): đã tải 249 tháng CPI, 20 năm GDP, một phần vàng và 5 PDF FPT; giải thích các điều kiện còn thiếu để thay bộ huấn luyện.
+
+**Đợt tìm lịch sử từ 2007:** dữ liệu mới được lưu riêng ở [data/research/history_2007](data/research/history_2007/). Chạy `python src/fetch_historical_candidates.py` để dựng lại CSV và kiểm tra phần trùng từ bản lưu, không cần mạng. Thêm `--download` để tải phản hồi còn thiếu; các bản đã có được giữ nguyên. CPI/GDP đủ kỳ tham chiếu nhưng chưa xác minh lịch công bố và phiên bản lịch sử; vàng mới đủ 7 năm rời. Những bản này chưa được dùng để tạo các điểm số bên dưới.
 
 **Chất lượng dữ liệu còn cần hoàn thiện:** mốc vàng 2019/CPI 2018 là giới hạn bản đã thu thập. Rà soát bổ sung ghi nhận 36 ngày có trong FPT nhưng thiếu ở nguồn VN-Index; 17 đoạn tính return nguồn đi qua các ngày bị khuyết. Báo cáo quý thiếu 22 quý; các ngày công bố quý/GDP có phần giả định. Xem [audit chi tiết](reports/data_quality_review.json). Các bảng điểm dưới đây vẫn thuộc snapshot hiện hành, chưa phải kết quả trên nguồn đã bổ sung/sửa.
 
@@ -97,7 +100,8 @@ Chạy theo ô tại [00_RUN_ALL.ipynb](notebooks/00_RUN_ALL.ipynb), hoặc từ
 
 ```text
 src/          thu thập, đặc trưng, chuẩn bị, metrics, train, sequence_models,
-              audit_data_quality, time_series_analysis, plots, explain, predict
+              audit_data_quality, fetch_historical_candidates,
+              time_series_analysis, plots, explain, predict
 notebooks/    00 chạy toàn bộ; 01–09 giải thích và chạy từng bước
 data/         raw snapshot và processed do pipeline tạo
 reports/      CV, 3 thí nghiệm, dự báo từng phiên, kiểm toán, ca lỗi

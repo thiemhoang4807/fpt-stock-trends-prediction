@@ -280,6 +280,30 @@ Rà soát mới phát hiện 36 ngày có trong FPT nhưng không có trong ngu�
 
 Để biết nên tìm thêm gì, mở [hướng dẫn kiểm tra và bổ sung dữ liệu](HUONG_DAN_KIEM_TRA_VA_BO_SUNG_DU_LIEU.md): có danh sách lỗi/thiếu, đầu mối nguồn vàng/CPI cũ, cách phân biệt CPI cùng kỳ với CPI tháng và 9 bước nghiệm thu một tệp mới. Lệnh `python src/audit_data_quality.py` tạo báo cáo riêng mà không sửa đầu vào hoặc mô hình.
 
+### 1.13. Đã tìm được dữ liệu từ 2007 chưa, và có thể dùng ngay không?
+
+**Đã tìm và tải được thêm dữ liệu thật.** Kết quả ngày 19/11/2026:
+
+| Nhóm | Đã có thêm gì? | Còn phải kiểm tra gì? |
+|---|---|---|
+| CPI | 249 tháng chỉ số CPI, từ 01/2005 đến 09/2025; tính được 237 tháng tăng cùng kỳ | Ngày công bố từng tháng và việc số liệu có bị sửa về sau hay không |
+| GDP | 20 năm 2005–2024 | Đây là GDP USD hiện hành theo năm; chưa có ngày công bố và bản đầu tiên của mỗi năm |
+| Vàng | 2.182 thanh giá thuộc 7 năm rời, có năm 2007 | Chưa đủ các năm; giá BID và giờ chốt ngày khác nguồn đang dùng |
+| Tài chính FPT | 5 PDF: thường niên 2007, quý II/2009 và I/II/III/2010 | Chưa đủ các quý; phải phân biệt doanh thu từng loại và số riêng quý với lũy kế |
+| Cổ phiếu | Số cuối 2006 và 2007 trong báo cáo thường niên 2007 | Chưa có lịch đầy đủ từng lần tăng vốn và ngày thị trường biết số đó |
+
+CPI mới trả về **chỉ số giá**, giống một thước đo mức giá của giỏ hàng. Nếu cùng tháng năm trước là 100, tháng này là 103 thì giỏ hàng tăng `(103 / 100 - 1) × 100 = 3%`. Dự án cần tỷ lệ tăng cùng kỳ nên phải tính phép chia này, không đưa số 103 vào cột được định nghĩa là 3%. Tải thêm năm 2005–2006 giúp có mẫu số cho thời điểm đầu giai đoạn nghiên cứu.
+
+Đối chiếu 81 mốc CPI cũ, lệch tối đa khoảng **0,04 điểm phần trăm** theo cách suy đoán tháng tham chiếu. Ví dụ 3,00% và 3,04% cách nhau 0,04 điểm phần trăm. Độ lệch nhỏ là dấu hiệu đáng kiểm tra tiếp, chưa chứng minh mọi ngày công bố đều đúng. Tệp API được tải năm 2026 có thể chứa số đã sửa của các năm trước.
+
+Vàng gặp lỗi **429**, nghĩa là máy chủ đang hạn chế số yêu cầu tải. Không có nghĩa “năm 2007 không có dữ liệu”. Ta giữ các năm đã tải được, dừng yêu cầu khi gặp giới hạn và có thể tải tiếp sau bằng công cụ chính thức. Không tự tạo những năm còn thiếu bằng cách kéo một đường thẳng giữa hai giá.
+
+Ví dụ cần thận trọng khi đọc tài chính: cuối 2007 có 92.352.579 cổ phiếu đã phát hành, nhưng 17.600 là cổ phiếu quỹ. Tổng lưu hành bằng `92.352.579 - 17.600 = 92.334.979`. Nếu chỉ lấy cổ phiếu phổ thông lưu hành thì là 91.899.459. Cùng nói “số cổ phiếu” nhưng ba con số khác nghĩa; phải chọn đúng định nghĩa và giữ nhất quán qua các năm.
+
+Các bản mới ở thư mục [data/research/history_2007](../data/research/history_2007/). Chạy `python src/fetch_historical_candidates.py` để tính lại và đọc kiểm toán ngoại tuyến. Trong CSV mới, `publication_date` trống nghĩa là **chưa xác minh được ngày công bố**, không phải CPI/GDP không có số liệu. Không điền ngày cuối tháng vào đó chỉ để bảng hết ô trống.
+
+**Các bảng điểm trong cẩm nang vẫn là kết quả của bộ đang dùng**, gồm 1.559 nhãn trên cửa sổ chung từ 2019. Việc tìm thêm dữ liệu chưa làm mô hình học thêm. Khi nguồn mới đạt yêu cầu, cần tạo lại đầu vào và chạy lại CV/Test; lúc đó mới biết kết quả thay đổi thế nào. Xem [báo cáo tìm nguồn từ 2007](DU_LIEU_TU_2007.md) để đọc URL tải, các số kiểm tra, ví dụ tài chính và hướng mở rộng phù hợp.
+
 ## Phần 2. Từ giá và volume tạo ra 32 đặc trưng
 
 ### 2.1. Ký hiệu trước khi đọc công thức
