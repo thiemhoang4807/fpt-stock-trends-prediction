@@ -14,7 +14,7 @@ Thiết kế hiện hành: cutoff 30/09/2025; một mục tiêu next_log_return 
 - [x] Đóng băng dữ liệu XAU/USD 4.858 ngày, CPI/GDP WDI 20 năm và 49 hàng sửa lịch sử VN-Index (33 bổ sung, 16 sửa giá đóng cửa). Lưu URL, lượng trùng và hash nguồn. CPI/GDP giả định cuối năm +180 ngày, tài chính quý +45 ngày. Không thiếu đầu vào trên tập chung sau hiệu chỉnh. Giữ bản giá gốc và lọc hai ngày HOSE đóng cửa khi chuẩn bị dữ liệu.
 - [x] Chạy EDA, ghép, chuẩn bị, ADF/KPSS, CV/Test, giải thích và dự báo. Có 3.031 nhãn từ 07/08/2013, Train 2.576 đến 29/11/2023, Test 455 đến 30/09/2025. XGBoost 32/38/42 đúng hướng 52,95/55,00/52,95%, MAE giá 1,1100/1,1164/1,1167. ARIMA(0,0,0) được chọn bằng CV RMSE 0,015860. Cập nhật tài liệu và kiểm chứng 67 tests đạt. Giữ ba tệp Proposal đã nộp.
 - [x] Chạy 10/10 notebook trong bản sao bằng kernel mới. 13 bảng báo cáo và 3 bảng đặc trưng khớp trong dung sai 1e-10/1e-12. JSON dự báo giống hệt. Không có dữ liệu thiếu trong tập chung hay ô ngoại sinh SARIMAX cần điền. Lưu kiểm định tại reports/study_2013_validation.json.
-- [ ] Kiểm tra và đồng bộ GitHub.
+- [x] Commit thực nghiệm `d2bf730` đã được push lên `main` và đối chiếu SHA từ remote. Hồ sơ nguồn, cẩm nang, bảng kết quả, mô hình và notebook nằm trong cùng phiên bản.
 
 ### Xác định mốc bắt đầu thí nghiệm — 19/11/2026
 
