@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from shutil import copyfile
 from tempfile import TemporaryDirectory
 
 import pandas as pd
@@ -178,3 +179,37 @@ def test_missing_input_in_study_window_stops_training_preparation(tmp_path):
     frame.to_csv(broken, index=False)
     with pytest.raises(ValueError, match="Incomplete input"):
         build_experiment_table(DEFAULT_INPUT, broken)
+
+
+def test_offline_reproduction_reads_only_active_study_snapshots(tmp_path):
+    from fetch_supplemental import ALIGNED_SOURCES, DEFAULT_OUTPUT, RAW_DIR, run_from_cache
+
+    files = ["vnindex_source.csv", "vnindex_close_corrections.csv", *ALIGNED_SOURCES]
+    for name in files:
+        copyfile(RAW_DIR / name, tmp_path / name)
+    before = {name: (tmp_path / name).read_bytes() for name in files}
+    output = tmp_path / "aligned.csv"
+
+    audit = run_from_cache(tmp_path, output)
+
+    pd.testing.assert_frame_equal(pd.read_csv(output), pd.read_csv(DEFAULT_OUTPUT))
+    assert set(audit["input_snapshots"]) == set(files)
+    assert {name: (tmp_path / name).read_bytes() for name in files} == before
+    assert {path.name for path in tmp_path.iterdir()} == {
+        *files, "aligned.csv", "aligned.audit.json"
+    }
+
+
+def test_market_download_defaults_to_candidate_dir(monkeypatch):
+    import fetch_supplemental as fetcher
+
+    destinations = []
+
+    def capture_download(raw_dir, *, end):
+        destinations.append(raw_dir)
+        return {"requested_end": end}
+
+    monkeypatch.setattr(sys, "argv", ["fetch_supplemental.py", "--download-market"])
+    monkeypatch.setattr(fetcher, "download_vnindex", capture_download)
+    fetcher.main()
+    assert destinations == [fetcher.MARKET_CANDIDATE_DIR]

@@ -26,7 +26,7 @@ Bản giá điều chỉnh dùng hệ số căn chuỗi lịch sử 0,8875 cho O
 
 ## 2. Cách lấy và kiểm tra từng nguồn
 
-- **Giá FPT** được lưu từ `Quote.history` của VCI qua vnstock. Kiểm tra bản tải bằng `python src/fetch_data.py --verify`. Phiên bản vnstock 5.1.0 đã ngừng truy vấn trực tuyến. Pipeline hiện tại chạy bằng snapshot.
+- **Giá FPT** được lưu từ `Quote.history` của VCI qua vnstock. `python src/fetch_data.py --verify` kiểm tra cấu trúc OHLCV, số hàng và mã SHA-256 của snapshot với hồ sơ nguồn. Pipeline tái lập bằng CSV lưu sẵn.
 - **USD/VND** dùng giá đóng cửa của CSV lịch sử. Giá `26,421` là 26.421 VND/USD. Ngày trong tệp là ngày/tháng/năm. [Lịch sử USD/VND](https://vn.investing.com/currencies/usd-vnd-historical-data)
 - **Vàng** dùng toàn bộ chuỗi giá đóng cửa đã kiểm tra và cắt về 30/09/2025 của bản xuất do thành viên cung cấp. Ví dụ `3,858.51` là 3.858,51 USD/ounce. Giá vàng ghi trong mô hình là tích **hai số đã ghép đúng thời điểm** của XAU/USD và USD/VND. [Lịch sử XAU/USD](https://vn.investing.com/currencies/xau-usd-historical-data)
 - **CPI/GDP** giữ giá trị gốc trong WDI, giới hạn đến hết 2024. Các trường ngày công bố thực còn trống. Quan sát CPI 2024 là 3,6210927%, GDP khoảng 476,325 tỷ USD. [CPI Việt Nam](https://data.worldbank.org/indicator/FP.CPI.TOTL.ZG?locations=VN) · [GDP Việt Nam](https://data.worldbank.org/indicator/NY.GDP.MKTP.CD?locations=VN)
@@ -59,7 +59,7 @@ Các đặc trưng kỹ thuật được giải thích bằng công thức và v
 
 - Tập chung có 60 phiên đầu vào đủ 42 biến cho mỗi dự báo. Từ 15/05/2013 đến cutoff, các phiên trong bảng bổ trợ đủ biến, và pipeline báo lỗi nếu xuất hiện khoảng trống.
 - Bản giá có ba bất nhất OHLC trước 2010. Chúng nằm ngoài tập chung. Một mốc VN-Index còn lệch trước 2013 và 22 quý thiếu trước 2013 được ghi trong kiểm toán.
-- Tất cả mô hình dùng cùng ranh giới Train/Test. Nhãn hướng được suy từ dấu log return. [Báo cáo thực nghiệm](../docs/REPORT.md)
+- Tất cả mô hình được chấm trên cùng các ngày mục tiêu. Hướng dự báo được suy từ dấu của log return. [Báo cáo thực nghiệm](../docs/REPORT.md)
 
 ```bash
 python src/fetch_data.py --verify
@@ -68,4 +68,15 @@ python src/audit_data_quality.py
 python src/prepare.py
 ```
 
-`prepare_macro_refresh.py` có thể kiểm tra lại bản CSV vàng và gói CSV WDI CPI nếu nhóm có hai tệp xuất gốc. Các CSV học máy có sẵn trong repository để tái tạo thực nghiệm ngoại tuyến. [Kiểm toán nguồn](../reports/supplemental_data_audit.json) · [Kiểm toán độ phủ](../reports/data_quality_review.json)
+`--from-cache` đọc các tệp đầu vào đã chuẩn hóa bên dưới, tạo `data/processed/fpt_multisource_features.csv` và lưu danh sách tệp cùng mã SHA-256 trong hồ sơ ghép. [Kiểm toán nguồn](../reports/supplemental_data_audit.json)
+
+| Nhóm | Tệp đầu vào trong `data/raw/supplemental/` |
+|---|---|
+| VN-Index | `vnindex_source.csv`, `vnindex_close_corrections.csv` |
+| Tỷ giá và vàng | `usd_vnd_daily.csv`, `gold_xauusd_study.csv` |
+| Vĩ mô năm | `vietnam_cpi_annual.csv`, `vietnam_gdp_annual.csv` |
+| Kết quả kinh doanh | `fpt_fundamentals_quarterly.csv` |
+
+`prepare_macro_refresh.py` kiểm tra tệp xuất vàng và gói CSV WDI CPI. `python src/fetch_supplemental.py --download-market` tải một bản VN-Index ứng viên vào `tmp/market_candidate/` để đối chiếu trước khi cập nhật dữ liệu nghiên cứu. [Hướng dẫn kiểm tra bản mới](../docs/HUONG_DAN_KIEM_TRA_VA_BO_SUNG_DU_LIEU.md)
+
+Các bản WDI có giá trị CPI và GDP cho đủ 20 năm. Ngày công bố thực để trống ở cả 20 hàng của mỗi bảng. Báo cáo kiểm toán đếm ô trống và giá trị vô hạn bằng hai chỉ tiêu riêng. [Kiểm toán độ phủ](../reports/data_quality_review.json)

@@ -1,28 +1,24 @@
 # Cẩm nang hiểu và thuyết trình dự án FPT
 
-**Đề tài:** Dự báo biến động cổ phiếu FPT ở phiên kế tiếp bằng học máy và mô hình chuỗi thời gian.
+Mỗi mô hình dự báo **một số duy nhất, log return của cổ phiếu FPT ở phiên kế tiếp**. Từ số đó, nhóm suy ra giá đóng cửa và hướng tăng, giảm hoặc đứng giá. Năm phương pháp chính là Last-Close, Ridge, XGBoost, ARIMA và GRU.
 
-Tài liệu học chung của nhóm, được đưa lên GitHub để các thành viên cùng đọc, cập nhật theo kết quả ngày 19/11/2026. Các ví dụ “giả định” dùng số nhỏ để học cách tính; các bảng “thực nghiệm” lấy từ `reports/`.
+Phần 0–2 giải thích đường đi từ dữ liệu gốc đến đặc trưng. Phần 3–6 giải thích cách học và chấm điểm. Phần 7–9 theo dõi một phiên thật, phân tích ca lỗi và ôn vấn đáp. Các ví dụ giả định dùng số tròn, còn kết quả thực nghiệm lấy từ `reports/`. [Sổ tay dữ liệu](../data/README.md) · [EDA và đặc trưng](EDA_VA_DAC_TRUNG.md)
 
-**Cách đọc:** bắt đầu với phần 0–1 để biết đang dự báo gì và lấy dữ liệu từ đâu; phần 2 giải thích cách biến dữ liệu thành đầu vào; phần 3–6 giải thích mô hình và điểm số. Khi cần tra một nguồn hoặc cột cụ thể, mở [sổ tay dữ liệu](../data/README.md). Khi cần xem công thức cùng mục đích sử dụng, mở [EDA và đặc trưng](EDA_VA_DAC_TRUNG.md). Hai tài liệu này bổ sung chi tiết cho cẩm nang, không yêu cầu người đọc biết tài chính từ trước.
+## Kịch bản thuyết trình 10 phút
 
-Điều cần nhớ đầu tiên: **dự án chỉ học một số là log return phiên kế tiếp**. Từ cùng một số, ta suy ra giá và hướng. Năm phương pháp chính là Last-Close, Ridge, XGBoost, ARIMA và GRU. Không còn hai bộ mô hình phân loại/hồi quy độc lập.
-
-## Kịch bản thuyết trình 10 phút: 7 bước, 3 thành viên
-
-Chuẩn bị sẵn báo cáo và hình; không huấn luyện lại toàn bộ trong 10 phút. Mở notebook để giải thích một ô tính hoặc một dòng dữ liệu khi giảng viên hỏi. “Chạy lại được” khác với “phải chạy lại tất cả ngay trên sân khấu”.
+Mở sẵn các hình và báo cáo trước giờ trình bày. Dùng notebook 04 để minh họa phép tính trên một phiên hoặc notebook 05 để trình bày cách chia tập khi có câu hỏi.
 
 | Người / thời gian | Bước câu chuyện | Mở tài liệu | Câu cần nói và con số cần nhớ |
 |---|---|---|---|
-| Hoàng, 0:00–0:50 | 1. Bài toán | `figures/00_pipeline_overview.png` | “Sau khi phiên hôm nay đóng cửa, nhóm dự báo một log return cho phiên sau; từ đó suy ra giá và hướng.” Giá 100, log return ln(1,01) → giá 101, hướng Tăng. |
-| Hoàng, 0:50–2:00 | 2. Dữ liệu | `data/README.md`, notebook 02 và 05 | Tập chung có 3.031 nhãn từ 2013. Ba cấp 32, 38, 42 biến. Giá ngày trễ một ngày, số quý trễ 45 ngày, CPI/GDP năm trễ 180 ngày. |
-| Dũng, 2:00–3:00 | 3. Chuỗi thời gian | `figures/12_acf_pacf.png` | ADF bác bỏ nghiệm đơn vị ở log return. KPSS vẫn bác bỏ dừng mức với p ≈ 0,0338. |
-| Dũng, 3:00–4:15 | 4. Năm phương pháp | Mục 4 của `docs/REPORT.md` | Baseline giữ nguyên; Ridge cộng trọng số có kiểm soát; XGBoost ghép các cây sửa lỗi; ARIMA đọc lịch sử lợi nhuận; GRU học thông tin cần nhớ qua 20/60 phiên. SARIMAX chỉ là đối sánh mở rộng. |
-| Dũng, 4:15–5:15 | 5. Đánh giá | Notebook 05 | Train 2.576, Test 455. Chọn bằng 5 fold trong Train và chừa một hàng giữa hai đoạn. |
-| Duy, 5:15–8:10 | 6. Ba thí nghiệm | Ba biểu đồ kết quả | ARIMA chọn qua CV 0,015860. XGBoost 38 biến đúng hướng 55,00%, nhưng MAE giá cao hơn bộ 32. GRU chọn L=60 qua CV. |
-| Duy, 8:10–10:00 | 7. Giải thích và ca lỗi | `permutation_importance.png`, `reports/error_cases.csv` | EMA10 ratio đứng đầu theo permutation. Ngày 03/04/2025 FPT giảm 6,97%, ARIMA dự báo tăng 0,10%. |
+| Hoàng, 0:00–0:50 | Bài toán | [Sơ đồ pipeline](../figures/00_pipeline_overview.png) | Sau khi phiên hôm nay đóng cửa, nhóm dự báo log return cho phiên sau. Với giá hiện tại 100 và dự báo ln(1,01), giá dự báo là 101 và hướng là Tăng. |
+| Hoàng, 0:50–2:00 | Dữ liệu | [Sổ tay dữ liệu](../data/README.md) · [Notebook 02](../notebooks/02_fetch_supplemental.ipynb) | Tập chung có 3.031 nhãn từ 2013. Ba cấu hình dùng 32, 38 và 42 biến. Dữ liệu thị trường ngày dùng từ ngày lịch kế tiếp. Báo cáo quý và CPI/GDP năm dùng với độ trễ giả định 45 và 180 ngày. |
+| Dũng, 2:00–3:00 | Chuỗi thời gian | [ACF/PACF](../figures/12_acf_pacf.png) | Trên log return, ADF bác bỏ nghiệm đơn vị. KPSS bác bỏ dừng mức ở ngưỡng 5%, với p ≈ 0,0338. |
+| Dũng, 3:00–4:15 | Năm phương pháp | [Báo cáo](REPORT.md) | Last-Close giữ nguyên giá. Ridge cộng tín hiệu có trọng số. XGBoost ghép các cây lần lượt sửa lỗi. ARIMA dự báo từ chuỗi lợi nhuận. GRU học thông tin cần nhớ qua 20 hoặc 60 phiên. |
+| Dũng, 4:15–5:15 | Đánh giá | [Notebook 05](../notebooks/05_prepare.ipynb) | Train 2.576 mẫu, Test 455 mẫu. Chọn bằng 5 lượt kiểm định trong Train, mỗi lượt chừa một hàng giữa phần học và phần chấm. |
+| Duy, 5:15–8:10 | Ba thí nghiệm | [Bảng chính](../figures/main_benchmark_metrics.png) · [Thêm dữ liệu](../figures/ablation_metrics.png) · [Bộ nhớ GRU](../figures/lookback_metrics.png) | ARIMA có RMSE log return CV thấp nhất, 0,015860. XGBoost 38 biến đúng 242/440 hướng, so với 233/440 của bộ 32, nhưng MAE giá cao hơn. CV chọn GRU 60 phiên với chênh lệch RMSE nhỏ. |
+| Duy, 8:10–10:00 | Giải thích và ca lỗi | [Permutation](../figures/permutation_importance.png) · [Ca lỗi](../reports/error_cases.csv) | Tỷ lệ giá so với EMA 10 phiên đứng đầu khi tráo từng biến. Ngày 03/04/2025 FPT giảm 6,97%, ARIMA dự báo tăng 0,10%. |
 
-Có 9 cấu hình Test duy nhất: 1 baseline + 1 Ridge + 3 cấp XGBoost + 1 ARIMA + 1 SARIMAX + 2 cửa sổ GRU. Chúng được dùng lại ở nhiều bảng. Có 9 mô hình chỉ học Train để đánh giá và 1 bản học lại để dự báo phiên mới nhất. “Năm phương pháp chính” không đồng nghĩa “chỉ có năm file mô hình”.
+Có 9 cấu hình đem chấm Test gồm Last-Close, Ridge, 3 bộ biến XGBoost, ARIMA, SARIMAX và 2 cửa sổ GRU. Các bảng dùng lại một số cấu hình chung. Ngoài 9 tệp đánh giá, nhóm lưu thêm một bản ARIMA học lại để dự báo sau phiên 30/09/2025.
 
 Nếu chỉ có 5 phút, giữ một câu cho mỗi bước, một bảng chính và một ca lỗi. Nếu có 15 phút, mở thêm notebook 04 để tính log return và notebook 05 để minh họa chia thời gian.
 
@@ -53,7 +49,7 @@ Phép exp luôn dương nên công thức cho giá dương khi giá hiện tại
 
 Một phiên là một ngày thị trường có giao dịch. “Phiên kế tiếp” không nhất thiết là ngày lịch tiếp theo: sau thứ sáu có thể là thứ hai, và còn có ngày nghỉ lễ.
 
-src/fetch_data.py có thể gọi thư viện vnstock với Quote(symbol="FPT", source="VCI"), rồi dùng history(..., interval="1D") để nhận nến theo ngày. VCI là nguồn Vietcap. Script cũng nhận CSV đã xuất để chuẩn hóa và có chế độ --verify để kiểm tra snapshot đang lưu.
+Nguồn giá là Vietcap (VCI), được lấy qua `vnstock` bằng `Quote(symbol="FPT", source="VCI").history(..., interval="1D")`. Khi chạy lại thí nghiệm, dùng `python src/fetch_data.py --verify` để đối chiếu bản giá đã lưu. Script cũng có thể chuẩn hóa CSV xuất từ nhà cung cấp. Khả năng truy vấn trực tuyến phụ thuộc phiên bản `vnstock` và kết nối của nguồn. [Hướng dẫn dữ liệu](../data/README.md)
 
 File chuẩn là data/raw/fpt/fpt_historical_price.csv:
 
@@ -150,7 +146,7 @@ Nguồn lưu chi phí lãi vay dưới dạng số âm, nên cần lấy trị t
 | GDP năm, World Bank WDI `NY.GDP.MKTP.CD` | 20 năm 2005–2024 | GDP danh nghĩa cả năm, USD hiện hành. |
 | Kết quả kinh doanh FPT, Vietcap qua vnstock | 50 quý liên tục 2013Q1–2025Q2 trong phạm vi dùng | Doanh thu thuần, lợi nhuận gộp, EBIT và lợi nhuận sau thuế của cổ đông công ty mẹ. |
 
-**32 → 38 → 42 biến.** Bộ đầu gồm 5 OHLCV, 23 chỉ báo và 4 biến nến. Bộ 38 thêm 2 biến VN-Index, USD/VND, vàng, CPI và GDP. Bộ 42 thêm 4 chỉ tiêu kết quả kinh doanh. Số cổ phiếu lưu hành được loại khỏi thiết kế vì tệp sẵn có chỉ bắt đầu khả dụng từ năm 2018.
+Số cổ phiếu lưu hành trong tệp hiện có chỉ bắt đầu khả dụng từ năm 2018, muộn hơn mốc bắt đầu nghiên cứu. Bốn chỉ tiêu kết quả kinh doanh có chuỗi đủ dài để đưa vào bộ 42 biến.
 
 ### 1.6. Máy được biết thông tin lúc nào?
 
@@ -191,7 +187,7 @@ Nếu muốn tìm hiểu tệp gốc, độ trễ và từng bước kiểm tra 
 
 P(t) là close phiên hiện tại t; P(t−1) là close phiên trước. V(t) là volume. N là số phiên trong một cửa sổ. Dấu chia “/”, cộng “+”, trừ “−”, nhân “×” có ý nghĩa thông thường.
 
-Return 0,02 là tăng 2%, không phải 0,02%. Trong code, nhiều biến được lưu dạng tỷ lệ số thập phân; khi báo cáo phần trăm cần nhân 100. Riêng CPI ở cột cpi_yoy_pct đã giữ số phần trăm như 3,24, không phải 0,0324.
+Return 0,02 là tỷ lệ tương ứng mức tăng 2%. Nhân tỷ lệ với 100 để viết theo phần trăm. Riêng cột `cpi_annual_inflation_pct` đã lưu theo đơn vị %, ví dụ 3,6211 tương ứng lạm phát 3,6211%.
 
 Đặc trưng là con số mô hình được nhìn. Nhãn/target là đáp án đúng mô hình cần học. Có đáp án trong bảng để chấm không có nghĩa được đưa đáp án đó vào đầu vào.
 
@@ -448,7 +444,7 @@ SMA50 cần 50 phiên mới có kết quả. Ở phiên 1 chỉ có một giá, 
 
 Đoạn cần tích lũy lịch sử này gọi là warm-up, tức thời gian “khởi động” của chỉ báo. Không lấy 49 giá tương lai điền ngược để giữ đủ hàng.
 
-Tệp giá lưu 4.671 hàng từ 02/01/2007 đến 30/09/2025. Pipeline bỏ hai ngày HOSE đóng cửa 23–24/01/2018, còn 4.669 phiên. Sau 49 phiên tích lũy cho SMA50, bảng kỹ thuật có 4.620 hàng. Chuỗi chung đủ 42 biến từ 15/05/2013. Phiên đầu vào 06/08/2013 có đủ 60 phiên liên tiếp và được gán nhãn bằng ngày mục tiêu 07/08/2013. Bảng chung có 3.032 hàng gồm 3.031 nhãn và đầu vào 30/09/2025 dành cho dự báo.
+Sau bước này, bảng kỹ thuật có 4.620 hàng. Phần 1.8 giải thích vì sao khi ghép dữ liệu bổ trợ và yêu cầu lịch sử liên tiếp, tập so sánh chung thu hẹp còn 3.032 hàng.
 
 ### 2.6. Tại sao dùng những công thức đó, thay vì đưa nguyên cả bảng giá?
 
@@ -486,7 +482,7 @@ EDA viết đầy đủ là *Exploratory Data Analysis*, nghĩa là xem xét d�
 
 **Bước 3 — Đọc đường giá.** Mở [01_fpt_close.png](../figures/01_fpt_close.png). Trục ngang là ngày, trục đứng là close nghìn VND/cổ phiếu. Giá thấp nhất 1,61525 và cao nhất 118,073 trên chuỗi close cho thấy thang giá thay đổi lớn. Hình giúp nhận ra xu thế dài hạn, đoạn biến động mạnh và mức giá giữa các giai đoạn. Nhìn đường giá đi lên không đủ để kết luận phiên ngày mai sẽ tăng.
 
-**Bước 4 — Đọc khối lượng.** Mở [02_fpt_volume.png](../figures/02_fpt_volume.png). Khối lượng từ 0 tới 23.514.300 cổ phiếu. Hình dùng thang `symlog`: gần 0 vẫn thể hiện được, còn vùng lớn được nén để đỉnh cao không che mất toàn bộ phần thấp. Thang hiển thị này không sửa số volume trong CSV. Nó khác phép `log(1+volume)` được dùng thật để tạo hai đặc trưng.
+**Bước 4 — Đọc khối lượng.** Sau khi lọc hai ngày HOSE đóng cửa, khối lượng từ 1.820 tới 23.514.300 cổ phiếu. Trục `symlog` nén vùng số lớn để thấy các mức thấp hơn. Thang này chỉ chỉnh cách hiển thị, còn `ln(1+volume)` được tính trên số gốc để tạo hai đặc trưng. [Biểu đồ khối lượng](../figures/02_fpt_volume.png)
 
 **Bước 5 — Đọc phân phối lợi nhuận.** Mở [03_daily_return_distribution.png](../figures/03_daily_return_distribution.png). Mỗi cột đếm số phiên có simple return nằm trong một khoảng. Đường tại 0 ngăn tăng và giảm. Toàn snapshot có trung bình khoảng 0,0644%/phiên, độ lệch chuẩn mẫu khoảng 1,9193%; lợi nhuận nhỏ nhất −6,9896%, lớn nhất 6,9922%. Phân vị 1% khoảng −4,9473% và 99% khoảng 4,9716%: một phần nhỏ phiên có biên độ rất khác phần giữa. “Phân vị 1%” nghĩa khoảng 1% quan sát ở mức đó hoặc thấp hơn, không phải xác suất được bảo đảm cho tương lai.
 
@@ -536,7 +532,7 @@ Giá cổ phiếu có thể từ vùng 10 sang vùng 100; việc học trực ti
 
 | Chuỗi, lịch sử đến 29/11/2023 | ADF p | KPSS p | Điều được phép nói |
 |---|---:|---:|---|
-| Close | 1,0000 | < 0,01 | ADF chưa bác bỏ nghiệm đơn vị; KPSS bác bỏ dừng mức |
+| Close | 0,9991 | < 0,01 | ADF chưa bác bỏ nghiệm đơn vị, KPSS bác bỏ dừng mức |
 | Log return | khoảng 5,63 × 10⁻¹⁷ | 0,0338 | ADF bác bỏ nghiệm đơn vị, nhưng KPSS vẫn bác bỏ dừng mức |
 
 Hai kết quả của log return không phải máy bị lỗi: các giả thuyết khác nhau và các kiểm định nhạy với đặc điểm khác nhau. Thay đổi chế độ hoặc cấu trúc còn lại có thể cần phân tích thêm. Không suy ra “log return đã dừng hoàn toàn”; cũng không suy ra KPSS đã chứng minh cụm biến động. Muốn nghiên cứu cụm biến động cần xem chuỗi bình phương return và kiểm định phù hợp riêng.
@@ -661,7 +657,7 @@ ARIMA là *AutoRegressive Integrated Moving Average*. Bộ `(p,d,q)` gồm:
 
 Dự án đã chuyển giá thành log return, chỉ thử d=0 và bậc (0,0,0)/(1,0,0), có hằng số. ARIMA không dùng cả 32 cột dù nằm trong thí nghiệm giá/kỹ thuật.
 
-CV chọn **ARIMA(0,0,0)**. Với bậc này, dự báo log return là một hằng số học từ Train. Giá dự báo vẫn thay đổi theo giá phiên đầu vào vì có phép nhân `close × exp(log return dự báo)`.
+CV chọn **ARIMA(0,0,0)**. Với bậc này, dự báo log return là một hằng số dương học từ Train, xấp xỉ 0,001002 cho mọi hàng Test. Giá dự báo thay đổi theo `close × exp(log return dự báo)`. Mô hình luôn dự báo tăng trên Test và đúng ở 230/440 phiên đổi giá.
 
 Ở cấu hình thử **ARIMA(1,0,0)**, phần tự hồi quy dùng log return đã quan sát gần nhất. Ví dụ trung bình bằng 0,1%, hệ số trễ bằng 0,2 và log return mới nhất là 1,1%, thì dự báo minh họa bằng `0,1% + 0,2 × (1,1% − 0,1%) = 0,3%`. Cấu hình được chọn ở lần chạy này là bậc 0.
 
@@ -691,7 +687,7 @@ SARIMAX là *Seasonal AutoRegressive Integrated Moving Average with eXogenous re
 
 Bản này không dùng mùa vụ, thử cùng hai bậc với ARIMA. CV chọn **SARIMAX(0,0,0)** với 10 biến bổ trợ và hằng số. Trong cấu hình chọn, phần tự hồi quy bị bỏ; dự báo chủ yếu từ hằng số và ngoại sinh. Không gọi là mô hình mùa vụ phức tạp chỉ vì tên thư viện có chữ S.
 
-Khoảng thiếu ngoại sinh trong ngữ cảnh thống kê dùng median (giá trị giữa sau sắp số) học trên Train, rồi scaler Train. Hằng số là cột toàn số 1 để cập nhật từng phiên ổn định, không phải biến kinh tế thứ 12.
+Nếu thiếu ngoại sinh trong ngữ cảnh thống kê, pipeline dùng trung vị và tham số chuẩn hóa học từ Train. Trong cửa sổ đánh giá hiện tại, cả 10 biến bổ trợ đều có đủ giá trị. Mô hình thêm một cột toàn số 1 để học hệ số chặn.
 
 SARIMAX chỉ thuộc mở rộng thí nghiệm 2. Cùng ngày Test không có nghĩa số quan sát fit nội bộ giống hệt: thống kê giữ lịch liên tục trong khoảng Train; mô hình bảng học cohort hợp lệ. Manifest lưu khác biệt này.
 
@@ -754,7 +750,7 @@ GRU L=60 có MAE 1,1114, so với 1,1097 nghìn VND của Last-Close. Độ chê
 
 Cùng cấu hình XGBoost trên cùng các phiên, thêm khối thị trường/vĩ mô nâng độ đúng hướng từ 52,95% lên 55,00%, đồng thời MAE giá tăng từ 1,1100 lên 1,1164 nghìn VND. Thêm bốn chỉ tiêu FPT cho MAE 1,1167 và độ đúng hướng 52,95%. Mỗi độ đo trả lời một câu hỏi khác nhau. Chênh lệch này mô tả mẫu Test hiện tại.
 
-Câu trả lời cho “thêm vĩ mô có tốt hơn không?” ở lần chạy này là **chưa tốt hơn**. Không suy ra vĩ mô vô dụng với mọi bài toán. Báo cáo quý ít thay đổi, độ trễ hoặc học nhiễu là các giả thuyết cần kiểm tra, chưa phải nguyên nhân đã xác định.
+Bộ 38 biến đoán đúng thêm 9 trên 440 phiên có đổi giá, đồng thời tăng sai số khi dự báo mức giá. Bộ 42 biến quay về 233 phiên đúng hướng. Tần suất cập nhật thấp và độ trễ của số liệu quý là những giả thuyết để giải thích kết quả này.
 
 Đối sánh mở rộng:
 
@@ -763,7 +759,7 @@ Câu trả lời cho “thêm vĩ mô có tốt hơn không?” ở lần chạy
 | ARIMA | 0.015860 ± 0.002130 | 1.1106 | 1.5636 | 52.27% | 55.16% |
 | SARIMAX | 0.016629 ± 0.000984 | 1.2753 | 1.7415 | 52.27% | 47.69% |
 
-SARIMAX có sai số giá lớn hơn ARIMA dù đúng hướng nhỉnh nhẹ. Một metric tăng không có nghĩa mô hình tốt hơn toàn diện. Không chọn theo một ô thuận lợi rồi bỏ qua phần còn lại.
+SARIMAX và ARIMA cùng đạt 52,27% đúng hướng. SARIMAX có sai số giá lớn hơn, với MAE 1,2753 so với 1,1106 nghìn VND/cổ phiếu.
 
 ### 6.5. Kết quả thật: thí nghiệm 3, nhớ 20 hay 60 phiên?
 
@@ -791,7 +787,7 @@ Phiên đầu vào **2025-09-29**, phiên mục tiêu **2025-09-30**. Đây là 
 3. `features.py` tạo `return_1d = -0.02051282`, `sma_5_ratio = -0.02251791`, `rsi_14 = 0.35085516` cùng các cột khác từ quá khứ đến phiên t. RSI lưu thang 0–1, nhân 100 để đọc thang quen thuộc.
 4. `prepare.py` ghép nguồn có hiệu lực, giữ chỉ số phiên và cửa sổ hợp lệ. Hàng thuộc Test vì ngày mục tiêu sau 29/11/2023.
 5. Nhãn sau khi có kết quả thật: `ln(82.54000/84.75625) = -0.026496466`. Không đưa nhãn vào đầu vào.
-6. `train.py` dự báo log return `0.000891975`, suy ra giá `84.75625 × exp(0.000891975) = 84.83188`. Dấu dự báo `1`, dấu thực tế `-1`; +1 Tăng, −1 Giảm, 0 Đứng giá. Sai số giá `2.29188` nghìn VND.
+6. `train.py` dự báo log return `0.001002175`, suy ra giá `84.75625 × exp(0.001002175) ≈ 84.84123`. Dự báo mang dấu dương (Tăng), thực tế mang dấu âm (Giảm). Sai số tuyệt đối là `84.84123 − 82.54 ≈ 2.30123` nghìn VND/cổ phiếu.
 7. `predict.py` dùng bản ARIMA học lại trên tất cả nhãn. Tại 30/09/2025, log return dự báo khoảng 0,000955963. Close 82,54 nhân exp của số đó cho 82,61894 nghìn VND, tăng khoảng 0,09564%.
 
 ### 7.1. Bản đồ hàm chính
@@ -799,7 +795,7 @@ Phiên đầu vào **2025-09-29**, phiên mục tiêu **2025-09-30**. Đây là 
 | Module / hàm | Đầu vào và xử lý | Đầu ra |
 |---|---|---|
 | fetch_data: normalize_ohlcv, audit_ohlcv, verify_snapshot | Giá nguồn → schema; kiểm tra thứ tự, số, hash | OHLCV và kiểm định |
-| fetch_supplemental: normalize_source_snapshots, release_aware_asof, run_from_cache | Chuẩn ngày/đơn vị; lấy số có hiệu lực gần nhất, kiểm hạn | Bảng bổ trợ, audit |
+| fetch_supplemental: release_aware_asof, run_from_cache | Đọc bộ dữ liệu nghiên cứu đã chuẩn hóa, lấy số có hiệu lực gần nhất và kiểm tra tuổi dữ liệu | Bảng bổ trợ và kiểm toán |
 | features: load_price_data, _rsi, build_feature_table | Cutoff trước nhãn; tính chỉ báo từ quá khứ | Đặc trưng, nhãn và hàng cuối chưa có nhãn |
 | prepare: merge_supplemental, build_experiment_table, feature_groups | Ghép cột khai báo, lọc cửa sổ, định nghĩa 32/38/42 | Cohort và ngữ cảnh |
 | train: _chronological_splits, cv_splits | Chia ngày mục tiêu và 5 fold có gap | Chỉ số hàng, ranh giới |
@@ -817,7 +813,7 @@ Phiên đầu vào **2025-09-29**, phiên mục tiêu **2025-09-30**. Đây là 
 
 Kiểm thử kiểm tra dữ liệu/đơn vị, cutoff trước nhãn; sửa tương lai không làm đổi đặc trưng quá khứ; báo cáo chưa công bố không điền về trước; scaler Train; cửa sổ không nhảy phiên; ARIMA dự báo trước nhận kết quả; dấu 0; phép đổi giá; tính lại metric từ từng dự báo khớp CSV; XGBoost cùng cấu hình; đúng 9 artefact đánh giá.
 
-47 tests đạt không có nghĩa dự báo cổ phiếu chính xác. Nó xác nhận những quy tắc kỹ thuật đã được kiểm tra. 10 notebook chạy kernel mới và đối chiếu kết quả giúp tránh chỉ chạy được do biến cũ còn trong bộ nhớ.
+Chạy `python -m pytest -q` để kiểm tra các quy tắc trên. Mở notebook bằng kernel mới rồi chạy các ô từ đầu để kiểm tra tính tái lập của luồng thực nghiệm. [Kết quả kiểm chứng bản nghiên cứu 2013](../reports/study_2013_validation.json)
 
 ## Phần 8. Giải thích mô hình và ba ca lỗi thật
 
@@ -865,7 +861,7 @@ Cả ba phiên FPT giảm mạnh trong khi ARIMA(0,0,0) dự báo tăng khoảng
 
 **8. Vì sao chọn ARIMA?** ARIMA có RMSE log return thấp nhất trong Train CV. Nhóm áp dụng quy tắc đã đặt trước khi đọc Test. Nếu chấm bằng MAE giá trên Test, Last-Close nhỉnh hơn rất ít.
 
-**9. Đúng hướng quanh 50%–55% có ý nghĩa gì?** Đây là tỷ lệ của 440 phiên đổi giá trong đợt Test. Hàm học tối ưu log return nên cần đọc cùng sai số giá và mô hình cơ sở.
+**9. Đúng hướng 55% có đáng kể không?** XGBoost 38 biến đúng 242/440 phiên đổi giá. Quy tắc luôn dự báo tăng đúng 230/440 phiên vì tập này có 230 phiên tăng. Mức hơn 12 phiên mô tả đợt Test này, còn độ ổn định cần kiểm tra trên các giai đoạn khác.
 
 **10. SHAP/permutation có xác định nguyên nhân kinh tế?** Không. Chúng giải thích hành vi mô hình: một bên phân bổ đầu ra, một bên đo lỗi tăng khi tráo thông tin. Cần thiết kế khác để nói nhân quả.
 

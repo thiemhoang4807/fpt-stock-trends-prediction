@@ -71,7 +71,9 @@ def review(root: Path = ROOT) -> dict:
             "duplicate_dates": int(dates.duplicated().sum()),
             "ascending_dates": bool(dates.is_monotonic_increasing),
             "nulls_by_column": {c: int(n) for c, n in frame.isna().sum().items()},
-            "nonfinite_numeric_values": int((~np.isfinite(numeric)).sum().sum()),
+            "nonfinite_numeric_values": int(
+                np.isinf(numeric.to_numpy(dtype=float, na_value=np.nan)).sum()
+            ),
         }
         frame["time"] = dates
         frames[name] = frame.sort_values("time").reset_index(drop=True)

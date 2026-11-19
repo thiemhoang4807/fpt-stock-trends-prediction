@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sys
 from types import SimpleNamespace
 from pathlib import Path
@@ -10,6 +11,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+import fetch_data
 from fetch_data import (
     DataValidationError,
     download_via_vnstock,
@@ -136,6 +138,52 @@ def test_verify_snapshot_rejects_wrong_end_date():
             verify_snapshot(path)
 
 
+def test_verify_cli_rejects_modified_project_snapshot(monkeypatch, tmp_path, capsys):
+    path = tmp_path / "study.csv"
+    path.write_text(
+        "time,open,high,low,close,volume\n"
+        "2007-01-02,10.0,11.0,9.0,10.5,1000\n"
+        "2025-09-30,63.4,64.0,63.0,63.0,3063973\n",
+        encoding="utf-8",
+    )
+    summary = verify_snapshot(path)
+    lineage = tmp_path / "reports" / "data_lineage.json"
+    lineage.parent.mkdir()
+    lineage.write_text(json.dumps(summary), encoding="utf-8")
+    monkeypatch.setattr(fetch_data, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(fetch_data, "DEFAULT_OUTPUT", path)
+
+    assert main(["--verify"]) == 0
+    prices = pd.read_csv(path)
+    prices.loc[1, "close"] = 63.5
+    prices.to_csv(path, index=False)
+
+    assert main(["--verify"]) == 1
+    assert "SHA-256" in capsys.readouterr().err
+
+
+def test_local_import_records_candidate_lineage_separately(monkeypatch, tmp_path):
+    source = tmp_path / "export.csv"
+    source.write_text(
+        "time,open,high,low,close,volume\n2007-01-02,10,11,9,10.5,1000\n",
+        encoding="utf-8",
+    )
+    official = tmp_path / "reports" / "data_lineage.json"
+    official.parent.mkdir()
+    official.write_text('{"provider": "official"}', encoding="utf-8")
+    output = tmp_path / "candidate.csv"
+    monkeypatch.setattr(fetch_data, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(fetch_data, "DEFAULT_OUTPUT", tmp_path / "study.csv")
+
+    assert main(["--input", str(source), "--output", str(output)]) == 0
+
+    assert json.loads(official.read_text(encoding="utf-8")) == {"provider": "official"}
+    lineage = json.loads(output.with_suffix(".lineage.json").read_text(encoding="utf-8"))
+    assert lineage["provider"] is None
+    assert lineage["connector"] == "local OHLCV CSV import"
+    assert lineage["rows"] == 1
+
+
 def test_recent_window_extends_archive_on_stable_provider_rebase():
     with TemporaryDirectory(dir=Path(__file__).resolve().parents[1]) as temp_dir:
         archive_path = Path(temp_dir) / "archive.csv"
@@ -221,11 +269,11 @@ def test_vnstock_download_uses_vci_quote_and_normalizes(monkeypatch):
 
 
 def test_no_mode_defaults_to_download_through_september_cutoff(monkeypatch):
-    import fetch_data
-
     with TemporaryDirectory(dir=Path(__file__).resolve().parents[1]) as temp_dir:
         tmp_path = Path(temp_dir)
         monkeypatch.setattr(fetch_data, "PROJECT_ROOT", tmp_path)
+        output = tmp_path / "fpt.csv"
+        monkeypatch.setattr(fetch_data, "DEFAULT_OUTPUT", output)
         calls = {}
 
         def fake_download(start, end):
@@ -242,9 +290,8 @@ def test_no_mode_defaults_to_download_through_september_cutoff(monkeypatch):
             )
 
         monkeypatch.setattr(fetch_data, "download_via_vnstock", fake_download)
-        output = tmp_path / "fpt.csv"
 
-        assert main(["--output", str(output)]) == 0
+        assert main([]) == 0
         assert calls["dates"] == ("2007-01-01", "2025-09-30")
         assert pd.read_csv(output)["time"].iloc[-1] == "2025-09-30"
         assert (tmp_path / "reports" / "data_lineage.json").is_file()

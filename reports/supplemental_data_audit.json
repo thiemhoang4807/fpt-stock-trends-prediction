@@ -114,135 +114,22 @@
       }
     }
   },
-  "normalized_raw_sources": {
-    "usd_vnd_daily.csv": {
-      "rows": 4893,
-      "first_date": "2007-01-01",
-      "last_date": "2025-09-30",
-      "columns": [
-        "time",
-        "usd_vnd_rate"
-      ],
-      "missing_values": {
-        "time": 0,
-        "usd_vnd_rate": 0
-      },
-      "sha256": "d82290ae103bcb25c1590f89ce7ccf6e52b312a206585317c2a957062a2b14ca"
-    },
-    "gold_xauusd_daily.csv": {
-      "rows": 1755,
-      "first_date": "2019-01-01",
-      "last_date": "2025-09-30",
-      "columns": [
-        "time",
-        "gold_usd_per_ounce"
-      ],
-      "missing_values": {
-        "time": 0,
-        "gold_usd_per_ounce": 0
-      },
-      "sha256": "b9691e60840064477841ab14e3f2903ad3b833f4c3150825668f7627f002783a"
-    },
-    "vietnam_cpi.csv": {
-      "rows": 81,
-      "first_date": "2018-12-27",
-      "last_date": "2025-09-06",
-      "columns": [
-        "time",
-        "cpi_yoy_pct"
-      ],
-      "missing_values": {
-        "time": 0,
-        "cpi_yoy_pct": 0
-      },
-      "sha256": "91b5cdb3ebd20e7927b705ca693f7176918001db7d62c5ed8c213e71e830ef04"
-    },
-    "vietnam_gdp.csv": {
-      "rows": 15,
-      "first_date": "2010-12-31",
-      "last_date": "2024-12-31",
-      "columns": [
-        "time",
-        "gdp_usd"
-      ],
-      "missing_values": {
-        "time": 0,
-        "gdp_usd": 0
-      },
-      "sha256": "35cf181db9ccf415e80f592cec47d36d61e35c9e80fcef8062d990a6fd17a1cd"
-    },
-    "ict_industry.csv": {
-      "rows": 33,
-      "first_date": "2016-02-06",
-      "last_date": "2025-07-24",
-      "columns": [
-        "time",
-        "ict_market_cap_vnd",
-        "ict_pe",
-        "ict_absolute_pe"
-      ],
-      "missing_values": {
-        "time": 0,
-        "ict_market_cap_vnd": 0,
-        "ict_pe": 0,
-        "ict_absolute_pe": 0
-      },
-      "sha256": "8a8f29305b135e3639395a8a5040a567b449da1f028b9f1e7983f4b9f2ff0e48"
-    },
-    "fpt_fundamentals_quarterly.csv": {
-      "rows": 52,
-      "first_date": "2007-03-31",
-      "last_date": "2025-06-30",
-      "columns": [
-        "time",
-        "fpt_net_revenue_vnd",
-        "fpt_gross_profit_vnd",
-        "fpt_ebit_vnd",
-        "fpt_parent_net_profit_vnd"
-      ],
-      "missing_values": {
-        "time": 0,
-        "fpt_net_revenue_vnd": 0,
-        "fpt_gross_profit_vnd": 0,
-        "fpt_ebit_vnd": 0,
-        "fpt_parent_net_profit_vnd": 0
-      },
-      "sha256": "fed368fa1c6369184a74f84ac36cfb3cade9c63794a349b17b176621ae056f76"
-    }
-  },
-  "input_rows_removed_by_cutoff_this_run": {},
   "input_snapshots": {
-    "fpt_income_statement_source.csv": {
-      "sha256": "06f3062ebe1e094b4c6ad8f83b24df2abee89b5185a7c490e35ee61526b5870b",
-      "bytes": 19264
-    },
-    "gold_xauusd_source.csv": {
-      "sha256": "5c2940dddd0eb963545c8e62ac3216be49cde56c91fa8cebdea27f7d3a817136",
-      "bytes": 109756
-    },
-    "ict_industry_source.csv": {
-      "sha256": "a8182c097d91e99cfb937014c5a6ff8a03a287d4e932274d8e381bb3e01f0014",
-      "bytes": 1821
-    },
-    "usd_vnd_source.csv": {
-      "sha256": "f0407e27f5933c388cab27fff8031a31e5a2dd011774faa39dd72a5686478d11",
-      "bytes": 310275
-    },
-    "vietnam_cpi_source.csv": {
-      "sha256": "9aa3b33a8138a3635425d8b81d5db7110ecda5a23868341331a62affc26bc6fb",
-      "bytes": 2498
-    },
-    "vietnam_gdp_source.csv": {
-      "sha256": "dd3b1a7866584c712c7c1b8adab5ff6512e1e3a0583dc44dfc98a0b2a3a8e1df",
-      "bytes": 329
-    },
-    "vnindex_source.csv": {
-      "sha256": "cc348bdcf888c947cf9929c14a58c719553662ff6ae875fc7a0ec9127e1e8d18",
-      "bytes": 224886
+    "fpt_fundamentals_quarterly.csv": {
+      "sha256": "fed368fa1c6369184a74f84ac36cfb3cade9c63794a349b17b176621ae056f76",
+      "bytes": 3535
     },
     "gold_xauusd_study.csv": {
       "sha256": "a578a861e074b1b038b3cb6913bcada59b6070ba4e2bbe8790b58a60ef6f33f5",
       "bytes": 90976
+    },
+    "study_2013_lineage.json": {
+      "sha256": "d076c7111509f0d1fb5dce2a9dcd216b1912fb101381526e0028c183b1f281ee",
+      "bytes": 6906
+    },
+    "usd_vnd_daily.csv": {
+      "sha256": "d82290ae103bcb25c1590f89ce7ccf6e52b312a206585317c2a957062a2b14ca",
+      "bytes": 92985
     },
     "vietnam_cpi_annual.csv": {
       "sha256": "3e2c8abf1a7b13a6bb8ed1934eda989126692da1f8ae32a8ed4ccb6fa2d36b57",
@@ -256,9 +143,13 @@
       "sha256": "ed5ad857ef8eb1c4d8d1c4365384abca4856457c1c2378e12893c1a99ee2327f",
       "bytes": 8983
     },
-    "study_2013_lineage.json": {
-      "sha256": "d076c7111509f0d1fb5dce2a9dcd216b1912fb101381526e0028c183b1f281ee",
-      "bytes": 7110
+    "vnindex_lineage.json": {
+      "sha256": "d622a3adddbffe3a7e414538cc42f937df4b4b84915567eb5fe755f807038238",
+      "bytes": 516
+    },
+    "vnindex_source.csv": {
+      "sha256": "cc348bdcf888c947cf9929c14a58c719553662ff6ae875fc7a0ec9127e1e8d18",
+      "bytes": 224886
     }
   },
   "study_start": "2013-01-01",

@@ -48,4 +48,4 @@ Một bản ghi nguồn nên có các trường sau trong bảng ghi chép thu t
 
 Khi có dữ liệu nguồn mới, kiểm tra theo danh sách trên và đóng băng một bản để cả nhóm có thể chạy lại cùng Train/Test.
 
-Trong đợt tài liệu này, không thay các giá trị nguồn, không sửa mô hình theo kết quả Test và không thay metric đã lưu. Audit mới giúp nhóm biết cần khắc phục gì trước lần thực nghiệm tiếp theo. Hướng ưu tiên là sửa/kiểm chứng lịch VN-Index và ngày công bố, rồi mới bổ sung lịch sử vàng/CPI cùng các báo cáo còn thiếu.
+Nếu muốn mở rộng về trước 2013, ưu tiên xác minh các quý FPT còn thiếu và mốc công bố của từng nguồn. Trên tập đang dùng, phiên FPT nào cũng đã có giá đóng cửa VN-Index tương ứng. Việc có lịch công bố gốc và bản số liệu theo từng lần phát hành sẽ giúp thay các quy tắc trễ giả định. [Hồ sơ nguồn hiện hành](../data/raw/supplemental/study_2013_lineage.json)

@@ -1,22 +1,30 @@
 # Notebook thực nghiệm FPT
 
-Các notebook gọi module trong `src/`, có ô giải thích tiếng Việt và ô code riêng. Chạy từ trên xuống; 00 là luồng toàn bộ, không cần chạy thêm 01–09 nếu chỉ muốn tái lập một lần.
+Mở [00_RUN_ALL](00_RUN_ALL.ipynb) và chạy từ trên xuống để tái lập thí nghiệm. Để học từng bước, mở các notebook 01–09 theo bảng bên dưới. Mỗi notebook có phần giải thích tiếng Việt và gọi hàm từ `src/`. [Cẩm nang dự án](../docs/CAM_NANG_HIEU_DU_AN.md)
 
-Nếu mới bắt đầu, đọc [cẩm nang dùng chung](../docs/CAM_NANG_HIEU_DU_AN.md), rồi mở notebook 01–05 để theo đường đi của dữ liệu. [Sổ tay nguồn dữ liệu](../data/README.md) giải thích nguồn, cách lấy, đơn vị, ngày hiệu lực và độ phủ từng biến. [EDA và đặc trưng](../docs/EDA_VA_DAC_TRUNG.md) giải thích ý nghĩa biểu đồ, công thức và ví dụ tính từng bước.
+## Bắt đầu
 
-| Notebook | Nội dung |
-|---|---|
-| 00_RUN_ALL | Chạy dữ liệu → phân tích → ba thí nghiệm → giải thích → dự báo → tests |
-| 01_fetch_data | Xác minh snapshot OHLCV; hướng dẫn tải mới khi chủ động cần |
-| 02_fetch_supplemental | Nguồn bổ trợ, ý nghĩa, độ phủ, ví dụ ngày công bố và ghép lùi |
-| 03_eda | Kiểm toán, cách đọc biểu đồ giá/volume/return và quyết định xử lý |
-| 04_features | Công thức, mục đích của 32 biến và log return → giá/hướng |
-| 05_prepare | Từ 4.671 hàng lưu đến 3.031 nhãn chung, 85/15 và 5 fold có gap |
-| 06_train | Năm phương pháp, XGBoost 32/38/42 và GRU 20/60 |
-| 07_predict | Một mô hình học lại sinh dự báo mới nhất |
-| 08_time_series_analysis | ADF/KPSS, ACF/PACF; STL bổ trợ |
-| 09_explain | Permutation, ba ca lỗi; SHAP bổ trợ |
+Trên máy cá nhân, cài môi trường từ thư mục gốc và mở JupyterLab.
 
-Cài `python -m pip install -r requirements.txt` trên máy cá nhân trước. Trên Colab, ô chuẩn bị có thể clone repository và cài thư viện. Mặc định dùng snapshot offline để giữ kết quả. Notebook 06 và 00 ghi lại artefact huấn luyện nên cần chạy xong trước khi dùng 07/09. Các notebook được kiểm tra bằng kernel mới; phiên bản nộp giữ ô code sạch để thuận tiện chạy lại.
+```bash
+python -m pip install -r requirements-notebooks.txt
+python -m jupyter lab
+```
 
-Sau khi tải một nguồn mới, dùng [hướng dẫn kiểm tra và bổ sung dữ liệu](../docs/HUONG_DAN_KIEM_TRA_VA_BO_SUNG_DU_LIEU.md). Notebook 02 có ô rà lịch ngày/kỳ bị thiếu; script `audit_data_quality.py` tạo báo cáo riêng, không sửa nguồn.
+Trên Colab, ô chuẩn bị sẽ lấy mã dự án nếu cần và cài thư viện. Các lệnh mặc định dùng bộ dữ liệu đã lưu. Notebook 00 và 06 ghi lại tệp mô hình và báo cáo. Nếu chỉ đọc kết quả, mở các liên kết trong bảng. Để dự báo hay giải thích sau khi đổi dữ liệu, chạy xong notebook 06 rồi mở notebook 07 hoặc 09.
+
+## Chọn notebook theo phần muốn xem
+
+| Notebook | Làm gì? | Kết quả để đối chiếu |
+|---|---|---|
+| [01 — Giá FPT](01_fetch_data.ipynb) | Xác minh bản giá OHLCV từ 2007 đến 30/09/2025 | [CSV giá](../data/raw/fpt/fpt_historical_price.csv) |
+| [02 — Dữ liệu bổ trợ](02_fetch_supplemental.ipynb) | Căn ngày hiệu lực và kiểm tra độ phủ của dữ liệu thị trường, vĩ mô và tài chính FPT | [Kiểm toán dữ liệu](../reports/data_quality_review.json) |
+| [03 — EDA](03_eda.ipynb) | Kiểm tra nến giá, xem giá, khối lượng và lợi nhuận | [Kiểm toán giá FPT](../reports/data_audit.json) |
+| [04 — Đặc trưng và mục tiêu](04_features.ipynb) | Tạo 32 biến từ giá/khối lượng, tính log return và quy đổi về giá/hướng | [Công thức và ví dụ](../docs/EDA_VA_DAC_TRUNG.md) |
+| [05 — Chia thời gian](05_prepare.ipynb) | Tạo tập chung 3.031 nhãn, chia 2.576 Train và 455 Test, xem 5 lượt kiểm định trong Train | [Ranh giới và số hàng](../reports/training_summary.json) |
+| [06 — Huấn luyện](06_train.ipynb) | So sánh 5 phương pháp chính, ba bộ biến XGBoost và hai cửa sổ GRU | [Bảng chính](../reports/main_benchmark.csv) · [Toàn bộ điểm Test](../reports/all_test_metrics.csv) |
+| [07 — Dự báo](07_predict.ipynb) | Dùng ARIMA đã học lại để dự báo sau phiên 30/09/2025 | [Dự báo đã lưu](../reports/latest_prediction.json) |
+| [08 — Chuỗi thời gian](08_time_series_analysis.ipynb) | Đọc ADF, KPSS, ACF/PACF và hình phân rã STL | [Kết quả kiểm định](../reports/stationarity_tests.csv) · [Hình ACF/PACF](../figures/12_acf_pacf.png) |
+| [09 — Giải thích](09_explain.ipynb) | Tráo từng biến để đo ảnh hưởng lên sai số, đọc ca lỗi và phần SHAP bổ trợ | [Mức độ quan trọng](../figures/permutation_importance.png) · [Ca lỗi](../reports/error_cases.csv) |
+
+Sau khi lấy dữ liệu mới, kiểm tra đơn vị, đối chiếu lịch ngày/kỳ và ghi rõ thời điểm khả dụng trước khi cập nhật tệp nghiên cứu. [Hướng dẫn kiểm tra và bổ sung dữ liệu](../docs/HUONG_DAN_KIEM_TRA_VA_BO_SUNG_DU_LIEU.md)

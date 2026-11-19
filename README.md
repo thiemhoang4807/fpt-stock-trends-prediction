@@ -1,70 +1,58 @@
 # Dự báo biến động cổ phiếu FPT ở phiên kế tiếp bằng học máy và mô hình chuỗi thời gian
 
-Đồ án môn CS114 — nhóm Lê Vũ Thiêm Hoàng (25520584), Nguyễn Tấn Dũng (25520367), Lưu Hoàng Minh Duy (25520424).
+Đồ án môn CS114 của nhóm Lê Vũ Thiêm Hoàng (25520584), Nguyễn Tấn Dũng (25520367) và Lưu Hoàng Minh Duy (25520424).
 
-- **Cùng 3.031 phiên mục tiêu** từ 07/08/2013 đến 30/09/2025 cho các cấu hình. Mỗi mô hình dự báo log return để suy ra giá và chiều biến động của phiên kế tiếp.
-- **ARIMA(0,0,0) được chọn qua Train CV** với RMSE log return 0,015860. MAE giá trên Test là 1,1106 nghìn VND, gần mức 1,1097 của Last-Close.
-- **XGBoost 38 biến có độ đúng hướng 55,00%**, so với 52,95% ở 32 và 42 biến. MAE giá tăng nhẹ từ 1,1100 lên 1,1164 rồi 1,1167 nghìn VND.
+## Kết quả chính
 
-## 1. Bài toán
+- **ARIMA(0,0,0) có RMSE log return thấp nhất qua kiểm định chéo trên Train** (0,015860). Trên Test, Last-Close vẫn có MAE giá thấp nhất (1,1097 nghìn VND/cổ phiếu), sát mức 1,1106 của ARIMA.
+- **XGBoost thêm dữ liệu thị trường và vĩ mô đoán đúng thêm 9 trong 440 phiên đổi giá**, từ 52,95% lên 55,00%, trong khi MAE giá tăng từ 1,1100 lên 1,1164 nghìn VND/cổ phiếu. Thêm tiếp dữ liệu tài chính đưa tỷ lệ đúng hướng về 52,95%.
+- **GRU chọn cửa sổ 60 phiên qua CV**, với sai số gần mức của cửa sổ 20 phiên và Last-Close. Kết quả trên mẫu này chưa cho thấy lợi ích rõ rệt từ bộ nhớ dài hơn.
 
-Một mô hình dự báo `r(t+1) = ln(C(t+1)/C(t))`; giá = `C(t) × exp(r dự báo)`, hướng = dấu của dự báo. Bằng 0 là Đứng giá. Không có mô hình phân loại riêng hoặc xác suất tăng.
+## Bài toán
 
-## 2. Dữ liệu
+Sau khi phiên t đóng cửa, mô hình dự báo lợi nhuận logarit phiên kế tiếp, `r = ln(C(t+1)/C(t))`. Từ một dự báo r, hệ thống tính **giá đóng cửa** bằng `C(t) × exp(r)` và **hướng biến động** bằng dấu của r (dương là tăng, âm là giảm, bằng 0 là đứng giá).
 
-Tệp giá lưu 4.671 hàng từ 02/01/2007 đến 30/09/2025. Pipeline bỏ hai ngày HOSE đóng cửa 23–24/01/2018, còn 4.669 phiên. Sau 49 phiên tích lũy cho SMA50, bảng kỹ thuật có 4.620 hàng. Chuỗi chung đủ 42 biến từ 15/05/2013. Phiên đầu vào 06/08/2013 có đủ 60 phiên liên tiếp và được gán nhãn bằng ngày mục tiêu 07/08/2013. Bảng chung có 3.032 hàng gồm 3.031 nhãn và đầu vào 30/09/2025 dành cho dự báo.
+## Dữ liệu
 
-| Nguồn | Phạm vi và quan sát | Cách dùng |
+| Nguồn | Phạm vi lưu | Vai trò |
 |---|---|---|
-| FPT OHLCV, Vietcap qua vnstock | 4.671 hàng lưu, 2007–30/09/2025 | 4.669 phiên sau lọc lịch HOSE. Giá nghìn VND/cổ phiếu, khối lượng tính bằng cổ phiếu. |
-| VN-Index, DNSE và CafeF | 4.668 giá đóng cửa sau bổ sung 33 phiên và sửa 16 mức giá | Tính log return và độ biến động 20 phiên. |
-| USD/VND, Investing.com | 4.893 quan sát, 2007–30/09/2025 | VND trên một USD. |
-| XAU/USD, bản xuất Investing.com | 4.858 giá ngày, 01/01/2007–30/09/2025 | Nhân với tỷ giá để có VND mỗi ounce vàng quốc tế. |
-| CPI năm, World Bank WDI `FP.CPI.TOTL.ZG` | 20 năm 2005–2024 | Tỷ lệ lạm phát cả năm, đơn vị %. |
-| GDP năm, World Bank WDI `NY.GDP.MKTP.CD` | 20 năm 2005–2024 | GDP danh nghĩa cả năm, USD hiện hành. |
-| Kết quả kinh doanh FPT, Vietcap qua vnstock | 50 quý liên tục 2013Q1–2025Q2 trong phạm vi dùng | Doanh thu thuần, lợi nhuận gộp, EBIT và lợi nhuận sau thuế của cổ đông công ty mẹ. |
+| OHLCV FPT, Vietcap qua vnstock | 4.671 hàng từ 02/01/2007 đến 30/09/2025 | Tạo 32 biến giá, khối lượng và kỹ thuật từ 4.669 phiên sau lọc lịch HOSE. |
+| VN-Index, DNSE và CafeF | 4.668 mức đóng cửa sau bổ sung 33 phiên và sửa 16 mức giá | Tính log return và độ biến động thị trường 20 phiên. |
+| USD/VND, XAU/USD từ Investing.com | 4.893 quan sát tỷ giá và 4.858 quan sát vàng, 2007–30/09/2025 | Dùng tỷ giá và giá vàng quốc tế quy đổi sang VND/ounce. |
+| CPI và GDP năm, World Bank WDI | 20 quan sát mỗi biến, 2005–2024 | Thêm lạm phát cả năm theo % và GDP danh nghĩa theo USD. |
+| Kết quả kinh doanh quý FPT, Vietcap qua vnstock | 50 quý dùng trong nghiên cứu, 2013Q1–2025Q2 | Thêm doanh thu thuần, lợi nhuận gộp, EBIT và lợi nhuận sau thuế của cổ đông công ty mẹ. |
 
-**32 → 38 → 42 biến.** Bộ đầu gồm 5 OHLCV, 23 chỉ báo và 4 biến nến. Bộ 38 thêm 2 biến VN-Index, USD/VND, vàng, CPI và GDP. Bộ 42 thêm 4 chỉ tiêu kết quả kinh doanh. Số cổ phiếu lưu hành được loại khỏi thiết kế vì tệp sẵn có chỉ bắt đầu khả dụng từ năm 2018.
+Thí nghiệm XGBoost bổ sung lần lượt **32 → 38 → 42 biến**. Nguồn ngày dùng sau một ngày lịch. Các nguồn quý và năm dùng độ trễ giả định tương ứng 45 và 180 ngày sau cuối kỳ. Mỗi phiên chỉ ghép giá trị nguồn đã khả dụng và còn trong giới hạn độ cũ. [Nguồn và cách xử lý](data/README.md) · [EDA và công thức đặc trưng](docs/EDA_VA_DAC_TRUNG.md)
 
-Giá VN-Index, USD/VND và vàng được dùng sau một ngày lịch, tối đa 10 ngày từ lúc khả dụng. Báo cáo tài chính dùng theo giả định cuối quý cộng 45 ngày, giữ tối đa 150 ngày. CPI và GDP dùng theo giả định cuối năm cộng 180 ngày, giữ tối đa 550 ngày. Ví dụ số 2024 dùng từ phiên 30/06/2025 theo quy tắc này. Ghép lùi theo thời điểm khả dụng. Số CPI 3,6211 được hiểu là 3,6211%. Các ngày công bố và phiên bản số liệu lịch sử chưa xác minh đầy đủ.
+## Thiết kế thực nghiệm
 
-[Sổ tay dữ liệu](data/README.md) · [EDA và công thức](docs/EDA_VA_DAC_TRUNG.md) · [Cẩm nang thuyết trình](docs/CAM_NANG_HIEU_DU_AN.md) · [Lịch sử và kiểm chứng nguồn](docs/DU_LIEU_TU_2007.md)
+Các cấu hình dùng cùng **3.031 nhãn từ 07/08/2013 đến 30/09/2025**, sau khi đủ 42 biến và 60 phiên ngữ cảnh. Chia theo ngày mục tiêu, với **2.576 mẫu Train** đến 29/11/2023 và **455 mẫu Test** từ 30/11/2023. Chọn cấu hình bằng RMSE log return trung bình qua `TimeSeriesSplit(n_splits=5, gap=1)` trên Train rồi giữ cố định tham số trong Test.
 
-## 3. Đặc điểm chuỗi thời gian
+1. So sánh **Last-Close, Ridge, XGBoost, ARIMA và GRU**. Ridge, XGBoost và GRU dùng 32 biến, ARIMA dùng lịch sử log return.
+2. Giữ cấu hình XGBoost để đo tác động khi tăng từ **32 lên 38 và 42 biến**. Thử thêm SARIMAX với 10 biến bên ngoài làm đối sánh thống kê với ARIMA.
+3. So sánh **GRU cửa sổ 20 và 60 phiên** trên cùng mốc dự báo. Kiến trúc và lịch huấn luyện được giữ cố định.
 
-ADF trên log return có p ≈ 5,63 × 10⁻¹⁷. KPSS có p ≈ 0,0338. Ở mức 5%, ADF bác bỏ nghiệm đơn vị và KPSS bác bỏ dừng mức. Hai kiểm định dùng lịch sử giá đến ngày kết thúc Train 29/11/2023. [Kiểm định và ACF/PACF](docs/REPORT.md#3-đặc-điểm-chuỗi-thời-gian)
+## Bảng đối sánh chính
 
-## 4. Năm phương pháp
+MAE và RMSE giá tính bằng nghìn VND/cổ phiếu trên 455 phiên. Tỷ lệ đúng hướng chỉ chấm 440 phiên thực tế đổi giá. Dung sai ±1% là tỷ lệ dự báo cách giá thực tế tối đa 1%.
 
-**Last-Close → Ridge → XGBoost → ARIMA → GRU.** Mỗi phương pháp đại diện một cách suy nghĩ: giữ nguyên, tuyến tính, cây phi tuyến, lịch sử chuỗi, bộ nhớ tuần tự. SARIMAX chỉ là đối sánh mở rộng với ARIMA trong thí nghiệm 2.
-
-## 5. Đánh giá
-
-**Train 2.576 mẫu (07/08/2013–29/11/2023)** và **Test 455 mẫu (30/11/2023–30/09/2025)**. Chia 85%/15% theo ngày mục tiêu. Hồi quy chấm 455 mẫu. Đúng hướng chấm 440 phiên đổi giá, dự báo đứng giá tính sai trên các phiên này. Train dùng `TimeSeriesSplit(n_splits=5, gap=1)`. Số hàng học lần lượt là 430, 859, 1.288, 1.717 và 2.146, với 429 hàng kiểm định mỗi fold. CV báo trung bình và độ lệch chuẩn mẫu. StandardScaler chỉ học từ phần Train của từng lượt fit.
-
-## 6. Ba thí nghiệm và kết quả chính
-
-1. So sánh năm phương pháp trên cùng ngày, mô hình ML/GRU dùng 32 biến; ARIMA chỉ dùng log return.
-2. XGBoost cố định cấu hình, thêm dữ liệu **32 → 38 → 42**; đối sánh thêm ARIMA/SARIMAX.
-3. GRU **L=20 so với L=60**, chọn bằng CV.
-
-| Mô hình / cấu hình | CV RMSE log return | Test MAE giá (nghìn VND) | Test RMSE giá (nghìn VND) | Đúng hướng | Dung sai ±1% |
+| Mô hình | CV RMSE log return ↓ | Test MAE giá ↓ | Test RMSE giá ↓ | Đúng hướng ↑ | Dung sai ±1% ↑ |
 |---|---:|---:|---:|---:|---:|
-| Last-Close Baseline | 0.015890 ± 0.002139 | 1.1097 | 1.5623 | 0.00% | 55.16% |
-| Ridge Regression | 0.016166 ± 0.002189 | 1.1229 | 1.5794 | 48.41% | 54.73% |
-| XGBoost | 0.016390 ± 0.002035 | 1.1100 | 1.5610 | 52.95% | 55.60% |
-| ARIMA | 0.015860 ± 0.002130 | 1.1106 | 1.5636 | 52.27% | 55.16% |
-| GRU L=60 | 0.016054 ± 0.002182 | 1.1114 | 1.5618 | 49.77% | 55.16% |
+| Last-Close | 0,015890 ± 0,002139 | **1,1097** | 1,5623 | 0,00% | 55,16% |
+| Ridge | 0,016166 ± 0,002189 | 1,1229 | 1,5794 | 48,41% | 54,73% |
+| XGBoost (32 biến) | 0,016390 ± 0,002035 | 1,1100 | **1,5610** | **52,95%** | **55,60%** |
+| ARIMA(0,0,0) | **0,015860 ± 0,002130** | 1,1106 | 1,5636 | 52,27% | 55,16% |
+| GRU (60 phiên) | 0,016054 ± 0,002182 | 1,1114 | 1,5618 | 49,77% | 55,16% |
 
-CV hiển thị trung bình ± độ lệch chuẩn qua 5 fold. Bảng chi tiết: [main](reports/main_benchmark.csv), [ablation](reports/ablation.csv), [ARIMA/SARIMAX](reports/statistical_extension.csv), [GRU](reports/lookback.csv). Có **9 cấu hình Test duy nhất, 10 artefact mô hình** gồm bản học lại.
+CV báo trung bình ± độ lệch chuẩn mẫu qua 5 fold. Last-Close luôn dự báo đứng giá nên đúng hướng 0,00% trên các phiên đổi giá. ARIMA(0,0,0) dự báo log return dương cố định nên 52,27% chính là tỷ lệ phiên tăng trong tập chấm hướng.
 
-![Giá thực tế và dự báo](figures/main_benchmark_prices.png)
+![Giá đóng cửa thực tế và dự báo trên Test, cùng phần phóng to 80 phiên cuối](figures/main_benchmark_prices.png)
 
-## 7. Giải thích và phân tích lỗi
+[Báo cáo thực nghiệm, kiểm định chuỗi thời gian và phân tích lỗi](docs/REPORT.md) · [Đủ 9 cấu hình Test](reports/all_test_metrics.csv) · [XGBoost 32/38/42 biến](reports/ablation.csv) · [ARIMA/SARIMAX](reports/statistical_extension.csv) · [Các cửa sổ GRU](reports/lookback.csv)
 
-Permutation Importance là phần chính; SHAP là phụ lục. [Báo cáo](docs/REPORT.md) trình bày 3 ca sai số lớn nhất với biến động FPT/VN-Index cùng phiên, tách quan sát khỏi giả thuyết nguyên nhân. Các giới hạn và hướng phát triển được tập hợp tại [cuối báo cáo](docs/REPORT.md#giới-hạn-nghiên-cứu--hướng-phát-triển).
+## Tái lập kết quả
 
-### Cài đặt và chạy
+Chạy từ thư mục gốc của dự án với Python 3.14. Pipeline dùng các tệp dữ liệu lưu sẵn. [Phiên bản môi trường thực nghiệm](reports/environment_versions.json)
 
 ```bash
 python -m pip install -r requirements.txt
@@ -80,23 +68,16 @@ python src/predict.py
 python -m pytest -q
 ```
 
-Lệnh mặc định tái lập snapshot, không cần tải lại nguồn. Môi trường thực nghiệm: Python 3.14, CPU, seed 42; phiên bản thư viện tại [environment_versions.json](reports/environment_versions.json). Tải mới giá bằng `python src/fetch_data.py --download --start 2007-01-01 --end 2025-09-30` có thể đổi phiên bản giá điều chỉnh; khi đó phải kiểm toán và chạy lại.
+- Chạy theo ô bằng [00_RUN_ALL.ipynb](notebooks/00_RUN_ALL.ipynb) hoặc [các notebook theo từng bước](notebooks/README.md). Notebook gọi cùng mã trong `src/`.
+- Dựng lại biểu đồ đối sánh từ kết quả đã lưu bằng `python src/plots.py`.
+- Xem đầu ra dự báo tại [latest_prediction.json](reports/latest_prediction.json). Tệp dùng mô hình học lại sau đánh giá để minh họa dự báo sau phiên 30/09/2025.
 
-Chạy theo ô tại [00_RUN_ALL.ipynb](notebooks/00_RUN_ALL.ipynb), hoặc từng notebook 01–09 theo [hướng dẫn](notebooks/README.md). Notebook gọi hàm trong `src/` để chỉ có một nơi định nghĩa thuật toán. Huấn luyện CV chạy trên CPU và lâu hơn các bước đọc dữ liệu.
+| Thư mục | Nội dung |
+|---|---|
+| [src/](src/), [tests/](tests/) | Pipeline và bộ kiểm thử |
+| [data/](data/), [notebooks/](notebooks/) | Dữ liệu đầu vào, bảng đặc trưng và hướng dẫn chạy |
+| [reports/](reports/), [figures/](figures/) | Kiểm toán dữ liệu, điểm CV/Test, dự báo từng phiên và hình minh họa |
+| [models/](models/) | 9 cấu hình học trên Train để chấm Test và 1 bản học lại để dự báo |
+| [docs/](docs/) | Báo cáo, cẩm nang và đề xuất đã nộp |
 
-```text
-src/          thu thập, đặc trưng, chuẩn bị, metrics, train, sequence_models,
-              audit_data_quality, fetch_historical_candidates,
-              time_series_analysis, plots, explain, predict
-notebooks/    00 chạy toàn bộ; 01–09 giải thích và chạy từng bước
-data/         raw snapshot và processed do pipeline tạo
-reports/      CV, 3 thí nghiệm, dự báo từng phiên, kiểm toán, ca lỗi
-models/       evaluation/ (9 bản Train-only), best_regressor.joblib
-figures/      EDA, ACF/PACF, 3 thí nghiệm, permutation; phụ lục SHAP/STL
-docs/         REPORT.md, CAM_NANG_HIEU_DU_AN.md, EDA_VA_DAC_TRUNG.md,
-              HUONG_DAN_KIEM_TRA_VA_BO_SUNG_DU_LIEU.md,
-              PROPOSAL.md, cs114_proposal.tex/.pdf
-tests/        kiểm định dữ liệu, thời gian, cửa sổ, đầu ra và artefact
-```
-
-[Cẩm nang dùng chung](docs/CAM_NANG_HIEU_DU_AN.md) · [Proposal Markdown đã nộp](docs/PROPOSAL.md) · [Proposal PDF đã nộp](docs/cs114_proposal.pdf). Proposal được giữ theo bản đã nộp; thiết kế thực nghiệm hiện hành nằm trong báo cáo và cẩm nang.
+[Cẩm nang học chung](docs/CAM_NANG_HIEU_DU_AN.md) · [Bản đề xuất đã nộp](docs/cs114_proposal.pdf)

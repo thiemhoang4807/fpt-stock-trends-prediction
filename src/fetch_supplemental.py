@@ -19,6 +19,7 @@ RAW_DIR = ROOT / "data" / "raw" / "supplemental"
 PRICE_PATH = ROOT / "data" / "raw" / "fpt" / "fpt_historical_price.csv"
 DEFAULT_OUTPUT = ROOT / "data" / "processed" / "fpt_multisource_features.csv"
 DEFAULT_END = "2025-09-30"
+MARKET_CANDIDATE_DIR = ROOT / "tmp" / "market_candidate"
 
 # Every declared field is required for the common two-branch comparison.
 MODEL_SUPPLEMENTAL_COLUMNS = [
@@ -36,7 +37,15 @@ MODEL_SUPPLEMENTAL_COLUMNS = [
 
 MARKET_MACRO_COLUMNS = MODEL_SUPPLEMENTAL_COLUMNS[:6]
 FUNDAMENTAL_COLUMNS = MODEL_SUPPLEMENTAL_COLUMNS[6:]
-INDUSTRY_COLUMNS: list[str] = []  # Sparse sector archive is audited, not modeled.
+MARKET_COLUMNS = MARKET_MACRO_COLUMNS[:2]
+# Each entry specifies the input columns, publication delay and maximum age.
+ALIGNED_SOURCES = {
+    "usd_vnd_daily.csv": ("usd_vnd", ["usd_vnd_rate"], 1, 10),
+    "gold_xauusd_study.csv": ("gold", ["gold_usd_per_ounce"], 1, 10),
+    "vietnam_cpi_annual.csv": ("cpi", ["cpi_annual_inflation_pct"], 180, 550),
+    "vietnam_gdp_annual.csv": ("gdp", ["gdp_usd"], 180, 550),
+    "fpt_fundamentals_quarterly.csv": ("fundamentals", FUNDAMENTAL_COLUMNS, 45, 150),
+}
 VNINDEX_API = "https://api.dnse.com.vn/chart-api/v2/ohlcs/index"
 
 
@@ -117,35 +126,6 @@ def download_vnindex(
         json.dumps(lineage, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     return lineage
-
-
-def audit_industry_coverage(raw_dir: Path = RAW_DIR, end: str = DEFAULT_END) -> dict:
-    """Document the observed sector archive instead of extrapolating it to 2007."""
-    path = raw_dir / "ict_industry_source.csv"
-    if not path.is_file():
-        return {
-            "modeling_status": "excluded",
-            "reason": "No archived sector observations",
-        }
-    source = pd.read_csv(path)
-    dates = pd.to_datetime(source["Date"], format="%d-%m-%Y", errors="raise")
-    dates = dates.loc[dates.le(pd.Timestamp(end))].sort_values()
-    return {
-        "provider": "Simply Wall St Vietnam Tech",
-        "url": "https://simplywall.st/markets/vn/tech",
-        "archive_rows": len(dates),
-        "archive_first_date": str(dates.min().date()),
-        "archive_last_date": str(dates.max().date()),
-        "covers_2007": bool(dates.min() <= pd.Timestamp("2007-01-02")),
-        "largest_gap_calendar_days": int(dates.diff().dt.days.max()),
-        "modeling_status": "excluded",
-        "excluded_columns": ["ict_market_cap_vnd", "ict_pe", "ict_absolute_pe"],
-        "reason": "Sparse sector valuation snapshots; no 2007 coverage and historical constituent membership/weights are not archived. No backward interpolation or fabricated sector history.",
-        "live_page_check_date": "2026-10-29",
-        "live_page_evidence": "Public sector page offers 1Y/3Y/5Y/10Y views and currently aggregated company financials; this does not verify a 2007 point-in-time series.",
-        "alternative_decision": "Retain VN-Index as a broad-market control. It is NOT an ICT-sector replacement. A fixed basket of today's listed technology firms would introduce selection/survivorship bias without historical constituents; therefore no synthetic ICT proxy is claimed.",
-        "ablation_policy": "Industry is excluded from all experiments; report only the 32/38/43 input levels without an empty sector row.",
-    }
 
 
 def _parse_dates(values: pd.Series, fmt: str) -> pd.Series:
@@ -450,29 +430,12 @@ def prepare_multisource_features(
     data = (
         data.loc[data["date"].le(end_date)].sort_values("date").reset_index(drop=True)
     )
-    delays = {
-        "usd_vnd_daily.csv": ("usd_vnd", ["usd_vnd_rate"], 1, 10),
-        "gold_xauusd_study.csv": ("gold", ["gold_usd_per_ounce"], 1, 10),
-        "vietnam_cpi_annual.csv": ("cpi", ["cpi_annual_inflation_pct"], 180, 550),
-        "vietnam_gdp_annual.csv": ("gdp", ["gdp_usd"], 180, 550),
-        "fpt_fundamentals_quarterly.csv": (
-            "fundamentals",
-            [
-                "fpt_net_revenue_vnd",
-                "fpt_gross_profit_vnd",
-                "fpt_ebit_vnd",
-                "fpt_parent_net_profit_vnd",
-            ],
-            45,
-            150,
-        ),
-    }
     source_audit: dict[str, dict] = {}
     vn = load_market_closes(raw_dir)
     vn = vn.loc[vn.time.le(pd.Timestamp(end))].copy()
     vn["vnindex_return_1d"] = np.log(vn.close / vn.close.shift(1))
     vn["vnindex_volatility_20d"] = vn.vnindex_return_1d.rolling(20).std(ddof=0)
-    cols = ["vnindex_return_1d", "vnindex_volatility_20d"]
+    cols = MARKET_COLUMNS
     aligned_market = release_aware_asof(
         data.date,
         vn[["time", *cols]],
@@ -489,7 +452,7 @@ def prepare_multisource_features(
         "last_date": str(vn.time.max().date()),
         "availability_delay_calendar_days": 1,
     }
-    for filename, (group, columns, delay, max_age) in delays.items():
+    for filename, (group, columns, delay, max_age) in ALIGNED_SOURCES.items():
         path = raw_dir / filename
         if not path.is_file():
             source_audit[group] = {"status": "missing", "file": filename}
@@ -559,9 +522,29 @@ def prepare_multisource_features(
 def run_from_cache(
     raw_dir: Path, output_path: Path, end: str = DEFAULT_END, trim_inputs: bool = False
 ) -> dict:
+    """Align the frozen study inputs. Archive conversion is explicitly opt-in."""
     end = pd.Timestamp(end).strftime("%Y-%m-%d")
-    trimmed = trim_source_exports(raw_dir, end) if trim_inputs else {}
-    raw_audit = normalize_source_snapshots(raw_dir, end=end)
+    archive_audit = {}
+    if trim_inputs:
+        if raw_dir.resolve() == RAW_DIR.resolve():
+            raise ValueError("--trim-inputs requires --raw-dir pointing to a separate copy")
+        archive_audit["input_rows_removed_by_cutoff_this_run"] = trim_source_exports(
+            raw_dir, end
+        )
+        archive_audit["normalized_raw_sources"] = normalize_source_snapshots(raw_dir, end)
+    filenames = ["vnindex_source.csv", *ALIGNED_SOURCES]
+    absent = [name for name in filenames if not (raw_dir / name).is_file()]
+    if absent:
+        raise FileNotFoundError(f"Missing study input snapshots: {absent}")
+    filenames.extend(
+        name
+        for name in (
+            "vnindex_close_corrections.csv",
+            "vnindex_lineage.json",
+            "study_2013_lineage.json",
+        )
+        if (raw_dir / name).is_file()
+    )
     prices = load_price_data(PRICE_PATH, end=end)
     expected_market_dates = prices.loc[prices.time.ge(STUDY_START), "time"]
     missing_market = expected_market_dates.loc[
@@ -572,6 +555,9 @@ def run_from_cache(
             f"VN-Index observations missing in the study window: {missing_market.dt.strftime('%Y-%m-%d').tolist()}"
         )
     aligned, audit = prepare_multisource_features(prices, raw_dir, end=end)
+    missing_columns = sorted(set(MODEL_SUPPLEMENTAL_COLUMNS) - set(aligned.columns))
+    if missing_columns:
+        raise ValueError(f"Missing study features: {missing_columns}")
     # Report Q1/2013 first becomes eligible on 15 May under the stated lag.
     first_report_available = (
         pd.Timestamp(STUDY_START) + pd.offsets.QuarterEnd() + pd.Timedelta(days=45)
@@ -589,30 +575,13 @@ def run_from_cache(
     aligned.to_csv(
         output_path, index=False, date_format="%Y-%m-%d", lineterminator="\n"
     )
-    audit["normalized_raw_sources"] = raw_audit
-    audit["input_rows_removed_by_cutoff_this_run"] = trimmed
-    audit["input_snapshots"] = {
-        path.name: {
-            "sha256": hashlib.sha256(
-                path.read_bytes().replace(b"\r\n", b"\n")
-            ).hexdigest(),
-            "bytes": path.stat().st_size,
-        }
-        for path in sorted(raw_dir.glob("*_source.csv"))
-    }
-    for name in (
-        "gold_xauusd_study.csv",
-        "vietnam_cpi_annual.csv",
-        "vietnam_gdp_annual.csv",
-        "vnindex_close_corrections.csv",
-        "study_2013_lineage.json",
-    ):
-        path = raw_dir / name
+    audit.update(archive_audit)
+    audit["input_snapshots"] = {}
+    for name in sorted(filenames):
+        content = (raw_dir / name).read_bytes().replace(b"\r\n", b"\n")
         audit["input_snapshots"][name] = {
-            "sha256": hashlib.sha256(
-                path.read_bytes().replace(b"\r\n", b"\n")
-            ).hexdigest(),
-            "bytes": path.stat().st_size,
+            "sha256": hashlib.sha256(content).hexdigest(),
+            "bytes": len(content),
         }
     audit["study_start"] = STUDY_START
     audit["output_file"] = (
@@ -620,7 +589,11 @@ def run_from_cache(
         if output_path.is_relative_to(ROOT)
         else str(output_path)
     )
-    audit_path = ROOT / "reports" / "supplemental_data_audit.json"
+    audit_path = (
+        ROOT / "reports" / "supplemental_data_audit.json"
+        if output_path.resolve() == DEFAULT_OUTPUT.resolve()
+        else output_path.with_suffix(".audit.json")
+    )
     audit_path.parent.mkdir(parents=True, exist_ok=True)
     audit_path.write_text(
         json.dumps(audit, ensure_ascii=False, indent=2), encoding="utf-8"
@@ -633,7 +606,7 @@ def main() -> None:
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(
-        description="Normalize archived macro, industry, and FPT financial CSVs; align them without look-ahead."
+        description="Align frozen market, macroeconomic and FPT financial snapshots by availability date."
     )
     parser.add_argument("--raw-dir", type=Path, default=RAW_DIR)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
@@ -646,16 +619,23 @@ def main() -> None:
     parser.add_argument(
         "--trim-inputs",
         action="store_true",
-        help="Also remove source-export observations after the cutoff and GDP forecast year.",
+        help="Trim and normalize historical exports in a separate --raw-dir copy.",
     )
     parser.add_argument(
         "--download-market",
         action="store_true",
-        help="Refresh VN-Index directly from DNSE",
+        help="Download a VN-Index candidate to tmp/market_candidate or a separate --raw-dir.",
     )
     args = parser.parse_args()
     if args.download_market:
-        download_vnindex(args.raw_dir, end=args.end)
+        if args.from_cache or args.trim_inputs:
+            parser.error("--download-market is a separate operation")
+        candidate_dir = (
+            MARKET_CANDIDATE_DIR if args.raw_dir.resolve() == RAW_DIR else args.raw_dir
+        )
+        audit = download_vnindex(candidate_dir, end=args.end)
+        print(json.dumps(audit, ensure_ascii=False, indent=2))
+        return
     audit = run_from_cache(
         args.raw_dir, args.output, end=args.end, trim_inputs=args.trim_inputs
     )

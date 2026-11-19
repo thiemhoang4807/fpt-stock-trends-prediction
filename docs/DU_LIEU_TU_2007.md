@@ -18,13 +18,13 @@ Từ thư mục gốc, chạy `python src/prepare_macro_refresh.py --gold-csv <t
 
 **Có thể tìm được dữ liệu trước 2018–2019.** Hai mốc này là giới hạn của các tệp CPI/vàng đã thu thập trước đây, không phải bằng chứng rằng các chỉ số đó chưa tồn tại. Đợt này đã tải được lịch sử CPI và GDP dài hơn, một phần lịch sử vàng, cùng báo cáo tài chính FPT cũ. Tuy nhiên, bộ 43 biến chưa đủ điều kiện để huấn luyện liên tục từ 2007.
 
-Các bản mới nằm riêng tại [data/research/history_2007](../data/research/history_2007/). Dữ liệu huấn luyện, mô hình và điểm thực nghiệm hiện tại chưa thay đổi. [audit.json](../data/research/history_2007/audit.json) ghi số liệu kiểm tra; [download_history.json](../data/research/history_2007/download_history.json) ghi URL, thời điểm tải, lỗi và hash.
+Các bản khảo sát nằm tại [data/research/history_2007](../data/research/history_2007/). Bảng từ mục 1 đến mục 8 mô tả trạng thái tại thời điểm khảo sát. Dữ liệu của bản đã huấn luyện từ 2013 được mô tả trong [sổ tay dữ liệu](../data/README.md). Hồ sơ khảo sát gồm [kết quả kiểm tra](../data/research/history_2007/audit.json) và [nhật ký tải](../data/research/history_2007/download_history.json).
 
 ## 1. Tìm được gì, còn thiếu gì?
 
-| Biến | Bản đang dùng | Kết quả tìm kiếm và tải thực tế | Điều kiện còn thiếu trước khi thay dữ liệu Train |
+| Biến | Bản trước đợt cập nhật | Kết quả tìm kiếm và tải thực tế | Điều kiện cần kiểm tra lúc khảo sát |
 |---|---|---|---|
-| Giá/khối lượng FPT | 4.671 phiên từ 02/01/2007 | Đã có lịch sử giá, không cần kéo dài phần đầu | Đối chiếu 3 hàng OHLC bất nhất và 2 hàng volume bằng 0 trong kiểm toán hiện có |
+| Giá/khối lượng FPT | 4.671 hàng từ 02/01/2007 | Đã có lịch sử giá từ năm 2007 | Đối chiếu 3 hàng OHLC bất nhất và 2 hàng volume bằng 0 |
 | USD/VND | 4.893 quan sát từ 01/01/2007 | Đã có từ 2007 | Giữ cùng đơn vị, cơ sở giá và thời điểm có thể biết |
 | VN-Index | 4.635 phiên từ 2007 | Tải lại API DNSE: số phiên và giá đóng cửa không đổi | Vẫn thiếu 36 ngày so với lịch FPT; chưa biết tất cả là thiếu nguồn hay khác lịch giao dịch |
 | CPI Việt Nam | 81 ngày công bố từ 12/2018 | **249 tháng chỉ số CPI, 01/2005–09/2025**, không thiếu tháng; tính được **237 tháng tăng cùng kỳ**, 01/2006–09/2025 | API không cung cấp lịch công bố từng tháng hoặc bản số liệu được biết tại từng thời điểm lịch sử |

@@ -316,7 +316,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     mode = parser.add_mutually_exclusive_group(required=False)
     mode.add_argument(
-        "--verify", action="store_true", help="Kiểm tra schema, dữ liệu và khoảng ngày."
+        "--verify",
+        action="store_true",
+        help="Kiểm tra cấu trúc, khoảng ngày và SHA-256 của snapshot dự án.",
     )
     mode.add_argument(
         "--download", action="store_true", help="Lấy dữ liệu từ vnstock/VCI."
@@ -346,18 +348,35 @@ def main(argv: list[str] | None = None) -> int:
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8")
     args = build_parser().parse_args(argv)
+    is_project_snapshot = args.output.resolve() == DEFAULT_OUTPUT.resolve()
+    lineage_path = (
+        PROJECT_ROOT / "reports" / "data_lineage.json"
+        if is_project_snapshot
+        else args.output.with_suffix(".lineage.json")
+    )
     try:
         if args.verify:
             summary = verify_snapshot(args.output, expected_last_date=args.end)
-            print("DATASET VERIFIED — schema, tính toàn vẹn và khoảng ngày hợp lệ.")
+            if is_project_snapshot:
+                lineage = json.loads(lineage_path.read_text(encoding="utf-8"))
+                if summary["sha256"] != lineage.get("sha256"):
+                    raise DataValidationError(
+                        "SHA-256 của snapshot không khớp hồ sơ nguồn dữ liệu."
+                    )
+                if summary["rows"] != lineage.get("rows"):
+                    raise DataValidationError(
+                        "Số dòng của snapshot không khớp hồ sơ nguồn dữ liệu."
+                    )
+                print("SHA-256 và số dòng khớp snapshot dự án.")
+            print("DATASET VERIFIED — cấu trúc, giá trị và khoảng ngày hợp lệ.")
             for key, value in summary.items():
                 print(f"{key}: {value}")
             return 0
 
-        lineage_path = PROJECT_ROOT / "reports" / "data_lineage.json"
+        should_download = args.download or args.input is None
         prior_lineage = (
             json.loads(lineage_path.read_text(encoding="utf-8"))
-            if lineage_path.is_file()
+            if should_download and lineage_path.is_file()
             else {}
         )
         previous_cumulative_factor = prior_lineage.get(
@@ -392,7 +411,6 @@ def main(argv: list[str] | None = None) -> int:
                         ),
                     }
                 )
-        should_download = args.download or args.input is None
         if should_download:
             recent = download_via_vnstock(args.start, args.end)
             adjustment_factor = None
@@ -427,7 +445,9 @@ def main(argv: list[str] | None = None) -> int:
             adjustment_factor = None
             overlap_rows = 0
             api_start = None
-        if adjustment_factor is not None and not np.isclose(adjustment_factor, 1.0):
+        if adjustment_factor is None:
+            adjustment_history = []
+        elif not np.isclose(adjustment_factor, 1.0):
             adjustment_history.append(
                 {
                     "factor": adjustment_factor,
@@ -442,11 +462,13 @@ def main(argv: list[str] | None = None) -> int:
             cumulative_factor = (
                 float(previous_cumulative_factor or 1.0) * adjustment_factor
             )
-        elif previous_cumulative_factor is not None:
-            cumulative_factor = float(previous_cumulative_factor)
         lineage = {
-            "provider": "VCI (Vietcap) via vnstock",
-            "connector": "vnstock Quote.history, source=VCI",
+            "provider": "VCI (Vietcap) via vnstock" if should_download else None,
+            "connector": (
+                "vnstock Quote.history, source=VCI"
+                if should_download
+                else "local OHLCV CSV import"
+            ),
             "requested_start": args.start,
             "requested_end": args.end,
             "api_window_start": api_start,

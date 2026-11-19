@@ -1,6 +1,6 @@
 # Đọc hiểu EDA và cách tạo đặc trưng của dự án FPT
 
-Tài liệu này đi từ dữ liệu giao dịch đến một hàng đầu vào mà mô hình sử dụng. Công thức được đối chiếu với `src/features.py`, `src/eda.py`, `src/prepare.py` và `src/time_series_analysis.py`; các số liệu lấy từ kết quả đã lưu trong dự án. Đọc [hướng dẫn nguồn dữ liệu](../data/README.md) để biết nơi lấy, đơn vị, khoảng thời gian và cách ghép từng nguồn bổ trợ. Đọc [cẩm nang dự án](CAM_NANG_HIEU_DU_AN.md) để nối phần này với huấn luyện, đánh giá và thuyết trình.
+Từ giá và khối lượng mỗi phiên, pipeline kiểm tra dữ liệu, tính chỉ báo rồi ghép thông tin bổ trợ đã có hiệu lực. Phần 2–3 hướng dẫn đọc các biểu đồ. Phần 4–7 giải thích công thức bằng bảng năm phiên giả định và một phiên FPT thật. [Sổ tay dữ liệu](../data/README.md) · [Cẩm nang huấn luyện và đánh giá](CAM_NANG_HIEU_DU_AN.md)
 
 ## 1. Một hàng dữ liệu có ý nghĩa gì?
 
@@ -24,7 +24,7 @@ Ký hiệu dùng xuyên suốt:
 
 ## 2. EDA: xem dữ liệu để trả lời câu hỏi nào?
 
-EDA là viết tắt của *Exploratory Data Analysis*: xem xét, mô tả và kiểm tra dữ liệu trước khi tin vào kết quả mô hình. EDA không chỉ là vẽ một biểu đồ đẹp. Nó giúp phát hiện lỗi nhập ngày, sai đơn vị, chuỗi bị thiếu, giá bất hợp lý và những giai đoạn khó dự báo.
+EDA (*Exploratory Data Analysis*) là phân tích khám phá dữ liệu. Nhóm kiểm tra ngày, đơn vị, độ phủ và quan hệ giữa các mức giá, rồi quan sát các giai đoạn biến động mạnh.
 
 ### 2.1. Quy trình kiểm tra và kết quả thật
 
@@ -33,9 +33,9 @@ EDA là viết tắt của *Exploratory Data Analysis*: xem xét, mô tả và k
 | Có đủ `time, open, high, low, close, volume`? | Thiếu một cột có thể khiến công thức dùng nhầm dữ liệu. | Đủ 6 cột. | Thiếu cột thì dừng với lỗi rõ ràng. |
 | Ngày và số có đọc được không? | Chuỗi chữ như dấu phẩy ngăn nghìn hoặc định dạng ngày sai không thể được xem là số hợp lệ. | 0 giá trị thiếu ở cả 6 cột. | Chuyển kiểu; giá trị không hợp lệ hoặc thiếu thì dừng, không tự lấy ngày mai bù vào. |
 | Ngày có trùng, có theo thứ tự không? | Hai hàng một ngày có thể làm lệch toàn bộ phép trễ và nhãn phiên kế tiếp. | 0 ngày trùng, đã tăng dần. | Báo lỗi nếu trùng; sắp tăng dần trước khi tạo đặc trưng. |
-| Có quan sát sau 30/09/2025 không? | Nhãn của hàng cuối không được vô tình lấy từ ngoài phạm vi nghiên cứu. | 4.671 phiên, 02/01/2007–30/09/2025. | Cắt mốc **trước** khi `shift(-1)` tạo mục tiêu. |
+| Có quan sát sau 30/09/2025 không? | Nhãn của hàng cuối chỉ được tính trong phạm vi nghiên cứu. | 4.671 hàng lưu từ 02/01/2007 đến 30/09/2025. | Cắt mốc **trước** khi `shift(-1)` tạo mục tiêu. |
 | Giá có dương và hữu hạn không? | Chia cho 0 hoặc lấy log của giá âm làm công thức vô nghĩa. | Giá OHLC nằm trong 1.562–119.36875 nghìn VND/cổ phiếu. | Không cho phép giá ≤ 0, vô cực hoặc `NaN`. |
-| Khối lượng có âm hoặc bằng 0? | Đối chiếu lịch giao dịch khi có volume bằng 0. | Hai hàng bằng 0 rơi vào ngày HOSE đóng cửa. | Bỏ hai ngày đóng cửa trước khi tính return. Giá trị volume lớn nhất còn lại là 23.514.300 cổ phiếu. |
+| Khối lượng có âm hoặc bằng 0? | Đối chiếu lịch giao dịch khi có volume bằng 0. | Hai hàng bằng 0 rơi vào ngày HOSE đóng cửa. | Loại hai ngày đóng cửa, còn 4.669 phiên. Khối lượng thấp nhất 1.820 và cao nhất 23.514.300 cổ phiếu. |
 | Nến có hợp lý không? | Giá mở/đóng phải nằm trong khoảng thấp nhất–cao nhất của cùng phiên. | 3 phiên bất nhất: 17/08/2007, 10/06/2009, 07/12/2009. | Ghi trong kiểm toán, không âm thầm sửa. Cả 3 nằm trước cửa sổ thí nghiệm chung. |
 | File đầu vào có bị thay sau lần chạy không? | Hai người dùng hai snapshot khác nhau có thể ra kết quả khác dù code giống nhau. | Có mã SHA-256 trong `reports/data_audit.json`. | Băm nội dung với xuống dòng chuẩn hóa để đối chiếu snapshot. |
 
@@ -89,7 +89,7 @@ Kết quả chính sử dụng lịch sử đến **29/11/2023**, là ngày kế
 
 File kết quả ghi KPSS của giá là `0.01` kèm cảnh báo: giá trị thật nhỏ hơn giới hạn bảng tra. Vì vậy bảng trên ghi `< 0.01`, không coi `0.01` là giá trị chính xác. Số liệu toàn snapshot cũng được lưu để mô tả, tách khỏi nhóm `train_history`.
 
-**Không được kết luận** “log return đã được chứng minh dừng hoàn toàn” hoặc “KPSS chứng minh có cụm biến động”. Hai kiểm định không trực tiếp kiểm định tính dừng chặt của toàn bộ phân phối; kết quả KPSS cũng không xác định nguyên nhân bác bỏ. Muốn kiểm tra hiện tượng nhiều phiên biến động mạnh đi liền nhau, cần xem thêm độ biến động theo thời gian hoặc kiểm định dành cho phương sai.
+ADF kiểm tra nghiệm đơn vị, còn KPSS kiểm tra giả thuyết dừng mức quanh một hằng số. Kết quả KPSS báo hiệu cần tìm hiểu thêm cấu trúc của log return. Hiện tượng nhiều phiên biến động mạnh đi liền nhau cần được khảo sát riêng qua độ biến động theo thời gian hoặc kiểm định dành cho phương sai.
 
 ### 3.3. ACF và PACF dùng vào việc gì?
 
@@ -395,7 +395,7 @@ Khi mô hình đưa ra một dự báo log return `r_hat`, phần quy đổi s�
 
 ## 8. Cách đọc và chạy để tự kiểm tra
 
-**Kiểm tra mất cả hàng:** `isna()` chỉ phát hiện ô trống trong các dòng đã tồn tại. Rà soát `python src/audit_data_quality.py` cho thấy VN-Index thiếu 36 ngày so lịch FPT, dù bảng nguồn không có NaN; 17 đoạn return giữa hai hàng nguồn trải qua phiên FPT bị khuyết. Báo cáo quý tương tự có đủ số trong 52 hàng nhưng thiếu 22 quý giữa chuỗi. Cần đối chiếu lịch ngày/kỳ, không chỉ kiểm tra đầu-cuối và ô trống. Việc xác minh một ngày có thật sự giao dịch hay không cần lịch sàn/nguồn độc lập.
+**Kiểm tra mất cả hàng.** `isna()` chỉ thấy ô trống trong các hàng hiện có. `python src/audit_data_quality.py` còn đối chiếu danh sách ngày và quý. Sau khi bổ sung 33 phiên và hiệu chỉnh 16 mức giá VN-Index bằng CafeF, lịch ghép còn một ngày lệch trước năm 2013, ngày 23/07/2007. Trong phạm vi nghiên cứu, mọi phiên FPT đều có quan sát VN-Index tương ứng. Tệp tài chính có 52 hàng quý, với 22 quý thiếu trước năm 2013 và 50 quý liên tục từ quý I/2013 đến quý II/2025. [Kết quả kiểm toán](../reports/data_quality_review.json)
 
 Đọc [hướng dẫn kiểm tra và bổ sung](HUONG_DAN_KIEM_TRA_VA_BO_SUNG_DU_LIEU.md) trước khi thay snapshot: chọn đúng chuỗi, đơn vị, ngày công bố, so phần giao nhau và giải trình xung đột. Không tự tạo số để làm cho một biểu đồ trông liên tục.
 

@@ -8,6 +8,18 @@ Thiết kế hiện hành: cutoff 30/09/2025; một mục tiêu next_log_return 
 
 ## Checklist theo giai đoạn
 
+### Rà soát trước khi đóng gói — 20/11/2026
+
+- [x] Kiểm tra trạng thái Git, phạm vi thí nghiệm từ 2013 và ba tệp Proposal đã nộp. Đối chiếu cách chia, lựa chọn bằng CV và nguồn các bảng kết quả.
+- [x] Rà soát đầu vào tái lập, kiểm định snapshot và sửa thống kê kiểm toán dữ liệu. Luồng ngoại tuyến đọc 7 CSV đầu vào đã chuẩn hóa. Lệnh tải VN-Index lưu ứng viên riêng. Thống kê ô trống CPI/GDP tách khỏi số vô hạn. Xác minh giá FPT đối chiếu SHA-256 và số dòng trong hồ sơ nguồn.
+- [x] Làm gọn bảng, biểu đồ, báo cáo, cẩm nang và hướng dẫn notebook. Bảng chính giữ 5 phương pháp, hai bảng riêng trình bày mức dữ liệu và cửa sổ GRU. Sáu hình đối sánh dựng lại từ CSV. Cẩm nang công khai có kịch bản thuyết trình 10 phút. Kiểm tra 161 liên kết cục bộ.
+- [x] Kiểm thử, đối chiếu kết quả, kiểm tra liên kết và dọn tệp nháp trong `tmp/`.
+- [x] Chuẩn bị bản công bố trên `main`. Phần công bố gồm mã, kiểm thử, hình, tài liệu và hai báo cáo kiểm toán cập nhật.
+
+Kiểm thử Python đạt 72/72. Chạy lại pipeline trong bản sao cho 16 bảng CSV khớp ở dung sai tương đối `1e-10` và tuyệt đối `1e-12`. Bảy JSON khớp nội dung, gồm dự báo sau phiên 30/09/2025. Kiểm tra Git xác nhận dữ liệu thí nghiệm, bảng điểm, các mô hình và ba tệp Proposal vẫn cùng nội dung với bản trước.
+
+Chạy 10/10 notebook trên kernel mới trong bản sao và kiểm tra lại 16 CSV cùng dự báo. Các ô mã công bố khớp bản trước. Đã dọn 258 tệp tạm và cache, tổng cộng 32,02 MiB, sau khi xác minh đường dẫn nằm trong dự án và giá trị nguồn được bảo toàn.
+
 ### Tái huấn luyện theo cửa sổ 2013 và 42 biến — 19/11/2026
 
 - [x] Chốt phạm vi 32 → 38 → 42 biến theo yêu cầu. Đối chiếu nguồn cho các ngày thiếu VN-Index, xác minh hai ngày HOSE đóng cửa 23–24/01/2018.
